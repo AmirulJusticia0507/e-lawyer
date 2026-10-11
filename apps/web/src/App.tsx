@@ -6,6 +6,8 @@ import CaseDetail from './pages/CaseDetail';
 import Cases from './pages/Cases';
 import ClientDetail from './pages/ClientDetail';
 import Clients from './pages/Clients';
+import ConsultationDetail from './pages/ConsultationDetail';
+import Consultations from './pages/Consultations';
 import Home from './pages/Home';
 import Login from './pages/Login';
 
@@ -67,6 +69,26 @@ export default function App() {
             <RequireAuth>
               <Layout>
                 <CaseDetail />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/konsultasi"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Consultations />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/konsultasi/:id"
+          element={
+            <RequireAuth>
+              <Layout>
+                <ConsultationDetail />
               </Layout>
             </RequireAuth>
           }

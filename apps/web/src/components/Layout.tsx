@@ -13,6 +13,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </Link>
         <NavLink to="/perkara">Perkara</NavLink>
         <NavLink to="/klien">Klien</NavLink>
+        <NavLink to="/konsultasi">Konsultasi</NavLink>
         <span className="spacer" />
         {user ? (
           <>

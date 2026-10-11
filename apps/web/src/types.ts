@@ -18,6 +18,11 @@ export type PartySide =
   | 'OTHER';
 export type InteractionType = 'CALL' | 'EMAIL' | 'MEETING' | 'HEARING' | 'DOCUMENT' | 'OTHER';
 
+export type ConsultationMode = 'CHAT' | 'VIDEO' | 'PHONE' | 'IN_PERSON';
+export type ConsultationStatus = 'REQUESTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+export type ConsultationMessageType = 'TEXT' | 'FILE' | 'SYSTEM';
+export type VideoSessionStatus = 'SCHEDULED' | 'ACTIVE' | 'ENDED';
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -116,4 +121,72 @@ export interface MetaInfo {
   caseStatuses: string[];
   partySides: string[];
   interactionTypes: string[];
+  consultationModes: string[];
+  consultationStatuses: string[];
+  messageTypes: string[];
+  videoSessionStatuses: string[];
+}
+
+export interface ConsultationAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  sha256: string;
+  scanStatus: 'PENDING' | 'CLEAN' | 'INFECTED' | 'FAILED';
+  createdAt: string;
+}
+
+export interface ConsultationMessage {
+  id: string;
+  type: ConsultationMessageType;
+  body?: string | null;
+  ciphertext?: string | null;
+  createdAt: string;
+  sender?: { id: string; fullName: string } | null;
+  attachments: ConsultationAttachment[];
+}
+
+export interface VideoSession {
+  id: string;
+  roomId: string;
+  provider: string;
+  status: VideoSessionStatus;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  createdAt: string;
+}
+
+export interface ConsultationSummary {
+  id: string;
+  subject: string;
+  description?: string | null;
+  mode: ConsultationMode;
+  status: ConsultationStatus;
+  scheduledAt?: string | null;
+  durationMinutes?: number | null;
+  updatedAt: string;
+  client: { id: string; fullName: string };
+  assignedTo?: { id: string; fullName: string } | null;
+  _count: { messages: number };
+}
+
+export interface ConsultationDetail {
+  id: string;
+  client: { id: string; fullName: string; email?: string | null; phone?: string | null };
+  case?: { id: string; caseNumber: string; title: string } | null;
+  requestedBy?: { id: string; fullName: string; email?: string | null } | null;
+  assignedTo?: { id: string; fullName: string; email?: string | null } | null;
+  subject: string;
+  description?: string | null;
+  mode: ConsultationMode;
+  status: ConsultationStatus;
+  scheduledAt?: string | null;
+  durationMinutes?: number | null;
+  closedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  messages: ConsultationMessage[];
+  videoSessions: VideoSession[];
 }

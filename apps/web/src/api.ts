@@ -4,6 +4,12 @@ import type {
   CaseStatus,
   CaseSummary,
   Client,
+  ConsultationAttachment,
+  ConsultationDetail,
+  ConsultationMessage,
+  ConsultationMode,
+  ConsultationStatus,
+  ConsultationSummary,
   Interaction,
   InteractionType,
   Jurisdiction,
@@ -11,6 +17,7 @@ import type {
   Paginated,
   Party,
   PartySide,
+  VideoSession,
 } from './types';
 
 const BASE = '/api';
@@ -153,6 +160,93 @@ export const api = {
     request<Party>(`/cases/${id}/parties`, { method: 'POST', body: dto }),
   addInteraction: (id: string, dto: { type: InteractionType; title: string; description?: string; occurredAt?: string }) =>
     request<Interaction>(`/cases/${id}/interactions`, { method: 'POST', body: dto }),
+
+  // Consultations
+  listConsultations: (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: ConsultationStatus;
+      mode?: ConsultationMode;
+      clientId?: string;
+      assignedToUserId?: string;
+    } = {},
+  ) => {
+    const q = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '') as [string, string][],
+    ).toString();
+    return request<Paginated<ConsultationSummary>>(`/consultations${q ? `?${q}` : ''}`);
+  },
+  createConsultation: (dto: {
+    clientId: string;
+    caseId?: string;
+    subject: string;
+    description?: string;
+    mode?: ConsultationMode;
+    scheduledAt?: string;
+    durationMinutes?: number;
+  }) => request<ConsultationDetail>('/consultations', { method: 'POST', body: dto }),
+  getConsultation: (id: string) => request<ConsultationDetail>(`/consultations/${id}`),
+  updateConsultation: (id: string, dto: Partial<ConsultationDetail>) =>
+    request<ConsultationDetail>(`/consultations/${id}`, { method: 'PATCH', body: dto }),
+  changeConsultationStatus: (id: string, status: ConsultationStatus) =>
+    request<ConsultationDetail>(`/consultations/${id}/status`, { method: 'POST', body: { status } }),
+  assignConsultation: (id: string, dto: { toUserId: string; scheduledAt?: string; durationMinutes?: number }) =>
+    request<ConsultationDetail>(`/consultations/${id}/assign`, { method: 'POST', body: dto }),
+  sendMessage: (
+    id: string,
+    dto: { body?: string; type?: ConsultationMessage['type']; ciphertext?: string; iv?: string; algorithm?: string },
+  ) => request<ConsultationMessage>(`/consultations/${id}/messages`, { method: 'POST', body: dto }),
+  uploadAttachment: async (id: string, file: File, messageId?: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    if (messageId) form.append('messageId', messageId);
+    let response = await fetch(`${BASE}/consultations/${id}/attachments/upload`, {
+      method: 'POST',
+      headers: getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {},
+      body: form,
+    });
+    if (response.status === 401) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        response = await fetch(`${BASE}/consultations/${id}/attachments/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${newToken}` },
+          body: form,
+        });
+      }
+    }
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      throw new ApiError(payload?.message ?? `HTTP ${response.status}`, response.status);
+    }
+    return (await response.json()) as ConsultationAttachment;
+  },
+  downloadAttachment: async (id: string, attachmentId: string) => {
+    let response = await fetch(`${BASE}/consultations/${id}/attachments/${attachmentId}/download`, {
+      headers: getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {},
+    });
+    if (response.status === 401) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        response = await fetch(`${BASE}/consultations/${id}/attachments/${attachmentId}/download`, {
+          headers: { Authorization: `Bearer ${newToken}` },
+        });
+      }
+    }
+    if (!response.ok) {
+      throw new ApiError(`HTTP ${response.status}`, response.status);
+    }
+    return response.blob();
+  },
+  createVideoSession: (id: string, provider?: string) =>
+    request<VideoSession>(`/consultations/${id}/video-sessions`, { method: 'POST', body: provider ? { provider } : {} }),
+  updateVideoSessionStatus: (id: string, sessionId: string, status: VideoSession['status']) =>
+    request<VideoSession>(`/consultations/${id}/video-sessions/${sessionId}`, {
+      method: 'PATCH',
+      body: { status },
+    }),
 };
 
 export const statusFlow: Record<CaseStatus, CaseStatus[]> = {
@@ -191,4 +285,27 @@ export const interactionLabels: Record<InteractionType, string> = {
   HEARING: 'Sidang',
   DOCUMENT: 'Dokumen',
   OTHER: 'Lainnya',
+};
+
+export const consultationStatusFlow: Record<ConsultationStatus, ConsultationStatus[]> = {
+  REQUESTED: ['SCHEDULED', 'CANCELLED'],
+  SCHEDULED: ['ONGOING', 'CANCELLED'],
+  ONGOING: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const consultationStatusLabels: Record<ConsultationStatus, string> = {
+  REQUESTED: 'Diajukan',
+  SCHEDULED: 'Terjadwal',
+  ONGOING: 'Berlangsung',
+  COMPLETED: 'Selesai',
+  CANCELLED: 'Dibatalkan',
+};
+
+export const consultationModeLabels: Record<ConsultationMode, string> = {
+  CHAT: 'Chat',
+  VIDEO: 'Video Call',
+  PHONE: 'Telepon',
+  IN_PERSON: 'Tatap Muka',
 };

@@ -30,6 +30,9 @@ coverage/
 # Prisma
 prisma/migrations/dev.db*
 
+# Storage lokal (berkas unggahan)
+storage/
+
 # OS / editor
 .DS_Store
 Thumbs.db

@@ -1,9 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
+import { createHash, randomUUID } from 'crypto';
+import { mkdirSync, writeFileSync } from 'fs';
+import { basename, join, resolve } from 'path';
 import { ConsultationStatus, Prisma, VideoSessionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
 import { assertTransition } from './consultation-status';
+import { ConsultationsGateway } from './consultations.gateway';
 import {
   AssignConsultationDto,
   ChangeConsultationStatusDto,
@@ -19,6 +27,9 @@ import {
 } from './dto/message.dto';
 
 const USER_SELECT = { id: true, fullName: true, email: true } as const;
+
+const STORAGE_ROOT = resolve(process.cwd(), 'storage');
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 const CONSULTATION_INCLUDE = {
   client: { select: { id: true, fullName: true, email: true, phone: true } },
@@ -37,7 +48,10 @@ const CONSULTATION_INCLUDE = {
 
 @Injectable()
 export class ConsultationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gateway: ConsultationsGateway,
+  ) {}
 
   async create(dto: CreateConsultationDto, actorId: string) {
     await this.ensureClientExists(dto.clientId);
@@ -133,7 +147,7 @@ export class ConsultationsService {
     }
     assertTransition(existing.status, dto.status);
     const isClosing = dto.status === ConsultationStatus.COMPLETED || dto.status === ConsultationStatus.CANCELLED;
-    return this.prisma.consultation.update({
+    const updated = await this.prisma.consultation.update({
       where: { id },
       data: {
         status: dto.status,
@@ -141,6 +155,8 @@ export class ConsultationsService {
       },
       include: CONSULTATION_INCLUDE,
     });
+    this.gateway.notifyStatus(id, updated);
+    return updated;
   }
 
   async assign(id: string, dto: AssignConsultationDto) {
@@ -172,7 +188,7 @@ export class ConsultationsService {
     if (!dto.body && !dto.ciphertext) {
       throw new BadRequestException('Pesan harus memiliki body atau ciphertext');
     }
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         consultationId: id,
         senderId: actorId,
@@ -184,6 +200,8 @@ export class ConsultationsService {
       },
       include: { sender: { select: { id: true, fullName: true } } },
     });
+    this.gateway.notifyMessage(id, message);
+    return message;
   }
 
   async addAttachment(id: string, dto: CreateAttachmentDto, actorId: string) {
@@ -209,6 +227,61 @@ export class ConsultationsService {
         sha256: dto.sha256,
       },
     });
+  }
+
+  async uploadAttachment(
+    id: string,
+    file: Express.Multer.File,
+    messageId: string | undefined,
+    actorId: string,
+  ) {
+    await this.ensureExists(id);
+    if (!file) {
+      throw new BadRequestException('Berkas wajib diunggah');
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw new PayloadTooLargeException('Ukuran berkas maksimal 20MB');
+    }
+    const hash = createHash('sha256').update(file.buffer).digest('hex');
+    const dir = join(STORAGE_ROOT, 'attachments', id);
+    mkdirSync(dir, { recursive: true });
+    const safeName = basename(file.originalname).replace(/[^\w.\-() ]/g, '_').slice(0, 80);
+    const fileName = `${randomUUID()}-${safeName}`;
+    writeFileSync(join(dir, fileName), file.buffer);
+
+    return this.prisma.attachment.create({
+      data: {
+        consultationId: id,
+        messageId,
+        uploaderId: actorId,
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        storageKey: join('attachments', id, fileName).split('\\').join('/'),
+        sha256: hash,
+      },
+    });
+  }
+
+  async findAttachment(id: string, attachmentId: string) {
+    await this.ensureExists(id);
+    const attachment = await this.prisma.attachment.findFirst({
+      where: { id: attachmentId, consultationId: id },
+    });
+    if (!attachment) {
+      throw new NotFoundException('Berkas tidak ditemukan');
+    }
+    return attachment;
+  }
+
+  async prepareDownload(id: string, attachmentId: string) {
+    const attachment = await this.findAttachment(id, attachmentId);
+    const absolute = resolve(STORAGE_ROOT, attachment.storageKey);
+    const root = resolve(STORAGE_ROOT);
+    if (absolute !== root && !absolute.startsWith(root + '\\') && !absolute.startsWith(root + '/')) {
+      throw new BadRequestException('Lokasi berkas tidak valid');
+    }
+    return { attachment, absolute };
   }
 
   async createVideoSession(id: string, dto: CreateVideoSessionDto) {

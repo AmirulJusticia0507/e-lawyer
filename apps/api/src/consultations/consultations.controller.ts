@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -10,7 +11,15 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
+import { createReadStream } from 'fs';
+import { extname } from 'path';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermission } from '../common/decorators/permissions.decorator';
 import { Action, Subject } from '../common/constants/permissions';
@@ -87,6 +96,42 @@ export class ConsultationsController {
     @CurrentUser('id') actorId: string,
   ) {
     return this.consultations.addAttachment(id, dto, actorId);
+  }
+
+  @Post(':id/attachments/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  @RequirePermission(Action.UPDATE, Subject.CONSULTATION)
+  uploadAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('messageId') messageId: string | undefined,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.consultations.uploadAttachment(id, file, messageId, actorId);
+  }
+
+  @Get(':id/attachments/:attachmentId/download')
+  @Header('Cache-Control', 'private, max-age=60')
+  @RequirePermission(Action.READ, Subject.CONSULTATION)
+  async downloadAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const { attachment, absolute } = await this.consultations.prepareDownload(id, attachmentId);
+    const fallback = extname(attachment.fileName) || '.bin';
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="download${fallback}"`,
+    );
+    return new StreamableFile(createReadStream(absolute), {
+      type: attachment.mimeType,
+      disposition: `attachment; filename="download${fallback}"`,
+    });
   }
 
   @Post(':id/video-sessions')

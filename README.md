@@ -119,8 +119,7 @@ Setiap perkara ditautkan dengan *registry* lingkungan peradilan untuk memuat set
 
 | Layer | Teknologi |
 |-------|-----------|
-| **Frontend Web** | React / Next.js |
-| **Mobile** | React Native |
+| **Frontend (SPA)** | React 18 + Vite |
 | **Backend** | Node.js (NestJS) atau Python (FastAPI) |
 | **Database** | PostgreSQL (+ `pgvector` untuk pencarian semantik) & Redis |
 | **Search** | PostgreSQL FTS / Elasticsearch (peraturan & putusan) |
@@ -306,8 +305,7 @@ Struktur berikut adalah usulan (belum diimplementasikan):
 ```
 e-lawyer/
 ├── apps/
-│   ├── web/            # Next.js (portal advokat, pengadilan, klien)
-│   ├── mobile/         # React Native (klien/advokat)
+│   ├── web/            # React SPA (portal advokat, pengadilan, klien)
 │   └── api/            # Backend API (NestJS / FastAPI)
 ├── services/
 │   ├── ai/             # RAG, prediksi, embedding, citation engine
@@ -354,7 +352,7 @@ Sistem dirancang untuk memenuhi standar kerahasiaan hubungan Advokat–Klien dan
 - [ ] **F7 — Waktu, Billing & Pembayaran:** time tracking, escrow, invoice, pajak, payment gateway
 - [ ] **F8 — AI Legal Analytics:** case scoring, yurisprudensi search, prediksi, asisten RAG
 - [ ] **F9 — Keamanan & Kepatuhan:** hardening, privacy, audit viewer, uji penetrasi
-- [ ] **F10 — Mobile App:** React Native untuk klien & advokat
+- [ ] **F10 — SPA Enhancements:** PWA, offline cache, push notification, aksesibilitas
 
 > Rincian task per fitur tersedia di [`TODO.md`](./TODO.md).
 

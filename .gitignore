@@ -36,11 +36,3 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
-# Mobile (React Native)
-*.keystore
-*.jks
-*.mobileprovision
-apps/mobile/android/app/build/
-apps/mobile/ios/Pods/
-apps/mobile/ios/build/

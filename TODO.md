@@ -14,7 +14,7 @@ Mapping ke kebutuhan utama:
 ---
 
 ## F0 — Fondasi & Setup
-- [x] Inisialisasi monorepo (Next.js web + backend NestJS; React Native mobile menyusul di F10)
+- [x] Inisialisasi monorepo (React SPA `apps/web` + backend NestJS `apps/api`)
 - [x] Konfigurasi `.env.example`, `docker-compose.yml` (PostgreSQL + pgvector + Redis)
 - [x] Setup ORM (Prisma) + migrasi awal + seed data
 - [x] Auth: JWT access + refresh token (verifikasi email/OTP menyusul)
@@ -135,13 +135,13 @@ Mapping ke kebutuhan utama:
 - [ ] Uji penetrasi & security review
 - [ ] Backup & disaster recovery
 
-## F10 — Mobile App
-- [ ] Setup React Native (klien/advokat)
-- [ ] Auth + konsumsi API
-- [ ] Fitur prioritas: konsultasi, notifikasi sidang, dokumen, invoice
-- [ ] Push notification (reminder sidang & deadline)
-- [ ] Offline cache & sinkronisasi
-- [ ] Rilis ke Play Store / App Store
+## F10 — SPA Enhancements
+- [ ] Setup PWA (manifest, service worker, offline cache)
+- [ ] Push notification di browser (reminder sidang & deadline)
+- [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
+- [ ] Aksesibilitas (a11y) & tema
+- [ ] Optimasi performa (code splitting, lazy loading)
+- [ ] Rilis produksi (Vercel/Netlify/NGINX static)
 
 ---
 

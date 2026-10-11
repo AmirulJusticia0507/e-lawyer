@@ -9,11 +9,11 @@ const features = [
   'AI Legal Analytics',
 ];
 
-export default function HomePage() {
+export default function Home() {
   return (
     <main
       style={{
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 57px)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -29,11 +29,8 @@ export default function HomePage() {
         </p>
       </header>
 
-      <ul
+      <div
         style={{
-          listStyle: 'none',
-          padding: 0,
-          margin: 0,
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '0.75rem',
@@ -42,7 +39,7 @@ export default function HomePage() {
         }}
       >
         {features.map((feature) => (
-          <li
+          <div
             key={feature}
             style={{
               background: 'var(--surface)',
@@ -52,9 +49,9 @@ export default function HomePage() {
             }}
           >
             {feature}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <footer style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
         Status: <strong>F0 — Fondasi & Setup</strong>

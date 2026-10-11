@@ -14,14 +14,14 @@ Mapping ke kebutuhan utama:
 ---
 
 ## F0 — Fondasi & Setup
-- [ ] Inisialisasi monorepo (Next.js web + React Native mobile + backend NestJS/FastAPI)
-- [ ] Konfigurasi `.env.example`, `docker-compose.yml` (PostgreSQL + pgvector + Redis)
-- [ ] Setup ORM (Prisma) + migrasi awal + seed data
-- [ ] Auth: OAuth2 / JWT + refresh token + verifikasi email/OTP
-- [ ] RBAC middleware (advokat, pengadilan, klien) + permission matrix
-- [ ] Factory audit log global + middleware pencatat aktivitas
+- [x] Inisialisasi monorepo (Next.js web + backend NestJS; React Native mobile menyusul di F10)
+- [x] Konfigurasi `.env.example`, `docker-compose.yml` (PostgreSQL + pgvector + Redis)
+- [x] Setup ORM (Prisma) + migrasi awal + seed data
+- [x] Auth: JWT access + refresh token (verifikasi email/OTP menyusul)
+- [x] RBAC middleware (10 role: advokat, pengadilan, klien) + permission matrix
+- [x] Factory audit log global + middleware pencatat aktivitas
 - [ ] Struktur environment (dev/staging/prod) + secret manager
-- [ ] CI/CD pipeline: lint, typecheck, test, build
+- [x] CI/CD pipeline: lint, typecheck, test, build
 - [ ] Setup observability (logging, error tracking, metrics)
 
 ## F1 — Manajemen Perkara & Klien

@@ -10,6 +10,7 @@ import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule } from './clients/clients.module';
+import { ConsultationsModule } from './consultations/consultations.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ClientsModule } from './clients/clients.module';
     AuthModule,
     ClientsModule,
     CasesModule,
+    ConsultationsModule,
   ],
   controllers: [AppController],
   providers: [

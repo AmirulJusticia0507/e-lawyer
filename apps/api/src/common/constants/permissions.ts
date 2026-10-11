@@ -19,6 +19,7 @@ export enum Subject {
   INVOICE = 'INVOICE',
   PAYMENT = 'PAYMENT',
   REGULATION = 'REGULATION',
+  CONSULTATION = 'CONSULTATION',
   AUDIT_LOG = 'AUDIT_LOG',
 }
 
@@ -47,6 +48,7 @@ export const PERMISSIONS: PermissionDef[] = [
   ...allOf(Subject.INVOICE),
   ...allOf(Subject.PAYMENT),
   { action: Action.READ, subject: Subject.REGULATION, description: 'Lihat basis peraturan' },
+  ...allOf(Subject.CONSULTATION),
 ];
 
 // Matriks role -> daftar permission ("ACTION:SUBJECT")
@@ -67,6 +69,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.JUDGMENT),
     key(Action.READ, Subject.AUDIT_LOG),
     key(Action.READ, Subject.REGULATION),
+    ...allOf(Subject.CONSULTATION).map((p) => key(p.action, p.subject)),
   ],
   [RoleName.SENIOR_ASSOCIATE]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
@@ -77,6 +80,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.PAYMENT),
     key(Action.READ, Subject.JUDGMENT),
     key(Action.READ, Subject.REGULATION),
+    ...allOf(Subject.CONSULTATION).map((p) => key(p.action, p.subject)),
   ],
   [RoleName.JUNIOR_ASSOCIATE]: [
     key(Action.CREATE, Subject.CASE),
@@ -88,6 +92,9 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.UPDATE, Subject.DOCUMENT),
     key(Action.READ, Subject.HEARING),
     key(Action.READ, Subject.REGULATION),
+    key(Action.CREATE, Subject.CONSULTATION),
+    key(Action.READ, Subject.CONSULTATION),
+    key(Action.UPDATE, Subject.CONSULTATION),
   ],
   [RoleName.PARALEGAL]: [
     key(Action.READ, Subject.CASE),
@@ -96,6 +103,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.DOCUMENT),
     key(Action.READ, Subject.HEARING),
     key(Action.READ, Subject.REGULATION),
+    key(Action.READ, Subject.CONSULTATION),
   ],
   [RoleName.CLIENT]: [
     key(Action.READ, Subject.CASE),
@@ -103,6 +111,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.CREATE, Subject.DOCUMENT),
     key(Action.READ, Subject.HEARING),
     key(Action.READ, Subject.INVOICE),
+    key(Action.CREATE, Subject.CONSULTATION),
+    key(Action.READ, Subject.CONSULTATION),
   ],
   [RoleName.JUDGE]: [
     key(Action.READ, Subject.CASE),

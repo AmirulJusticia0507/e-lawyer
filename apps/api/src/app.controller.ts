@@ -1,5 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
-import { CaseStatus, ClientType, InteractionType, Jurisdiction, PartySide } from '@prisma/client';
+import {
+  CaseStatus,
+  ClientType,
+  ConsultationMode,
+  ConsultationStatus,
+  InteractionType,
+  Jurisdiction,
+  MessageType,
+  PartySide,
+  VideoSessionStatus,
+} from '@prisma/client';
 import { Public } from './common/decorators/public.decorator';
 
 @Controller()
@@ -28,6 +38,10 @@ export class AppController {
       caseStatuses: Object.values(CaseStatus),
       partySides: Object.values(PartySide),
       interactionTypes: Object.values(InteractionType),
+      consultationModes: Object.values(ConsultationMode),
+      consultationStatuses: Object.values(ConsultationStatus),
+      messageTypes: Object.values(MessageType),
+      videoSessionStatuses: Object.values(VideoSessionStatus),
     };
   }
 }

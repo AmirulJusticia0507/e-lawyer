@@ -36,9 +36,10 @@ Mapping ke kebutuhan utama:
 - [x] Audit log untuk perubahan perkara (AuditLogInterceptor global)
 
 ## F2 — Konsultasi Legal Digital
-- [ ] Data model: `Consultation`, `Message`, `Attachment`, `VideoSession`
-- [ ] Portal klien: pengajuan konsultasi (form + jadwal preferensi)
-- [ ] Modul perpesanan E2EE (end-to-end encryption)
+- [x] Data model: `Consultation`, `Message`, `Attachment`, `VideoSession` (+ migrasi `2_consultation`)
+- [x] Portal klien: pengajuan konsultasi (form + jadwal preferensi) via `POST /api/consultations`
+- [x] API konsultasi: CRUD, status workflow, assign advokat, pesan, attachment, sesi video
+- [ ] Modul perpesanan E2EE (end-to-end encryption) — field ciphertext/iv/algorithm siap, kripto client menyusul
 - [ ] Integrasi video conference (WebRTC / penyedia pihak ketiga)
 - [ ] Upload + verifikasi berkas aman (signed URL, scan malware, hash)
 - [ ] Notifikasi realtime (WebSocket / push)

@@ -16,6 +16,49 @@ enum UserStatus {
   DISABLED
 }
 
+enum ClientType {
+  PERSON
+  ORGANIZATION
+}
+
+enum Jurisdiction {
+  CIVIL
+  CRIMINAL
+  ADMINISTRATIVE
+  RELIGIOUS
+  MILITARY
+  ARBITRATION
+  OTHER
+}
+
+enum CaseStatus {
+  NEW
+  ACTIVE
+  POSTPONED
+  DECIDED
+  CLOSED
+  ARCHIVED
+}
+
+enum PartySide {
+  PLAINTIFF
+  DEFENDANT
+  APPLICANT
+  RESPONDENT
+  ACCUSED
+  THIRD_PARTY
+  OTHER
+}
+
+enum InteractionType {
+  CALL
+  EMAIL
+  MEETING
+  HEARING
+  DOCUMENT
+  OTHER
+}
+
 model User {
   id              String       @id @default(uuid()) @db.Uuid
   email           String       @unique
@@ -31,6 +74,14 @@ model User {
   roles         UserRole[]
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]     @relation("AuditActor")
+
+  clientsCreated      Client[]         @relation("ClientCreatedBy")
+  interactionsCreated Interaction[]    @relation("InteractionCreatedBy")
+  casesFiled          Case[]           @relation("CaseFiledBy")
+  casesAssigned       Case[]           @relation("CaseAssignedTo")
+  assignmentsMade     CaseAssignment[] @relation("CaseAssignmentMadeBy")
+  assignmentsHistory  CaseAssignment[] @relation("CaseAssignmentFrom")
+  assignmentsReceived CaseAssignment[] @relation("CaseAssignmentTo")
 
   @@index([status])
 }
@@ -119,4 +170,120 @@ model AuditLog {
   @@index([subject])
   @@index([action])
   @@index([createdAt])
+}
+
+model Client {
+  id          String     @id @default(uuid()) @db.Uuid
+  type        ClientType @default(PERSON)
+  fullName    String
+  nik         String?    @unique
+  npwp        String?
+  email       String?
+  phone       String?
+  address     Json?
+  notes       String?
+  createdById String?    @db.Uuid
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  createdBy    User?         @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  parties      Party[]
+  interactions Interaction[]
+
+  @@index([fullName])
+  @@index([createdById])
+  @@index([email])
+  @@index([phone])
+}
+
+model Case {
+  id               String       @id @default(uuid()) @db.Uuid
+  caseNumber       String       @unique
+  title            String
+  description      String?
+  courtName        String?
+  jurisdiction     Jurisdiction @default(CIVIL)
+  caseType         String?
+  status           CaseStatus   @default(NEW)
+  filedAt          DateTime?
+  decidedAt        DateTime?
+  filedByUserId    String?      @db.Uuid
+  assignedToUserId String?      @db.Uuid
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  filedBy      User?            @relation("CaseFiledBy", fields: [filedByUserId], references: [id], onDelete: SetNull)
+  assignedTo   User?            @relation("CaseAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  parties      Party[]
+  interactions Interaction[]
+  assignments  CaseAssignment[]
+
+  @@index([filedByUserId])
+  @@index([assignedToUserId])
+  @@index([status])
+  @@index([jurisdiction])
+  @@index([courtName])
+}
+
+model Party {
+  id          String     @id @default(uuid()) @db.Uuid
+  caseId      String     @db.Uuid
+  clientId    String?    @db.Uuid
+  side        PartySide  @default(OTHER)
+  name        String
+  type        ClientType @default(PERSON)
+  nik         String?
+  npwp        String?
+  email       String?
+  phone       String?
+  address     Json?
+  isMainParty Boolean    @default(false)
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  case   Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@unique([caseId, side, name])
+  @@index([clientId])
+}
+
+model Interaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  caseId      String          @db.Uuid
+  clientId    String?         @db.Uuid
+  type        InteractionType @default(OTHER)
+  title       String
+  description String?
+  occurredAt  DateTime        @default(now())
+  createdById String?         @db.Uuid
+  createdAt   DateTime        @default(now())
+
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  client    Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdBy User?   @relation("InteractionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([clientId])
+  @@index([createdById])
+  @@index([occurredAt])
+}
+
+model CaseAssignment {
+  id           String   @id @default(uuid()) @db.Uuid
+  caseId       String   @db.Uuid
+  fromUserId   String?  @db.Uuid
+  toUserId     String   @db.Uuid
+  assignedById String?  @db.Uuid
+  note         String?
+  createdAt    DateTime @default(now())
+
+  case       Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromUser   User? @relation("CaseAssignmentFrom", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser     User? @relation("CaseAssignmentTo", fields: [toUserId], references: [id], onDelete: SetNull)
+  assignedBy User? @relation("CaseAssignmentMadeBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([toUserId])
 }

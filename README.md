@@ -1,15 +1,18 @@
 # e-Lawyer Platform
 
-> Platform *Legal Tech* terpadu untuk merampingkan praktik hukum digital, manajemen kasus, konsultasi klien, serta otomatisasi dokumen bagi advokat dan firma hukum.
+> Platform *Legal Tech* terpadu yang menghubungkan **advokat/firma hukum** dan **pengadilan** dalam satu ekosistem litigasi digital: manajemen perkara, konsultasi klien, basis peraturan, penyusunan dokumen & putusan, penjadwalan sidang, pembayaran, dan analitik hukum berbasis AI.
 
 [![Status](https://img.shields.io/badge/status-planning-yellow)]()
 [![License](https://img.shields.io/badge/license-proprietary-red)]()
+
+> ⚠️ **Disclaimer:** Sistem ini adalah alat bantu (decision support). Output AI **bukan** nasihat hukum resmi dan **tidak menjamin** hasil/kemenangan suatu perkara. Segala keputusan hukum tetap tanggung jawab advokat/hakim.
 
 ---
 
 ## Daftar Isi
 
 - [Tentang](#tentang)
+- [Cakupan Yurisdiksi](#cakupan-yurisdiksi)
 - [Fitur Utama](#fitur-utama)
 - [Arsitektur & Teknologi](#arsitektur--teknologi)
 - [Peran Pengguna (RBAC)](#peran-pengguna-rbac)
@@ -17,7 +20,7 @@
 - [Panduan Instalasi](#panduan-instalasi)
 - [Konfigurasi Environment](#konfigurasi-environment)
 - [Struktur Proyek](#struktur-proyek)
-- [Keamanan & Privasi Data](#keamanan--privasi-data)
+- [Keamanan & Kepatuhan](#keamanan--kepatuhan)
 - [Roadmap](#roadmap)
 - [Kontribusi](#kontribusi)
 - [Lisensi](#lisensi)
@@ -26,37 +29,89 @@
 
 ## Tentang
 
-**e-Lawyer** adalah platform *Legal Tech* terpadu yang dirancang untuk merampingkan praktik hukum digital, manajemen kasus, konsultasi klien, serta otomatisasi dokumen bagi advokat dan firma hukum.
+**e-Lawyer** adalah platform *Legal Tech* terpadu yang dirancang untuk merampingkan praktik hukum digital, manajemen kasus, konsultasi klien, otomatisasi dokumen, serta **kolaborasi antara advokat dan pengadilan** dalam satu sistem.
 
-Sistem ini dibangun untuk memenuhi standar kerahasiaan hubungan **Advokat–Klien** (*Attorney–Client Privilege*) dengan enkripsi menyeluruh dan audit trail yang lengkap.
+Sistem dibangun untuk:
+- Memenuhi standar kerahasiaan **Advokat–Klien** (*Attorney–Client Privilege*).
+- Menjaga **integritas proses hukum** (anti-manipulasi dari pihak penggugat maupun tergugat).
+- Menyediakan **sitasi pasal yang akurat** dan **penyusunan putusan** yang konsisten.
+- Memberi **analitik & prediksi berbasis AI** sebagai penunjang strategi perkara.
+
+---
+
+## Cakupan Yurisdiksi
+
+Platform dirancang untuk **seluruh lingkungan peradilan Indonesia**:
+
+| Lingkungan | Contoh Dasar Hukum |
+|-----------|--------------------|
+| **Perdata** | KUHPerdata, HIR/RBg, RV |
+| **Pidana** | KUHP, KUHAP |
+| **TUN** | UU PTUN, Hukum Acara PTUN |
+| **Agama** | UU Peradilan Agama, Kompilasi Hukum Islam |
+| **Militer** | UU Peradilan Militer |
+| **Sengketa lain** | Arbitrase (UU 30/1999), PHI, Niaga |
+
+Setiap perkara ditautkan dengan *registry* lingkungan peradilan untuk memuat set peraturan & template yang tepat.
 
 ---
 
 ## Fitur Utama
 
 ### 1. Manajemen Perkara & Klien (Case & Client Management)
-- Pelacakan status perkara (litigasi dan non-litigasi).
+- Pelacakan status perkara lintas lingkungan peradilan (litigasi & non-litigasi).
 - Penjadwalan sidang, jadwal konsultasi, dan pengingat *deadline*.
-- Manajemen repositori data klien dan riwayat interaksi.
+- Manajemen repositori data klien, para pihak, dan riwayat interaksi.
 
 ### 2. Konsultasi Legal Digital (Virtual Consultation Portal)
 - Portal klien mandiri untuk pengajuan konsultasi online.
 - Modul perpesanan terenkripsi dan integrasi *video conference*.
 - Portal unggah dan verifikasi berkas perkara secara aman.
 
-### 3. Otomatisasi Dokumen Hukum (Document Automation)
-- Generator draf surat kuasa, kontrak, dan perjanjian legal otomatis.
-- Manajemen versi dokumen (*version control*) dan riwayat revisi.
-- Integrasi tanda tangan digital (*E-Signature*) yang sah secara hukum.
+### 3. Basis Peraturan & Sitasi Pasal (Legal Citation Engine)
+- Katalog UU, Perma, SEMA, dan yurisprudensi (putusan MA) terstruktur **per pasal**.
+- Metadata status: **berlaku / diubah / dicabut**, dengan pelacakan versi berbasis tanggal.
+- Setiap dokumen (gugatan, jawaban, putusan) **wajib menautkan pasal**; sistem memvalidasi pasal masih berlaku.
+- Pencarian full-text + semantik (vektor) atas peraturan & putusan.
 
-### 4. Pencatatan Waktu & Keuangan (Time Tracking & Invoicing)
-- Pencatatan jam kerja advokat (*Billable Hours counter*).
-- Pembuatan *invoice* otomatis berbasis tarif layanan atau *retainer*.
-- Integrasi *payment gateway* untuk pembayaran layanan hukum.
+### 4. Integritas & Anti-Manipulasi (Integrity Layer)
+- Mencegah penggugat/tergugat "mengakali" proses:
+  - Hash **SHA-256** + *trusted timestamp* setiap berkas saat masuk.
+  - **Audit log append-only** yang tidak dapat dihapus/diedit.
+  - Dokumen yang telah disubmit **immutable** — revisi hanya via *addendum*.
+  - **Dual-confirmation**: pihak lawan menerima salinan resmi & konfirmasi.
+  - Deteksi anomali (upload mendadak, backdate, perubahan klaim).
+  - *Deadline enforcement* otomatis (penundaan tidak bisa disembunyikan).
 
-### 5. Keamanan & Audit Trail
-- *End-to-End Encryption* untuk menjaga kerahasiaan *Attorney-Client Privilege*.
-- Log aktivitas terpusat untuk memantau akses dan perubahan berkas.
+### 5. Otomatisasi & Penyusunan Dokumen (Document & Judgment Automation)
+- Generator draf otomatis: **surat kuasa**, gugatan, jawaban, kontrak, perjanjian.
+- **Penyusun berkas putusan** terstruktur: Kepala Putusan → Identitas Pihak → Duduk Perkara → Pertimbangan Hukum (wajib sitasi pasal) → Amar → Penutup.
+- *Version control* dokumen + riwayat revisi.
+- Integrasi **e-Signature** (BSrE) & **e-Meterai** yang sah secara hukum.
+
+### 6. Jadwal Sidang & Anti-Molor (Hearing Scheduler)
+- Kalender sidang terpusat (sinkron jadwal hakim + ruang sidang).
+- **Limit otomatis penundaan sidang** sesuai aturan pembatasan penundaan.
+- Pengingat otomatis (H-7 / H-3 / H-1) via email, WhatsApp, push.
+- Deteksi bentrok jadwal + **escalation** ke pengawas jika molor tanpa alasan.
+- Dashboard statistik keterlambatan per hakim/perkara + SLA timer.
+
+### 7. Waktu, Billing & Pembayaran Advokat (Time, Billing & Payment)
+- Pencatatan jam kerja advokat (*Billable Hours*); tarif retainer/hourly/fixed/success fee.
+- **Escrow / rekening bersama** (uang klien) dengan rilis berbasis milestone.
+- Pembuatan *invoice* otomatis + integrasi pajak (PPh 21/23, PPN).
+- Integrasi *payment gateway* (VA, e-wallet, transfer) & rekonsiliasi.
+
+### 8. Analitik & Prediksi Kasus berbasis AI (AI Legal Analytics)
+- **Case strength scoring**: skor kekuatan dalil, bukti, dan dasar hukum.
+- **Yurisprudensi search**: putusan MA/serupa berdasarkan kemiripan fakta.
+- **Checklist alat bukti** sesuai jenis perkara (surat, saksi, persangkaan, pengakuan, sumpah).
+- **Prediksi putusan** (ML) + rekomendasi strategi — *dengan disclaimer wajib*.
+- Asisten riset pasal & argumen (RAG atas basis peraturan & putusan).
+
+### 9. Keamanan & Audit Trail
+- *End-to-End Encryption* untuk kerahasiaan *Attorney-Client Privilege*.
+- Log aktivitas terpusat (unduh/ubah/hapus) yang permanen.
 
 ---
 
@@ -66,23 +121,36 @@ Sistem ini dibangun untuk memenuhi standar kerahasiaan hubungan **Advokat–Klie
 |-------|-----------|
 | **Frontend Web** | React / Next.js |
 | **Mobile** | React Native |
-| **Backend** | Node.js (NestJS / Express) atau Python (FastAPI) |
-| **Database** | PostgreSQL (relasional) & Redis (session/caching) |
+| **Backend** | Node.js (NestJS) atau Python (FastAPI) |
+| **Database** | PostgreSQL (+ `pgvector` untuk pencarian semantik) & Redis |
+| **Search** | PostgreSQL FTS / Elasticsearch (peraturan & putusan) |
+| **AI/ML** | LLM + RAG pipeline, model prediksi (classifier), embedding model |
 | **Storage** | Amazon S3 / Google Cloud Storage (dokumen terenkripsi) |
+| **Queue/Scheduler** | BullMQ / Celery + Redis (reminder, eskalasi, SLA) |
 | **Security** | AES-256 (at-rest), TLS 1.3 (in-transit), OAuth2/JWT, RBAC |
+| **Integrasi** | e-Signature BSrE, e-Meterai, Payment Gateway, TSA (trusted timestamp) |
 
 ---
 
 ## Peran Pengguna (RBAC)
 
+### Sisi Advokat / Firma Hukum
 | Peran | Deskripsi Akses |
 |-------|-----------------|
-| **Admin** | Konfigurasi sistem, kelola pengguna, kelola RBAC, audit log |
+| **Admin Sistem** | Konfigurasi sistem, kelola pengguna, RBAC, audit log |
 | **Managing Partner** | Overview firma, laporan keuangan, semua perkara |
 | **Senior Associate** | Kelola perkara, dokumen, billing tim |
 | **Junior Associate** | Perkara yang ditugaskan, dokumen, time tracking |
 | **Paralegal** | Dukungan perkara, dokumen, jadwal |
 | **Klien** | Portal konsultasi, upload berkas, status perkara, invoice |
+
+### Sisi Pengadilan
+| Peran | Deskripsi Akses |
+|-------|-----------------|
+| **Hakim** | Menyusun & menandatangani putusan, memutus penundaan sidang |
+| **Panitera** | Administrasi perkara, jadwal sidang, pemanggilan pihak |
+| **Juru Sita** | Pelaksanaan pemanggilan & pemberitahuan resmi |
+| **Jaksa Penuntut Umum** | Perkara pidana (dakwaan, tuntutan) |
 
 ---
 
@@ -92,31 +160,38 @@ Sistem ini dibangun untuk memenuhi standar kerahasiaan hubungan **Advokat–Klie
 Registrasi/Login (OAuth2/JWT)
         │
         ▼
-  RBAC menentukan akses fitur
+   RBAC menentukan akses fitur (advokat / pengadilan / klien)
         │
- ┌──────────────┬───────────────┬──────────────┬──────────────┐
- │ Konsultasi   │ Manajemen     │ Otomatisasi  │ Time &       │
- │ Digital      │ Perkara/Klien │ Dokumen      │ Invoicing    │
- └──────┬───────┴───────┬───────┴──────┬───────┴──────┬───────┘
-        ▼               ▼              ▼              ▼
-  Chat/Video      Jadwal Sidang   Generator +    Billable Hour
-  + Upload Berkas + Deadline      E-Signature    + Invoice
-        ▼               ▼              ▼              ▼
-        └───────────────┴──────────────┴──────────────┘
-                        ▼
-             Audit Trail + Enkripsi AES-256
-                        ▼
+ ┌────────────┬─────────────┬─────────────┬──────────────┐
+ │ Perkara &  │ Konsultasi  │ Dokumen &   │ Jadwal       │
+ │ Klien      │ Digital     │ Putusan     │ Sidang       │
+ └─────┬──────┴──────┬──────┴──────┬──────┴──────┬───────┘
+       ▼             ▼             ▼             ▼
+ Sitasi Pasal   Chat/Video    Surat Kuasa   Reminder +
+ & Validasi     + Berkas      E-Signature   Limit Tunda
+       │             │             │             │
+       └─────────────┴──────┬──────┴─────────────┘
+                            ▼
+           Integritas & Audit Trail + Enkripsi AES-256
+                            ▼
+        ┌───────────────────┴───────────────────┐
+        ▼                                       ▼
+  Billing & Escrow                      AI Legal Analytics
+  (pembayaran advokat)                  (skor & prediksi kasus)
+                            ▼
                  Storage Terenkripsi (S3/GCS)
 ```
 
 **Alur bisnis end-to-end:**
 
-1. **Onboarding Klien** — Admin/advokat mengundang klien, klien membuat akun.
-2. **Pengajuan Konsultasi** — Klien submit via portal → advokat review → penjadwalan → chat/video → berkas diverifikasi.
-3. **Pembukaan Perkara** — Perkara dibuat + assign advokat → tracking status → jadwal sidang + reminder *deadline*.
-4. **Produksi Dokumen** — Pilih template → generate draf → *version control* → *e-signature* → arsip.
-5. **Monetisasi** — Timer mencatat jam kerja → invoice otomatis → pembayaran via payment gateway.
-6. **Audit** — Setiap unduh/ubah/hapus berkas tercatat permanen.
+1. **Onboarding** — Admin/advokat mengundang klien; klien membuat akun.
+2. **Konsultasi** — Klien submit via portal → advokat review → penjadwalan → chat/video → berkas diverifikasi.
+3. **Pembukaan Perkara** — Perkara dibuat + assign advokat → sitasi pasal divalidasi → jadwal sidang dibuat.
+4. **Persidangan** — Jadwal anti-molor + pengingat → penundaan dibatasi & dilacak → integritas berkas terjaga.
+5. **Dokumen & Putusan** — Generate surat kuasa/gugatan → pertimbangan wajib sitasi pasal → putusan + e-signature.
+6. **Pembayaran** — Time tracking → invoice otomatis → dana dirilis dari escrow → rekonsiliasi & pajak.
+7. **Analitik** — AI menghitung kekuatan kasus, mencari yurisprudensi, dan memberi rekomendasi strategi.
+8. **Audit** — Setiap unduh/ubah/hapus berkas tercatat permanen.
 
 ---
 
@@ -125,9 +200,9 @@ Registrasi/Login (OAuth2/JWT)
 ### Prasyarat
 
 - Node.js versi 18.x atau lebih baru
-- PostgreSQL versi 14.x atau lebih baru
+- PostgreSQL versi 14.x atau lebih baru (dengan ekstensi `pgvector`)
+- Redis (session, cache, queue)
 - Docker & Docker Compose (opsional)
-- Redis (untuk session/caching)
 
 ### Langkah-Langkah
 
@@ -190,9 +265,30 @@ STORAGE_SECRET_KEY=
 # Encryption
 ENCRYPTION_KEY=changeme-aes256-key
 
-# Payment Gateway
+# Trusted Timestamp & Integrity
+TSA_URL=
+INTEGRITY_HASH_ALGO=sha256
+
+# AI / LLM
+AI_PROVIDER=
+AI_API_KEY=
+AI_EMBEDDING_MODEL=
+AI_VECTOR_DIM=1536
+
+# E-Signature & E-Meterai
+ESIGN_PROVIDER=
+ESIGN_API_KEY=
+EMETERAI_API_KEY=
+
+# Payment Gateway & Escrow
 PAYMENT_PROVIDER=
 PAYMENT_SERVER_KEY=
+ESCROW_ACCOUNT_ID=
+
+# Notification
+SMTP_URL=
+WHATSAPP_API_KEY=
+PUSH_PROVIDER_KEY=
 
 # Video Conference
 VIDEO_PROVIDER=
@@ -210,41 +306,57 @@ Struktur berikut adalah usulan (belum diimplementasikan):
 ```
 e-lawyer/
 ├── apps/
-│   ├── web/            # Next.js (portal web advokat & klien)
+│   ├── web/            # Next.js (portal advokat, pengadilan, klien)
 │   ├── mobile/         # React Native (klien/advokat)
 │   └── api/            # Backend API (NestJS / FastAPI)
+├── services/
+│   ├── ai/             # RAG, prediksi, embedding, citation engine
+│   ├── scheduler/      # Reminder sidang, SLA, eskalasi (queue worker)
+│   └── integrity/      # Hashing, TSA, audit log service
 ├── packages/
 │   ├── ui/             # Komponen UI bersama
 │   ├── config/         # Konfigurasi bersama (eslint, tsconfig)
 │   └── types/          # Tipe/schema bersama
+├── data/
+│   ├── regulations/    # Sumber peraturan (UU, Perma, SEMA)
+│   └── templates/      # Template dokumen, surat kuasa, putusan
 ├── prisma/             # Schema & migrasi database
 ├── docker-compose.yml
 ├── .env.example
+├── TODO.md             # Rincian task per fitur
 └── README.md
 ```
 
 ---
 
-## Keamanan & Privasi Data
+## Keamanan & Kepatuhan
 
-Sistem dirancang untuk memenuhi standar kerahasiaan hubungan Advokat–Klien:
+Sistem dirancang untuk memenuhi standar kerahasiaan hubungan Advokat–Klien dan integritas proses hukum:
 
-- **Hak Akses Berjenjang (RBAC):** Hak akses dikelompokkan berdasarkan peran (Admin, Managing Partner, Senior/Junior Associate, Paralegal, Klien).
-- **Enkripsi Dokumen:** Seluruh berkas perkara dienkripsi (AES-256) sebelum disimpan ke server storage.
+- **Hak Akses Berjenjang (RBAC):** Akses dikelompokkan berdasarkan peran advokat, pengadilan, dan klien.
+- **Enkripsi Dokumen:** Seluruh berkas dienkripsi (AES-256) sebelum disimpan.
 - **Enkripsi Transmisi:** Seluruh komunikasi menggunakan TLS 1.3.
-- **Audit Logs:** Pencatatan permanen untuk aktivitas unduh, ubah, dan hapus berkas.
+- **Integritas Berkas:** Hash SHA-256 + *trusted timestamp* untuk mendeteksi manipulasi.
+- **Audit Logs:** Pencatatan permanen (*append-only*) untuk aktivitas unduh, ubah, dan hapus berkas.
+- **Privasi AI:** Data perkara yang dikirim ke layanan AI harus dianonimisasi sesuai kebijakan privasi.
 
 ---
 
 ## Roadmap
 
 - [ ] **F0 — Fondasi & Setup:** monorepo, Docker, auth, RBAC, audit log, CI/CD
-- [ ] **F1 — Manajemen Perkara & Klien:** CRUD klien/perkara, jadwal, reminder
+- [ ] **F1 — Manajemen Perkara & Klien:** CRUD klien/perkara multi-peradilan, para pihak, riwayat interaksi
 - [ ] **F2 — Konsultasi Legal Digital:** portal konsultasi, chat E2EE, video call, upload berkas
-- [ ] **F3 — Otomatisasi Dokumen:** template, generator, version control, e-signature
-- [ ] **F4 — Time Tracking & Invoicing:** timer, tarif, invoice, payment gateway
-- [ ] **F5 — Keamanan & Audit Trail:** enkripsi, hardening, audit viewer
-- [ ] **F6 — Mobile App:** React Native untuk klien & advokat
+- [ ] **F3 — Basis Peraturan & Sitasi Pasal:** ingest peraturan, katalog per-pasal, validasi sitasi
+- [ ] **F4 — Integritas & Anti-Manipulasi:** hashing, TSA, immutable dokumen, deteksi anomali
+- [ ] **F5 — Otomatisasi Dokumen & Putusan:** generator surat kuasa/gugatan, penyusun putusan, e-signature & e-meterai
+- [ ] **F6 — Jadwal Sidang & Anti-Molor:** kalender, limit penundaan, reminder, eskalasi, SLA
+- [ ] **F7 — Waktu, Billing & Pembayaran:** time tracking, escrow, invoice, pajak, payment gateway
+- [ ] **F8 — AI Legal Analytics:** case scoring, yurisprudensi search, prediksi, asisten RAG
+- [ ] **F9 — Keamanan & Kepatuhan:** hardening, privacy, audit viewer, uji penetrasi
+- [ ] **F10 — Mobile App:** React Native untuk klien & advokat
+
+> Rincian task per fitur tersedia di [`TODO.md`](./TODO.md).
 
 ---
 

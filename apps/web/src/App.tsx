@@ -1,29 +1,78 @@
-import { Link, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { ReactNode } from 'react';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import Layout from './components/Layout';
+import CaseDetail from './pages/CaseDetail';
+import Cases from './pages/Cases';
+import ClientDetail from './pages/ClientDetail';
+import Clients from './pages/Clients';
 import Home from './pages/Home';
 import Login from './pages/Login';
 
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { user, ready } = useAuth();
+  if (!ready) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
-    <div>
-      <nav
-        style={{
-          display: 'flex',
-          gap: '1.5rem',
-          padding: '1rem 1.5rem',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--surface)',
-        }}
-      >
-        <Link to="/" style={{ fontWeight: 700 }}>
-          e-Lawyer
-        </Link>
-        <Link to="/login">Masuk</Link>
-      </nav>
-
+    <AuthProvider>
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Home />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/klien"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Clients />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/klien/:id"
+          element={
+            <RequireAuth>
+              <Layout>
+                <ClientDetail />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/perkara"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Cases />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/perkara/:id"
+          element={
+            <RequireAuth>
+              <Layout>
+                <CaseDetail />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </AuthProvider>
   );
 }

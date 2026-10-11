@@ -25,15 +25,15 @@ Mapping ke kebutuhan utama:
 - [ ] Setup observability (logging, error tracking, metrics)
 
 ## F1 — Manajemen Perkara & Klien
-- [ ] Data model: `Client`, `Party` (penggugat/tergugat/tersangka), `Case`, `CaseParty`, `Interaction`
-- [ ] Registry lingkungan peradilan (perdata/pidana/TUN/agama/militer/arbitrase)
-- [ ] CRUD klien + repositori data klien (KTP, NPWP, kontak)
-- [ ] CRUD perkara: nomor perkara, jenis, status workflow (baru → berjalan → putus → berkas)
-- [ ] Manajemen para pihak & relasi antar pihak
-- [ ] Riwayat interaksi & catatan perkara
-- [ ] Presence tim advokat (assign/transfer perkara)
-- [ ] UI: dashboard perkara, detail klien, timeline perkara
-- [ ] Audit log untuk perubahan perkara
+- [x] Data model: `Client`, `Party` (penggugat/tergugat/tersangka), `Case`, `CaseParty`, `Interaction`
+- [x] Registry lingkungan peradilan (perdata/pidana/TUN/agama/militer/arbitrase) via `Jurisdiction` enum + `GET /api/meta`
+- [x] CRUD klien + repositori data klien (KTP, NPWP, kontak) + dedup NIK/email
+- [x] CRUD perkara: nomor perkara, jenis, status workflow (baru → berjalan → putus → selesai → arsip) + validasi transisi
+- [x] Manajemen para pihak & relasi antar pihak
+- [x] Riwayat interaksi & catatan perkara (timeline)
+- [x] Presence tim advokat (assign/transfer perkara)
+- [x] UI: dashboard perkara, detail klien, timeline perkara (React SPA)
+- [x] Audit log untuk perubahan perkara (AuditLogInterceptor global)
 
 ## F2 — Konsultasi Legal Digital
 - [ ] Data model: `Consultation`, `Message`, `Attachment`, `VideoSession`

@@ -12,6 +12,7 @@ export interface RefreshPayload {
   sub: string;
   jti: string;
   type: 'refresh';
+  sessionExpiresAt: number;
 }
 
 export interface AuthenticatedUser {

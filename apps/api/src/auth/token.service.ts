@@ -35,13 +35,17 @@ export class TokenService {
     return this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
   }
 
+  private get sessionMaxAgeMs(): number {
+    return this.ttlToMs(this.config.get<string>('JWT_SESSION_MAX_AGE', '30d'));
+  }
+
   private hash(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
 
   private ttlToMs(ttl: string): number {
     const match = /^(\d+)([smhd])$/.exec(ttl);
-    if (!match) return 7 * 24 * 60 * 60 * 1000;
+    if (!match) throw new Error(`Durasi token tidak valid: ${ttl}`);
     const value = Number(match[1]);
     const unit = match[2];
     const factor = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[unit] ?? 1000;
@@ -51,24 +55,37 @@ export class TokenService {
   async issueTokens(
     payload: Omit<JwtPayload, 'type'>,
     meta?: { userAgent?: string; ip?: string },
+    sessionExpiresAt = Math.floor((Date.now() + this.sessionMaxAgeMs) / 1000),
   ): Promise<IssuedTokens> {
     const accessToken = await this.jwt.signAsync(
       { ...payload, type: 'access' } satisfies JwtPayload,
       { secret: this.accessSecret, expiresIn: this.accessExpiresIn },
     );
 
+    const now = Date.now();
+    const nowInSeconds = Math.floor(now / 1000);
+    if (sessionExpiresAt <= nowInSeconds) {
+      throw new UnauthorizedException('Sesi sudah kedaluwarsa, silakan masuk kembali');
+    }
+
     const jti = randomUUID();
-    const refreshPayload: RefreshPayload = { sub: payload.sub, jti, type: 'refresh' };
+    const refreshPayload: RefreshPayload = {
+      sub: payload.sub,
+      jti,
+      type: 'refresh',
+      sessionExpiresAt,
+    };
+    const refreshTtlMs = this.ttlToMs(this.refreshExpiresIn);
     const refreshToken = await this.jwt.signAsync(refreshPayload, {
       secret: this.refreshSecret,
-      expiresIn: this.refreshExpiresIn,
+      expiresIn: Math.min(Math.floor(refreshTtlMs / 1000), sessionExpiresAt - nowInSeconds),
     });
 
     await this.prisma.refreshToken.create({
       data: {
         userId: payload.sub,
         tokenHash: this.hash(refreshToken),
-        expiresAt: new Date(Date.now() + this.ttlToMs(this.refreshExpiresIn)),
+        expiresAt: new Date(Math.min(now + refreshTtlMs, sessionExpiresAt * 1000)),
         userAgent: meta?.userAgent,
         ip: meta?.ip,
       },
@@ -91,16 +108,25 @@ export class TokenService {
     if (!record || record.revokedAt || record.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token sudah tidak berlaku');
     }
-    return decoded;
+
+    const sessionExpiresAt =
+      decoded.sessionExpiresAt ??
+      Math.floor((record.createdAt.getTime() + this.sessionMaxAgeMs) / 1000);
+    if (sessionExpiresAt <= Math.floor(Date.now() / 1000)) {
+      throw new UnauthorizedException('Sesi sudah kedaluwarsa, silakan masuk kembali');
+    }
+
+    return { ...decoded, sessionExpiresAt };
   }
 
   async rotateRefreshToken(
     oldToken: string,
     payload: Omit<JwtPayload, 'type'>,
+    sessionExpiresAt: number,
     meta?: { userAgent?: string; ip?: string },
   ): Promise<IssuedTokens> {
     await this.revokeRefreshToken(oldToken);
-    return this.issueTokens(payload, meta);
+    return this.issueTokens(payload, meta, sessionExpiresAt);
   }
 
   async revokeRefreshToken(token: string): Promise<void> {

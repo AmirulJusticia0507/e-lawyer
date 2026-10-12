@@ -46,7 +46,7 @@ export function ReminderPanel({ hearingId }: { hearingId: string }) {
               </button>
             </div>
           </div>
-        )}
+        ))}
 
         {showForm && (
           <form
@@ -61,8 +61,9 @@ export function ReminderPanel({ hearingId }: { hearingId: string }) {
               <div>
                 <select
                   value={newReminder.type}
-                  onChange={(e) => setNewReminder({ ...newReminder, type: e.target.value })
-                  }
+                  onChange={(e) =>
+                  setNewReminder({ ...newReminder, type: e.target.value })
+                }
                   className="w-full border border-border rounded px-3 py-2 bg-surface text-text"
                 >
                   <option value="H-7">H-7 (7 hari sebelum)</option>
@@ -103,6 +104,7 @@ export function ReminderPanel({ hearingId }: { hearingId: string }) {
               >
                 Batal
               </button>
+            </div>
             </form>
           )}
         </div>

@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import rateLimit from 'express-rate-limit';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
@@ -9,6 +10,7 @@ import { PrismaService } from './prisma/prisma.service';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);
+  const prefix = config.get<string>('API_PREFIX', 'api').replace(/^\/+|\/+$/g, '');
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
@@ -28,16 +30,27 @@ async function bootstrap(): Promise<void> {
     next();
   });
 
-  // Rate limiting sederhana berdasarkan IP
-  const rateLimit = require('express-rate-limit');
-  const limiter = rateLimit({
+  const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 menit
-    max: 100, // batasi setiap IP maksimal 100 request per window
+    limit: 100,
     message: 'Terlalu banyak request dari IP ini, coba lagi nanti',
+    standardHeaders: true,
+    legacyHeaders: false,
   });
-  app.use('/api/', limiter);
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    skipSuccessfulRequests: true,
+    message: 'Terlalu banyak percobaan login, coba lagi dalam 15 menit',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const apiPath = prefix ? `/${prefix}/` : '/';
+  const loginPath = prefix ? `/${prefix}/auth/login` : '/auth/login';
+  app.use(apiPath, apiLimiter);
+  app.use(loginPath, loginLimiter);
 
-  app.setGlobalPrefix(prefix);
+  if (prefix) app.setGlobalPrefix(prefix);
 
   app.useGlobalPipes(
     new ValidationPipe({

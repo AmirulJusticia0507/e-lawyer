@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { HearingStatus, PostponementStatus, Prisma } from '@prisma/client';
+import { HearingStatus, PostponementStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const MAX_POSTPONEMENTS_PER_HEARING = 2;

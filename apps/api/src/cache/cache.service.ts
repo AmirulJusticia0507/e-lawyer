@@ -15,9 +15,10 @@ export class CacheService {
   async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.cache.get<T>(key);
-      return value;
+      return value ?? null;
     } catch (error) {
-      this.logger.warn(`Cache get error for key ${key}: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Cache get error for key ${key}: ${message}`);
       return null;
     }
   }
@@ -30,7 +31,8 @@ export class CacheService {
         await this.cache.set(key, value);
       }
     } catch (error) {
-      this.logger.error(`Cache set error for key ${key}: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Cache set error for key ${key}: ${message}`);
     }
   }
 
@@ -38,7 +40,8 @@ export class CacheService {
     try {
       await this.cache.del(key);
     } catch (error) {
-      this.logger.error(`Cache del error for key ${key}: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Cache del error for key ${key}: ${message}`);
     }
   }
 

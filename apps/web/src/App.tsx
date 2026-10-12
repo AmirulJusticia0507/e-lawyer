@@ -12,9 +12,11 @@ const ConsultationDetail = lazy(() => import('./pages/ConsultationDetail'));
 const Consultations = lazy(() => import('./pages/Consultations'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Hearings = lazy(() => import('./pages/Hearings'));
+const Hearings = lazy(() => import('./pages/Hearings'));
 const Home = lazy(() => import('./pages/Home'));
 const Integritas = lazy(() => import('./pages/Integritas'));
 const Login = lazy(() => import('./pages/Login'));
+const BillingDashboard = lazy(() => import('./pages/BillingDashboard'));
 const RegulationDetail = lazy(() => import('./pages/RegulationDetail'));
 const Regulations = lazy(() => import('./pages/Regulations'));
 
@@ -123,11 +125,11 @@ export default function App() {
             }
           />
           <Route
-            path="/integritas"
+            path="/sidang"
             element={
-              <RequireAuth permission="READ:INTEGRITY">
+              <RequireAuth permission="READ:HEARING">
                 <Layout>
-                  <Integritas />
+                  <Hearings />
                 </Layout>
               </RequireAuth>
             }

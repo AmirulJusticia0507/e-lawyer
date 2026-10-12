@@ -16,7 +16,6 @@ import {
   AdvanceStageDto,
   CreatePostponementDto,
   ProcessPostponementDto,
-  QuerySlaDto,
 } from './dto/sla.dto';
 import { HearingsService } from './hearings.service';
 import { PostponementService } from './postponement.service';

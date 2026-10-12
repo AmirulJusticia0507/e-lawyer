@@ -48,7 +48,6 @@ import type {
   RegulationListItem,
   RegulationType,
   Reminder,
-  ReminderType,
   SearchKind,
   SearchResult,
   SlaStatistics,

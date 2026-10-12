@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Matches, Max, Min, validateSync } from 'class-validator';
 import { resolveSecretFiles } from './secret-files';
 
 enum Environment {
@@ -68,6 +68,10 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   JWT_REFRESH_EXPIRES_IN = '7d';
+
+  @Matches(/^\d+[smhd]$/)
+  @IsOptional()
+  JWT_SESSION_MAX_AGE = '30d';
 
   @IsInt()
   @Min(4)

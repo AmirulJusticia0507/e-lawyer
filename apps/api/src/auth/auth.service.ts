@@ -70,6 +70,7 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
+    await this.tokens.revokeAllForUser(user.id);
     return this.completeAuthentication(user.id, meta);
   }
 
@@ -82,6 +83,7 @@ export class AuthService {
     const tokens = await this.tokens.rotateRefreshToken(
       refreshToken,
       this.toJwtPayload(authUser),
+      decoded.sessionExpiresAt,
       meta,
     );
     return { ...tokens, user: authUser };

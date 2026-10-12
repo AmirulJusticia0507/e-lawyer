@@ -28,6 +28,17 @@ describe('validateEnv', () => {
     expect(result.DATABASE_URL_UNPOOLED).toBe('postgresql://localhost/elawyer');
   });
 
+  it('memakai batas sesi maksimum 30 hari secara default', () => {
+    const result = validateEnv({ ...base });
+    expect(result.JWT_SESSION_MAX_AGE).toBe('30d');
+  });
+
+  it('menolak format batas sesi maksimum yang tidak valid', () => {
+    expect(() => validateEnv({ ...base, JWT_SESSION_MAX_AGE: '30days' })).toThrow(
+      /Konfigurasi environment tidak valid/,
+    );
+  });
+
   it('memakai endpoint AI yang disediakan dan menerima model dari environment', () => {
     const result = validateEnv({ ...base, AI_MODEL: 'router/model-slug' });
     expect(result.AI_BASE_URL).toBe('https://griphubrouter.web.id/v1');

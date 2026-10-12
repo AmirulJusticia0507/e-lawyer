@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { HearingStage, Prisma, SlaStatus } from '@prisma/client';
+import { HearingStage, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const STAGE_SEQUENCE: HearingStage[] = [

@@ -1,10 +1,5 @@
 import { createHash } from 'crypto';
-import {
-  AnomalyType,
-  IntegrityCheckResult,
-  PartySide,
-  ReceiptStatus,
-} from '@prisma/client';
+import { AnomalyType, IntegrityCheckResult, PartySide, ReceiptStatus } from '@prisma/client';
 
 export const UPLOAD_BURST_WINDOW_MS = 10 * 60 * 1000;
 export const UPLOAD_BURST_THRESHOLD = 5;
@@ -76,10 +71,7 @@ export function anchorHash(prevAnchor: string | null, contentHash: string, at: D
 
 export type ReceiptEvent = 'confirm' | 'dispute' | 'expire';
 
-export function transitionReceipt(
-  current: ReceiptStatus,
-  event: ReceiptEvent,
-): ReceiptStatus {
+export function transitionReceipt(current: ReceiptStatus, event: ReceiptEvent): ReceiptStatus {
   if (current !== ReceiptStatus.SENT) {
     throw new Error(`Status resi ${current} tidak dapat diproses via event ${event}`);
   }

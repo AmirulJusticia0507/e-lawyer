@@ -13,7 +13,13 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEFAULT_DOCUMENT_TEMPLATES, hashDocumentContent, renderDocumentTemplate } from './document-content';
+import { ConfigService } from '@nestjs/config';
+import { decryptText, encryptText } from '../security/encryption';
+import {
+  DEFAULT_DOCUMENT_TEMPLATES,
+  hashDocumentContent,
+  renderDocumentTemplate,
+} from './document-content';
 import {
   CreateDocumentDto,
   CreatePowerOfAttorneyDto,
@@ -26,7 +32,18 @@ import {
 
 @Injectable()
 export class DocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
+
+  private encrypt(content: string): string {
+    return encryptText(content, this.config.getOrThrow<string>('ENCRYPTION_KEY'));
+  }
+
+  private decrypt(content: string): string {
+    return decryptText(content, this.config.getOrThrow<string>('ENCRYPTION_KEY'));
+  }
 
   async list(query: QueryDocumentsDto) {
     const where: Prisma.DocumentWhereInput = {
@@ -50,8 +67,13 @@ export class DocumentsService {
       this.prisma.document.count({ where }),
     ]);
     return {
-      items,
-      meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+      items: items.map((item) => ({ ...item, content: this.decrypt(item.content) })),
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+      },
     };
   }
 
@@ -86,7 +108,14 @@ export class DocumentsService {
       },
     });
     if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
-    return document;
+    return {
+      ...document,
+      content: this.decrypt(document.content),
+      versions: document.versions.map((version) => ({
+        ...version,
+        content: this.decrypt(version.content),
+      })),
+    };
   }
 
   async listTemplates(documentType?: DocumentType) {
@@ -111,13 +140,16 @@ export class DocumentsService {
   async createTemplateVersion(id: string, dto: CreateTemplateDto, actorId: string) {
     const template = await this.prisma.template.findUnique({ where: { id } });
     if (!template) throw new NotFoundException('Template tidak ditemukan');
-    if (!template.isActive) throw new ConflictException('Template arsip tidak dapat dibuat versinya');
+    if (!template.isActive)
+      throw new ConflictException('Template arsip tidak dapat dibuat versinya');
     if (
       dto.name !== template.name ||
       dto.documentType !== template.documentType ||
       dto.jurisdiction !== template.jurisdiction
     ) {
-      throw new BadRequestException('Versi baru harus mempertahankan nama, jenis dokumen, dan lingkungan peradilan');
+      throw new BadRequestException(
+        'Versi baru harus mempertahankan nama, jenis dokumen, dan lingkungan peradilan',
+      );
     }
     const latestVersion = await this.prisma.template.aggregate({
       where: {
@@ -183,9 +215,13 @@ export class DocumentsService {
       }
       this.validatePowerOfAttorney(dto.powerOfAttorney);
       if (dto.powerOfAttorney.clientId) {
-        const party = caseRecord.parties.find((item) => item.clientId === dto.powerOfAttorney?.clientId);
+        const party = caseRecord.parties.find(
+          (item) => item.clientId === dto.powerOfAttorney?.clientId,
+        );
         if (!party) {
-          throw new BadRequestException('Klien pemberi kuasa harus terdaftar sebagai pihak dalam perkara');
+          throw new BadRequestException(
+            'Klien pemberi kuasa harus terdaftar sebagai pihak dalam perkara',
+          );
         }
       }
       templateValues.NAMA_PEMBERI = dto.powerOfAttorney.principalName;
@@ -220,11 +256,17 @@ export class DocumentsService {
           createdById: actorId,
           type: dto.type,
           title: dto.title,
-          content,
+          content: this.encrypt(content),
           sha256: hash,
           data: dto.data as Prisma.InputJsonValue | undefined,
           versions: {
-            create: { version: 1, content, data: dto.data as Prisma.InputJsonValue | undefined, createdById: actorId, changeSummary: 'Versi awal' },
+            create: {
+              version: 1,
+              content: this.encrypt(content),
+              data: dto.data as Prisma.InputJsonValue | undefined,
+              createdById: actorId,
+              changeSummary: 'Versi awal',
+            },
           },
           ...(dto.powerOfAttorney
             ? {
@@ -239,8 +281,12 @@ export class DocumentsService {
                     attorneyLicenseNo: dto.powerOfAttorney.attorneyLicenseNo,
                     attorneyNpwp: dto.powerOfAttorney.attorneyNpwp,
                     authority: dto.powerOfAttorney.authority as Prisma.InputJsonValue | undefined,
-                    validFrom: dto.powerOfAttorney.validFrom ? new Date(dto.powerOfAttorney.validFrom) : undefined,
-                    validUntil: dto.powerOfAttorney.validUntil ? new Date(dto.powerOfAttorney.validUntil) : undefined,
+                    validFrom: dto.powerOfAttorney.validFrom
+                      ? new Date(dto.powerOfAttorney.validFrom)
+                      : undefined,
+                    validUntil: dto.powerOfAttorney.validUntil
+                      ? new Date(dto.powerOfAttorney.validUntil)
+                      : undefined,
                     attorneyUserId: actorId,
                   },
                 },
@@ -252,7 +298,8 @@ export class DocumentsService {
                   create: {
                     verdict: dto.judgment.verdict,
                     header: dto.judgment.header as Prisma.InputJsonValue | undefined,
-                    partyIdentities: dto.judgment.partyIdentities as Prisma.InputJsonValue | undefined,
+                    partyIdentities: dto.judgment.partyIdentities as
+                      Prisma.InputJsonValue | undefined,
                     caseSummary: dto.judgment.caseSummary,
                     considerations: dto.judgment.considerations,
                     disposition: dto.judgment.disposition,
@@ -264,7 +311,11 @@ export class DocumentsService {
         },
         include: { versions: true, powerOfAttorney: true, judgment: true },
       });
-      return document;
+      return {
+        ...document,
+        content,
+        versions: document.versions.map((version) => ({ ...version, content })),
+      };
     });
   }
 
@@ -272,9 +323,11 @@ export class DocumentsService {
     const existing = await this.prisma.document.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Dokumen tidak ditemukan');
     if (existing.status !== DocumentStatus.DRAFT) {
-      throw new ConflictException('Dokumen terkirim tidak dapat diubah; buat addendum atau versi baru');
+      throw new ConflictException(
+        'Dokumen terkirim tidak dapat diubah; buat addendum atau versi baru',
+      );
     }
-    const content = dto.content ?? existing.content;
+    const content = dto.content ?? this.decrypt(existing.content);
     return this.prisma.$transaction(async (tx) => {
       const version = await tx.documentVersion.aggregate({
         where: { documentId: id },
@@ -284,13 +337,13 @@ export class DocumentsService {
         where: { id },
         data: {
           title: dto.title,
-          content,
+          content: this.encrypt(content),
           sha256: hashDocumentContent(content),
           data: dto.data as Prisma.InputJsonValue | undefined,
           versions: {
             create: {
               version: (version._max.version ?? 0) + 1,
-              content,
+              content: this.encrypt(content),
               data: dto.data as Prisma.InputJsonValue | undefined,
               createdById: actorId,
               changeSummary: dto.changeSummary ?? 'Perubahan draf',
@@ -298,7 +351,7 @@ export class DocumentsService {
           },
         },
       });
-      return document;
+      return { ...document, content };
     });
   }
 
@@ -317,21 +370,24 @@ export class DocumentsService {
     if (existing.type === DocumentType.JUDGMENT && existing.judgment) {
       await this.validateJudgmentCitations(existing.caseId, existing.judgment.considerations);
     }
-    return this.prisma.document.update({
+    const document = await this.prisma.document.update({
       where: { id },
       data: {
         status: DocumentStatus.SUBMITTED,
         submittedAt: new Date(),
-        sha256: hashDocumentContent(existing.content),
+        sha256: existing.sha256 ?? hashDocumentContent(this.decrypt(existing.content)),
       },
     });
+    return { ...document, content: this.decrypt(document.content) };
   }
 
   async createSignature(id: string, dto: CreateSignatureDto) {
     const document = await this.prisma.document.findUnique({ where: { id } });
     if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
     if (document.status !== DocumentStatus.SUBMITTED) {
-      throw new ConflictException('Tanda tangan hanya dapat diminta untuk dokumen yang sudah dikirim');
+      throw new ConflictException(
+        'Tanda tangan hanya dapat diminta untuk dokumen yang sudah dikirim',
+      );
     }
     return this.prisma.signature.create({
       data: {
@@ -377,8 +433,10 @@ export class DocumentsService {
   async createJudgment(documentId: string, dto: JudgmentInputDto) {
     const document = await this.prisma.document.findUnique({ where: { id: documentId } });
     if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
-    if (document.type !== DocumentType.JUDGMENT) throw new BadRequestException('Dokumen bukan Putusan');
-    if (document.status !== DocumentStatus.DRAFT) throw new ConflictException('Putusan terkirim tidak dapat diubah');
+    if (document.type !== DocumentType.JUDGMENT)
+      throw new BadRequestException('Dokumen bukan Putusan');
+    if (document.status !== DocumentStatus.DRAFT)
+      throw new ConflictException('Putusan terkirim tidak dapat diubah');
     await this.validateJudgmentCitations(document.caseId, dto.considerations);
     return this.prisma.judgment.upsert({
       where: { documentId },
@@ -435,5 +493,4 @@ export class DocumentsService {
       throw new BadRequestException('Pertimbangan hukum wajib diisi');
     }
   }
-
 }

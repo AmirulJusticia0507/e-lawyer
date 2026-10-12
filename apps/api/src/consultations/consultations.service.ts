@@ -5,12 +5,14 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { ConfigService } from '@nestjs/config';
 import { basename, join, resolve } from 'path';
 import { ConsultationStatus, Prisma, VideoSessionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
 import { IntegrityService } from '../integrity/integrity.service';
+import { decryptBuffer, encryptBuffer } from '../security/encryption';
 import { assertTransition } from './consultation-status';
 import { ConsultationsGateway } from './consultations.gateway';
 import {
@@ -53,6 +55,7 @@ export class ConsultationsService {
     private readonly prisma: PrismaService,
     private readonly gateway: ConsultationsGateway,
     private readonly integrity: IntegrityService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(dto: CreateConsultationDto, actorId: string) {
@@ -148,7 +151,8 @@ export class ConsultationsService {
       throw new NotFoundException('Konsultasi tidak ditemukan');
     }
     assertTransition(existing.status, dto.status);
-    const isClosing = dto.status === ConsultationStatus.COMPLETED || dto.status === ConsultationStatus.CANCELLED;
+    const isClosing =
+      dto.status === ConsultationStatus.COMPLETED || dto.status === ConsultationStatus.CANCELLED;
     const updated = await this.prisma.consultation.update({
       where: { id },
       data: {
@@ -179,7 +183,10 @@ export class ConsultationsService {
         assignedToUserId: dto.toUserId,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         durationMinutes: dto.durationMinutes,
-        status: existing.status === ConsultationStatus.REQUESTED ? ConsultationStatus.SCHEDULED : undefined,
+        status:
+          existing.status === ConsultationStatus.REQUESTED
+            ? ConsultationStatus.SCHEDULED
+            : undefined,
       },
       include: CONSULTATION_INCLUDE,
     });
@@ -269,9 +276,14 @@ export class ConsultationsService {
     const hash = createHash('sha256').update(file.buffer).digest('hex');
     const dir = join(STORAGE_ROOT, 'attachments', id);
     mkdirSync(dir, { recursive: true });
-    const safeName = basename(file.originalname).replace(/[^\w.\-() ]/g, '_').slice(0, 80);
+    const safeName = basename(file.originalname)
+      .replace(/[^\w.\-() ]/g, '_')
+      .slice(0, 80);
     const fileName = `${randomUUID()}-${safeName}`;
-    writeFileSync(join(dir, fileName), file.buffer);
+    writeFileSync(
+      join(dir, fileName),
+      encryptBuffer(file.buffer, this.config.getOrThrow<string>('ENCRYPTION_KEY')),
+    );
     const storageKey = join('attachments', id, fileName).split('\\').join('/');
 
     const attachment = await this.prisma.attachment.create({
@@ -315,10 +327,18 @@ export class ConsultationsService {
     const attachment = await this.findAttachment(id, attachmentId);
     const absolute = resolve(STORAGE_ROOT, attachment.storageKey);
     const root = resolve(STORAGE_ROOT);
-    if (absolute !== root && !absolute.startsWith(root + '\\') && !absolute.startsWith(root + '/')) {
+    if (
+      absolute !== root &&
+      !absolute.startsWith(root + '\\') &&
+      !absolute.startsWith(root + '/')
+    ) {
       throw new BadRequestException('Lokasi berkas tidak valid');
     }
-    return { attachment, absolute };
+    const content = decryptBuffer(
+      readFileSync(absolute),
+      this.config.getOrThrow<string>('ENCRYPTION_KEY'),
+    );
+    return { attachment, content };
   }
 
   async createVideoSession(id: string, dto: CreateVideoSessionDto) {
@@ -345,7 +365,8 @@ export class ConsultationsService {
       where: { id: sessionId },
       data: {
         status: dto.status,
-        startedAt: dto.status === VideoSessionStatus.ACTIVE && !session.startedAt ? new Date() : undefined,
+        startedAt:
+          dto.status === VideoSessionStatus.ACTIVE && !session.startedAt ? new Date() : undefined,
         endedAt: dto.status === VideoSessionStatus.ENDED ? new Date() : undefined,
       },
     });
@@ -359,7 +380,10 @@ export class ConsultationsService {
   }
 
   private async ensureExists(id: string): Promise<void> {
-    const existing = await this.prisma.consultation.findUnique({ where: { id }, select: { id: true } });
+    const existing = await this.prisma.consultation.findUnique({
+      where: { id },
+      select: { id: true },
+    });
     if (!existing) {
       throw new NotFoundException('Konsultasi tidak ditemukan');
     }

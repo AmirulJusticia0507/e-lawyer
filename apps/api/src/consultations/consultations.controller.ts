@@ -18,7 +18,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { createReadStream } from 'fs';
 import { extname } from 'path';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequirePermission } from '../common/decorators/permissions.decorator';
@@ -122,13 +121,10 @@ export class ConsultationsController {
     @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    const { attachment, absolute } = await this.consultations.prepareDownload(id, attachmentId);
+    const { attachment, content } = await this.consultations.prepareDownload(id, attachmentId);
     const fallback = extname(attachment.fileName) || '.bin';
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="download${fallback}"`,
-    );
-    return new StreamableFile(createReadStream(absolute), {
+    res.setHeader('Content-Disposition', `attachment; filename="download${fallback}"`);
+    return new StreamableFile(content, {
       type: attachment.mimeType,
       disposition: `attachment; filename="download${fallback}"`,
     });

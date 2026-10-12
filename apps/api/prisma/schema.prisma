@@ -141,6 +141,46 @@ enum CitationDocumentType {
   LAINNYA
 }
 
+enum DocumentType {
+  POWER_OF_ATTORNEY
+  COMPLAINT
+  ANSWER
+  REPLY
+  DUPLICATION
+  CONCLUSION
+  JUDGMENT
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  SUBMITTED
+  SIGNED
+  ARCHIVED
+}
+
+enum PowerOfAttorneyType {
+  GENERAL
+  SPECIFIC
+  SPECIAL
+}
+
+enum SignatureStatus {
+  PENDING
+  SIGNED
+  REVOKED
+  FAILED
+}
+
+enum JudgmentVerdict {
+  GRANTED
+  REJECTED
+  INADMISSIBLE
+  SETTLED
+  DEFAULT
+  OTHER
+}
+
 enum JurisprudenceStatus {
   ACTIVE
   OVERRULED
@@ -224,6 +264,12 @@ model User {
   addendaWritten     Addendum[]         @relation("AddendumAuthor")
   receiptsSent       DocumentReceipt[]  @relation("ReceiptSentBy")
   anomaliesResolved  AnomalyFlag[]      @relation("AnomalyResolvedBy")
+  templatesCreated   Template[]         @relation("TemplateCreatedBy")
+  documentsCreated   Document[]         @relation("DocumentCreatedBy")
+  documentVersions   DocumentVersion[]  @relation("DocumentVersionCreatedBy")
+  documentSignatures Signature[]        @relation("SignatureSignedBy")
+  powersOfAttorney   PowerOfAttorney[]  @relation("PowerOfAttorneyAttorney")
+  judgmentsSigned    Judgment[]         @relation("JudgmentSignedBy")
 
   @@index([status])
 }
@@ -332,6 +378,7 @@ model Client {
   parties       Party[]
   interactions  Interaction[]
   consultations Consultation[]
+  powersOfAttorney PowerOfAttorney[]
 
   @@index([fullName])
   @@index([createdById])
@@ -368,6 +415,7 @@ model Case {
   receipts         DocumentReceipt[]
   deadlines        CaseDeadline[]
   anomalies        AnomalyFlag[]
+  documents        Document[]
 
   @@index([filedByUserId])
   @@index([assignedToUserId])
@@ -553,7 +601,7 @@ model Regulation {
   updatedAt      DateTime          @updatedAt
 
   // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
-  searchVector Unsupported("tsvector")?    
+  searchVector Unsupported("tsvector")?
   embedding    Unsupported("vector(1536)")?
 
   articles           Article[]
@@ -581,7 +629,7 @@ model Article {
   updatedAt       DateTime          @updatedAt
 
   // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
-  searchVector Unsupported("tsvector")?    
+  searchVector Unsupported("tsvector")?
   embedding    Unsupported("vector(1536)")?
 
   regulation Regulation  @relation(fields: [regulationId], references: [id], onDelete: Cascade)
@@ -632,7 +680,7 @@ model Jurisprudence {
   updatedAt          DateTime            @updatedAt
 
   // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
-  searchVector Unsupported("tsvector")?    
+  searchVector Unsupported("tsvector")?
   embedding    Unsupported("vector(1536)")?
 
   citations Citation[]
@@ -820,4 +868,143 @@ model CaseDeadline {
   @@index([caseId])
   @@index([status])
   @@index([dueAt])
+}
+
+model Template {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  documentType DocumentType
+  jurisdiction Jurisdiction
+  version      Int          @default(1)
+  content      String       @db.Text
+  structure    Json?
+  isActive     Boolean      @default(true)
+  createdById  String?      @db.Uuid
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  createdBy User?      @relation("TemplateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  documents Document[]
+
+  @@unique([name, version, jurisdiction])
+  @@index([documentType, jurisdiction, isActive])
+  @@index([createdById])
+}
+
+model Document {
+  id          String         @id @default(uuid()) @db.Uuid
+  caseId      String         @db.Uuid
+  templateId  String?        @db.Uuid
+  createdById String?        @db.Uuid
+  type        DocumentType
+  status      DocumentStatus @default(DRAFT)
+  title       String
+  content     String         @db.Text
+  data        Json?
+  storageKey  String?        @unique
+  sha256      String?
+  submittedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  case            Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  template        Template?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  createdBy       User?             @relation("DocumentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  versions        DocumentVersion[]
+  signatures      Signature[]
+  powerOfAttorney PowerOfAttorney?
+  judgment        Judgment?
+
+  @@index([caseId, type, status])
+  @@index([templateId])
+  @@index([createdById])
+  @@index([sha256])
+}
+
+model DocumentVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  documentId    String   @db.Uuid
+  version       Int
+  content       String   @db.Text
+  data          Json?
+  changeSummary String?
+  createdById   String?  @db.Uuid
+  createdAt     DateTime @default(now())
+
+  document  Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation("DocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, version])
+  @@index([createdById])
+}
+
+model Signature {
+  id            String          @id @default(uuid()) @db.Uuid
+  documentId    String          @db.Uuid
+  signerId      String?         @db.Uuid
+  signerName    String
+  signerRole    String
+  status        SignatureStatus @default(PENDING)
+  method        String?
+  signatureHash String?
+  certificateId String?
+  metadata      Json?
+  signedAt      DateTime?
+  createdAt     DateTime        @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signer   User?    @relation("SignatureSignedBy", fields: [signerId], references: [id], onDelete: SetNull)
+
+  @@index([documentId, status])
+  @@index([signerId])
+}
+
+model PowerOfAttorney {
+  id                String              @id @default(uuid()) @db.Uuid
+  documentId        String              @unique @db.Uuid
+  clientId          String?             @db.Uuid
+  attorneyUserId    String?             @db.Uuid
+  type              PowerOfAttorneyType
+  principalName     String
+  principalNik      String?
+  principalNpwp     String?
+  attorneyName      String
+  attorneyLicenseNo String?
+  attorneyNpwp      String?
+  authority         Json?
+  validFrom         DateTime?
+  validUntil        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  client       Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  attorneyUser User?    @relation("PowerOfAttorneyAttorney", fields: [attorneyUserId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([attorneyUserId])
+  @@index([type, validUntil])
+}
+
+model Judgment {
+  id              String          @id @default(uuid()) @db.Uuid
+  documentId      String          @unique @db.Uuid
+  signedByUserId  String?         @db.Uuid
+  verdict         JudgmentVerdict @default(OTHER)
+  header          Json?
+  partyIdentities Json?
+  caseSummary     String          @db.Text
+  considerations  String          @db.Text
+  disposition     String          @db.Text
+  closing         String          @db.Text
+  publishedAt     DateTime?
+  anonymizedAt    DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signedBy User?    @relation("JudgmentSignedBy", fields: [signedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([signedByUserId])
+  @@index([publishedAt])
 }

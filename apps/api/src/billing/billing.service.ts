@@ -16,7 +16,7 @@ export class BillingService {
   }
 
   stopTimer(id: string, userId: string) {
-    return this.prisma.timeEntry.update({ where: { id }, data: { status: 'STOPPED' as any } });
+    return this.prisma.timeEntry.update({ where: { id, userId }, data: { status: 'STOPPED' as any } });
   }
 
   createManualTimeEntry(caseId: string, userId: string, startedAt: string, endedAt: string, description: string, billable: boolean, hourlyRate: number) {
@@ -62,8 +62,8 @@ export class BillingService {
     });
   }
 
-reconcilePayments(invoiceId: string) async 
-    const invoice = this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+  async reconcilePayments(invoiceId: string) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice tidak ditemukan');
 
     const payments = await this.prisma.payment.findMany({
@@ -74,23 +74,23 @@ reconcilePayments(invoiceId: string) async
       (sum: number, p: any) => sum + Number(p.amount),
       0,
     );
-    const totalAmount = Number(invoice?.totalAmount ?? 0);
+    const totalAmount = Number(invoice.total);
 
     const isPaid = totalPaid >= totalAmount;
 
     const newStatus = isPaid ? 'PAID' : 'PARTIALLY_PAID';
-    this.prisma.invoice.update({
+    await this.prisma.invoice.update({
       where: { id: invoiceId },
       data: { status: newStatus },
     });
 
     return {
       invoiceId,
-      totalAmount: totalAmount ?? 0,
-      totalPaid: totalPaid ?? 0,
+      totalAmount,
+      totalPaid,
       isPaid,
       status: newStatus,
-    } as any;
+    };
   }
 
   // Invoice Generator

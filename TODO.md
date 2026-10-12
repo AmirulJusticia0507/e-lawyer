@@ -88,16 +88,16 @@ Mapping ke kebutuhan utama:
 - [~] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (provider tanda tangan eksternal belum terhubung)
 
 ## F6 — Jadwal Sidang & Anti-Molor  `(#7)`
-- [ ] Data model: `Hearing`, `Courtroom`, `JudgeSchedule`, `Postponement`, `Reminder`
-- [ ] Kalender sidang terpusat (sinkron jadwal hakim + ruang sidang)
-- [ ] Deteksi bentrok jadwal (hakim, ruang, para pihak) otomatis
+- [~] Data model `Hearing` dasar; `Courtroom`, `JudgeSchedule`, `Postponement`, `Reminder` belum ada
+- [~] Agenda sidang tujuh hari dan pencatatan jadwal per perkara tersedia; sinkronisasi kalender terpusat belum ada
+- [~] Deteksi bentrok waktu untuk nama hakim, ruang, dan pihak yang sama pada jadwal baru
 - [ ] **Limit penundaan** sidang: hitung & batasi sesuai aturan pembatasan penundaan
 - [ ] Alur permohonan penundaan + persetujuan hakim + jejak alasan
 - [ ] Reminder otomatis H-7 / H-3 / H-1 (email, WhatsApp, push)
 - [ ] SLA timer per tahapan persidangan + alert saat mendekati/melewati batas
 - [ ] Escalation ke pengawas jika sidang molor tanpa alasan sah
 - [ ] Dashboard statistik keterlambatan per hakim/perkara
-- [ ] UI: kalender interaktif, drag-and-drop penjadwalan (dengan validasi)
+- [~] UI: agenda dan form jadwal dasar; kalender interaktif/drag-and-drop belum ada
 
 ## F7 — Waktu, Billing & Pembayaran  `(#6)`
 - [ ] Data model: `TimeEntry`, `FeeScheme`, `Invoice`, `InvoiceItem`, `Payment`, `Escrow`, `TaxRecord`

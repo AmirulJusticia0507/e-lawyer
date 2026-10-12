@@ -236,6 +236,39 @@ textarea {
   margin-bottom: 1rem;
 }
 
+.hearing-create {
+  margin-bottom: 1rem;
+}
+
+.hearing-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hearing-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(200px, 1.5fr) minmax(140px, 0.8fr);
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+}
+
+.hearing-item > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hearing-item > p {
+  grid-column: 2 / -1;
+  margin: 0;
+}
+
+.hearing-time {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .document-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -422,8 +455,13 @@ textarea {
 @media (max-width: 800px) {
   .document-workspace,
   .document-form,
+  .hearing-item,
   .version-comparison {
     grid-template-columns: 1fr;
+  }
+
+  .hearing-item > p {
+    grid-column: auto;
   }
 
   .document-fields {

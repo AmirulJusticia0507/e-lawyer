@@ -88,6 +88,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
   [RoleName.ADMIN]: [
     key(Action.MANAGE, Subject.USER),
     key(Action.MANAGE, Subject.ROLE),
+    ...allOf(Subject.HEARING).map((p) => key(p.action, p.subject)),
     key(Action.READ, Subject.AUDIT_LOG),
     key(Action.READ, Subject.REGULATION),
     ...citationAll,

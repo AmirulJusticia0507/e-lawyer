@@ -40,6 +40,13 @@ enum CaseStatus {
   ARCHIVED
 }
 
+enum HearingStatus {
+  SCHEDULED
+  COMPLETED
+  POSTPONED
+  CANCELLED
+}
+
 enum PartySide {
   PLAINTIFF
   DEFENDANT
@@ -270,6 +277,7 @@ model User {
   documentSignatures Signature[]        @relation("SignatureSignedBy")
   powersOfAttorney   PowerOfAttorney[]  @relation("PowerOfAttorneyAttorney")
   judgmentsSigned    Judgment[]         @relation("JudgmentSignedBy")
+  hearingsCreated    Hearing[]         @relation("HearingCreatedBy")
 
   @@index([status])
 }
@@ -416,12 +424,35 @@ model Case {
   deadlines        CaseDeadline[]
   anomalies        AnomalyFlag[]
   documents        Document[]
+  hearings         Hearing[]
 
   @@index([filedByUserId])
   @@index([assignedToUserId])
   @@index([status])
   @@index([jurisdiction])
   @@index([courtName])
+}
+
+model Hearing {
+  id          String        @id @default(uuid()) @db.Uuid
+  caseId      String        @db.Uuid
+  startsAt    DateTime
+  endsAt      DateTime
+  courtroom   String
+  judgeName   String
+  status      HearingStatus @default(SCHEDULED)
+  notes       String?
+  createdById String?       @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  case      Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("HearingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([startsAt, endsAt, status])
+  @@index([courtroom, startsAt, endsAt])
+  @@index([judgeName, startsAt, endsAt])
+  @@index([caseId, startsAt])
 }
 
 model Party {

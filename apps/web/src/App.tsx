@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Regulations from './pages/Regulations';
 import RegulationDetail from './pages/RegulationDetail';
 import Documents from './pages/Documents';
+import Hearings from './pages/Hearings';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
@@ -133,6 +134,16 @@ export default function App() {
             <RequireAuth>
               <Layout>
                 <Documents />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/sidang"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Hearings />
               </Layout>
             </RequireAuth>
           }

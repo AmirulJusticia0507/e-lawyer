@@ -29,6 +29,7 @@ export type DocumentType =
 export type DocumentStatus = 'DRAFT' | 'SUBMITTED' | 'SIGNED' | 'ARCHIVED';
 export type PowerOfAttorneyType = 'GENERAL' | 'SPECIFIC' | 'SPECIAL';
 export type JudgmentVerdict = 'GRANTED' | 'REJECTED' | 'INADMISSIBLE' | 'SETTLED' | 'DEFAULT' | 'OTHER';
+export type HearingStatus = 'SCHEDULED' | 'COMPLETED' | 'POSTPONED' | 'CANCELLED';
 
 export type ConsultationMode = 'CHAT' | 'VIDEO' | 'PHONE' | 'IN_PERSON';
 export type ConsultationStatus = 'REQUESTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
@@ -125,6 +126,18 @@ export interface CaseDetail extends Omit<CaseSummary, 'parties' | '_count'> {
   parties: Party[];
   interactions: Interaction[];
   assignments: Assignment[];
+}
+
+export interface Hearing {
+  id: string;
+  caseId: string;
+  startsAt: string;
+  endsAt: string;
+  courtroom: string;
+  judgeName: string;
+  status: HearingStatus;
+  notes?: string | null;
+  case: Pick<CaseSummary, 'id' | 'caseNumber' | 'title' | 'courtName'>;
 }
 
 export interface DocumentTemplate {

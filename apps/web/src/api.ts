@@ -29,6 +29,7 @@ import type {
   LegalDocument,
   Interaction,
   InteractionType,
+  Hearing,
   IntegrityCheck,
   IntegrityCheckResult,
   IntegrityEntityType,
@@ -198,6 +199,18 @@ export const api = {
     request<Party>(`/cases/${id}/parties`, { method: 'POST', body: dto }),
   addInteraction: (id: string, dto: { type: InteractionType; title: string; description?: string; occurredAt?: string }) =>
     request<Interaction>(`/cases/${id}/interactions`, { method: 'POST', body: dto }),
+
+  // Jadwal sidang (F6)
+  listHearings: (params: { from?: string; to?: string; caseId?: string } = {}) =>
+    request<Hearing[]>(`/hearings${buildQuery(params)}`),
+  createHearing: (dto: {
+    caseId: string;
+    startsAt: string;
+    endsAt: string;
+    courtroom: string;
+    judgeName: string;
+    notes?: string;
+  }) => request<Hearing>('/hearings', { method: 'POST', body: dto }),
 
   // Dokumen, surat kuasa, putusan (F5)
   listDocuments: (params: { caseId?: string; type?: DocumentType; page?: number; limit?: number } = {}) =>

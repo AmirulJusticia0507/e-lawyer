@@ -59,15 +59,15 @@ Mapping ke kebutuhan utama:
 - [ ] Seed & kurasi minimal set peraturan tiap lingkungan peradilan
 
 ## F4 — Integritas & Anti-Manipulasi  `(#2)`
-- [ ] Data model: `IntegrityRecord`, `AuditLog` (append-only), `AnomalyFlag`
-- [ ] Hashing SHA-256 setiap berkas saat masuk + penyimpanan hash
-- [ ] *Trusted timestamp* (TSA) / anchoring untuk bukti waktu
-- [ ] Dokumen immutable setelah submit — revisi hanya via `Addendum`
-- [ ] Dual-confirmation: pihak lawan terima salinan resmi + konfirmasi terima
-- [ ] Deteksi anomali: upload mendadak, backdate, perubahan klaim, pola tunda
-- [ ] Enforcement deadline otomatis (tidak bisa diundur diam-diam)
-- [ ] Verifikasi integritas berkas (bandingkan hash) + UI indikator "utuh/terubah"
-- [ ] Notifikasi pelanggaran integritas ke pengawas
+- [x] Data model: `IntegrityRecord`, `AuditLog` (append-only), `AnomalyFlag`
+- [x] Hashing SHA-256 setiap berkas saat masuk + penyimpanan hash
+- [x] *Trusted timestamp* (TSA) / anchoring untuk bukti waktu
+- [x] Dokumen immutable setelah submit — revisi hanya via `Addendum`
+- [x] Dual-confirmation: pihak lawan terima salinan resmi + konfirmasi terima
+- [x] Deteksi anomali: upload mendadak, backdate, perubahan klaim, pola tunda
+- [x] Enforcement deadline otomatis (tidak bisa diundur diam-diam)
+- [x] Verifikasi integritas berkas (bandingkan hash) + UI indikator "utuh/terubah"
+- [x] Notifikasi pelanggaran integritas ke pengawas
 
 ## F5 — Otomatisasi Dokumen & Putusan  `(#3, #4)`
 - [ ] Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`

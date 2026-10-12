@@ -131,6 +131,13 @@ export interface MetaInfo {
   citationValidationStatuses: string[];
   citationDocumentTypes: string[];
   jurisprudenceStatuses: string[];
+  integrityEntityTypes: string[];
+  integrityCheckResults: string[];
+  receiptStatuses: string[];
+  anomalyTypes: string[];
+  anomalySeverities: string[];
+  anomalyStatuses: string[];
+  deadlineStatuses: string[];
 }
 
 export interface ConsultationAttachment {
@@ -195,4 +202,320 @@ export interface ConsultationDetail {
   updatedAt: string;
   messages: ConsultationMessage[];
   videoSessions: VideoSession[];
+}
+export type RegulationType =
+  | 'CONSTITUTION'
+  | 'LAW'
+  | 'GOVERNMENT_REGULATION'
+  | 'PRESIDENTIAL_REGULATION'
+  | 'MINISTERIAL_REGULATION'
+  | 'SUPREME_COURT_REGULATION'
+  | 'SUPREME_COURT_CIRCULAR'
+  | 'CIVIL_CODE'
+  | 'CRIMINAL_CODE'
+  | 'PROCEDURAL_LAW'
+  | 'LOCAL_REGULATION'
+  | 'OTHER';
+
+export type LegalSourceStatus = 'DRAFT' | 'ACTIVE' | 'AMENDED' | 'REPEALED' | 'UNKNOWN';
+export type AmendmentType = 'AMENDS' | 'REPEALS' | 'REPLACES' | 'SUPPLEMENTS';
+export type CitationValidationStatus = 'PENDING' | 'VALID' | 'WARNING' | 'INVALID';
+export type CitationDocumentType =
+  | 'GUGATAN'
+  | 'JAWABAN'
+  | 'REPLIK'
+  | 'DUPLIK'
+  | 'KESIMPULAN'
+  | 'PUTUSAN'
+  | 'MEMO'
+  | 'LAINNYA';
+
+export type ApplicabilityState =
+  | 'APPLICABLE'
+  | 'NOT_YET_EFFECTIVE'
+  | 'EXPIRED'
+  | 'REPEALED'
+  | 'DRAFT'
+  | 'UNKNOWN';
+
+export interface Applicability {
+  state: ApplicabilityState;
+  label: string;
+  message: string;
+  effectiveFrom: string | null;
+  effectiveUntil: string | null;
+}
+
+export interface RegulationSummary {
+  id: string;
+  slug: string;
+  title: string;
+  type: RegulationType;
+  number: string | null;
+  year: number | null;
+  status: LegalSourceStatus;
+  jurisdiction?: Jurisdiction | null;
+  effectiveFrom: string | null;
+  effectiveUntil: string | null;
+}
+
+export interface RegulationListItem extends RegulationSummary {
+  statusAt: LegalSourceStatus;
+  applicability: Applicability;
+  _count: { articles: number };
+}
+
+export interface VersionEvent {
+  date: string | null;
+  type: 'EFFECTIVE' | 'AMENDED' | 'REPEALED';
+  label: string;
+  note: string | null;
+}
+
+export interface Amendment {
+  id: string;
+  type: AmendmentType;
+  effectiveAt: string | null;
+  note: string | null;
+  articleId?: string | null;
+  amendingRegulation?: { slug: string; title: string; type: RegulationType; year: number | null };
+  amendedRegulation?: { slug: string; title: string; type: RegulationType; year: number | null };
+}
+
+export interface RegulationDetail extends RegulationSummary {
+  sourceUrl: string | null;
+  sourceName: string | null;
+  issuedAt: string | null;
+  statusAt: LegalSourceStatus;
+  applicability: Applicability;
+  amendmentsMade: Amendment[];
+  amendmentsReceived: Amendment[];
+  timeline: VersionEvent[];
+  _count: { articles: number };
+}
+
+export interface ArticleCatalogItem {
+  id: string;
+  unitKey: string;
+  articleNumber: string;
+  paragraphNumber: string | null;
+  heading: string | null;
+  content: string;
+  status: LegalSourceStatus;
+  effectiveFrom: string | null;
+  effectiveUntil: string | null;
+  applicability: Applicability;
+  regulation: RegulationSummary;
+}
+
+export interface ArticleDetail extends ArticleCatalogItem {
+  amendments: Amendment[];
+  statusAt: LegalSourceStatus;
+  regulationApplicability: Applicability;
+  timeline: VersionEvent[];
+  _count: { citations: number };
+}
+
+export interface ArticleLookup {
+  matches: {
+    id: string;
+    unitKey: string;
+    articleNumber: string;
+    paragraphNumber: string | null;
+    status: LegalSourceStatus;
+    effectiveFrom: string | null;
+    effectiveUntil: string | null;
+    applicability: Applicability;
+  }[];
+  selected: ArticleDetail;
+}
+
+export interface Citation {
+  id: string;
+  articleId: string;
+  caseId: string | null;
+  quote: string | null;
+  context: string | null;
+  documentType: CitationDocumentType | null;
+  documentTitle: string | null;
+  validationStatus: CitationValidationStatus;
+  validationMessage: string | null;
+  validatedAt: string | null;
+  createdAt: string;
+  article: ArticleCatalogItem;
+  applicability: Applicability;
+}
+
+export interface CitationList {
+  items: Citation[];
+  summary: { total: number; valid: number; warning: number; invalid: number; pending: number };
+}
+
+export interface LegalBasis {
+  case: { id: string; caseNumber: string; title: string; jurisdiction: Jurisdiction };
+  referenceDate: string;
+  summary: CitationList['summary'];
+  flagged: {
+    citationId: string;
+    label: string;
+    status: CitationValidationStatus;
+    message: string | null;
+  }[];
+  regulations: {
+    regulationId: string;
+    regulationSlug: string;
+    regulationTitle: string;
+    regulationType: RegulationType;
+    regulationNumber: string | null;
+    regulationYear: number | null;
+    regulationStatus: LegalSourceStatus;
+    label: string;
+    worstStatus: CitationValidationStatus;
+    articles: { label: string; unitKey: string; id: string; content: string }[];
+  }[];
+}
+
+export type SearchKind = 'ARTICLE' | 'REGULATION' | 'JURISPRUDENCE';
+
+export interface SearchHit {
+  kind: SearchKind;
+  id: string;
+  title: string;
+  snippet: string;
+  rank: number;
+  url: string;
+  status: string;
+  regulation: { slug: string; title: string; number: string | null; year: number | null } | null;
+  applicability?: Applicability;
+}
+
+export interface SearchResult {
+  query: string;
+  tsQuery: string | null;
+  at: string;
+  total: number;
+  items: SearchHit[];
+}
+
+export interface ArticleCrossReference {
+  article: { id: string; unitKey: string; articleNumber: string; regulationId: string };
+  amendments: (Amendment & { amendingRegulation: { slug: string; title: string; type: RegulationType; year: number | null } })[];
+  coRegulations: {
+    id: string;
+    unitKey: string;
+    regulation: { slug: string; title: string; type: RegulationType; year: number | null; number: string | null };
+  }[];
+  citedIn: { id: string; case: { id: string; caseNumber: string; title: string } }[];
+}
+
+export type IntegrityEntityType = 'ATTACHMENT' | 'ADDENDUM' | 'OFFICIAL_COPY';
+export type IntegrityCheckResult = 'MATCH' | 'MISMATCH' | 'MISSING_FILE';
+export type ReceiptStatus = 'SENT' | 'CONFIRMED' | 'DISPUTED' | 'EXPIRED';
+export type AnomalyType =
+  | 'UPLOAD_BURST'
+  | 'BACKDATE_SUSPECT'
+  | 'CLAIM_CHANGED'
+  | 'DELAY_PATTERN'
+  | 'HASH_MISMATCH'
+  | 'DEADLINE_BREACH';
+export type AnomalySeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+export type AnomalyStatus = 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED' | 'DISMISSED';
+export type DeadlineStatus = 'OPEN' | 'MET' | 'BREACHED' | 'CANCELLED';
+
+export interface IntegrityRecordSummary {
+  id: string;
+  entityType: IntegrityEntityType;
+  entityId: string;
+  caseId: string | null;
+  consultationId: string | null;
+  sha256: string;
+  algorithm: string;
+  sizeBytes: number | null;
+  storageKey: string | null;
+  anchorHash: string | null;
+  anchoredAt: string | null;
+  tsaUrl: string | null;
+  createdAt: string;
+  recordedBy: { id: string; fullName: string } | null;
+}
+
+export interface IntegrityCheck {
+  id: string;
+  recordId: string;
+  expectedSha256: string;
+  actualSha256: string | null;
+  result: IntegrityCheckResult;
+  note: string | null;
+  createdAt: string;
+  checkedBy: { id: string; fullName: string } | null;
+}
+
+export interface DocumentReceiptItem {
+  id: string;
+  caseId: string;
+  recordId: string;
+  recipientPartyId: string;
+  senderId: string | null;
+  status: ReceiptStatus;
+  token: string;
+  sentAt: string;
+  confirmedAt: string | null;
+  confirmNote: string | null;
+  recipientParty: { id: string; name: string; side: string };
+  record: IntegrityRecordSummary;
+}
+
+export interface AddendumItem {
+  id: string;
+  caseId: string;
+  recordId: string;
+  authorId: string | null;
+  title: string;
+  content: string;
+  createdAt: string;
+  author: { id: string; fullName: string } | null;
+  record: IntegrityRecordSummary;
+}
+
+export interface CaseDeadlineItem {
+  id: string;
+  caseId: string;
+  label: string;
+  dueAt: string;
+  status: DeadlineStatus;
+  extensionCount: number;
+  lastExtensionReason: string | null;
+  extendedAt: string | null;
+  breachedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnomalyFlag {
+  id: string;
+  type: AnomalyType;
+  severity: AnomalySeverity;
+  status: AnomalyStatus;
+  caseId: string | null;
+  recordId: string | null;
+  subject: string;
+  subjectId: string | null;
+  message: string;
+  details: Record<string, unknown> | null;
+  resolvedById: string | null;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  resolvedBy?: { id: string; fullName: string } | null;
+  case?: { id: string; caseNumber: string; title: string } | null;
+}
+
+export interface CaseIntegrity {
+  records: (IntegrityRecordSummary & {
+    latestCheck: { recordId: string; result: IntegrityCheckResult; createdAt: string } | null;
+  })[];
+  addenda: AddendumItem[];
+  receipts: DocumentReceiptItem[];
+  deadlines: CaseDeadlineItem[];
+  anomalies: AnomalyFlag[];
 }

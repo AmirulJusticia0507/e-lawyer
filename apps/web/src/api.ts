@@ -1,8 +1,20 @@
 import type {
+  AddendumItem,
+  AnomalyFlag,
+  AnomalyStatus,
+  AnomalyType,
+  ArticleCatalogItem,
+  ArticleCrossReference,
+  ArticleDetail,
+  ArticleLookup,
   AuthResult,
   CaseDetail,
+  CaseDeadlineItem,
+  CaseIntegrity,
   CaseStatus,
   CaseSummary,
+  CitationDocumentType,
+  CitationList,
   Client,
   ConsultationAttachment,
   ConsultationDetail,
@@ -10,13 +22,26 @@ import type {
   ConsultationMode,
   ConsultationStatus,
   ConsultationSummary,
+  DeadlineStatus,
+  DocumentReceiptItem,
   Interaction,
   InteractionType,
+  IntegrityCheck,
+  IntegrityCheckResult,
+  IntegrityEntityType,
   Jurisdiction,
+  LegalBasis,
+  LegalSourceStatus,
   MetaInfo,
   Paginated,
   Party,
   PartySide,
+  ReceiptStatus,
+  RegulationListItem,
+  RegulationType,
+  RegulationDetail,
+  SearchKind,
+  SearchResult,
   VideoSession,
 } from './types';
 
@@ -113,6 +138,16 @@ async function request<T>(
   }
 
   return (await response.json()) as T;
+}
+
+function buildQuery(params: Record<string, unknown>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') continue;
+    search.set(key, String(value));
+  }
+  const query = search.toString();
+  return query ? `?${query}` : '';
 }
 
 export const api = {
@@ -247,6 +282,129 @@ export const api = {
       method: 'PATCH',
       body: { status },
     }),
+
+  // Basis peraturan & sitasi pasal
+  listRegulations: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: RegulationType;
+    status?: LegalSourceStatus;
+    jurisdiction?: Jurisdiction;
+    year?: number;
+    at?: string;
+  } = {}) => {
+    const q = buildQuery(params);
+    return request<Paginated<RegulationListItem>>(`/regulations${q}`);
+  },
+  getRegulation: (slug: string, at?: string) =>
+    request<RegulationDetail>(`/regulations/${slug}${at ? `?at=${encodeURIComponent(at)}` : ''}`),
+  listArticlesInRegulation: (
+    slug: string,
+    params: { page?: number; limit?: number; status?: LegalSourceStatus; at?: string } = {},
+  ) => {
+    const q = buildQuery(params);
+    return request<Paginated<ArticleCatalogItem>>(`/regulations/${slug}/articles${q}`);
+  },
+  listArticles: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: RegulationType;
+    status?: LegalSourceStatus;
+    jurisdiction?: Jurisdiction;
+    regulationSlug?: string;
+    articleNumber?: string;
+    at?: string;
+  } = {}) => {
+    const q = buildQuery(params);
+    return request<Paginated<ArticleCatalogItem>>(`/articles${q}`);
+  },
+  getArticle: (id: string, at?: string) =>
+    request<ArticleDetail>(`/articles/${id}${at ? `?at=${encodeURIComponent(at)}` : ''}`),
+  lookupArticle: (params: {
+    regulationSlug: string;
+    articleNumber: string;
+    paragraphNumber?: string;
+    at?: string;
+  }) => {
+    const q = buildQuery(params);
+    return request<ArticleLookup>(`/articles/lookup${q}`);
+  },
+  crossReference: (articleId: string) =>
+    request<ArticleCrossReference>(`/articles/${articleId}/cross-reference`),
+  searchLegalSources: (params: { q: string; kind?: SearchKind; limit?: number; at?: string }) => {
+    const query = buildQuery(params);
+    return request<SearchResult>(`/legal-sources/search${query}`);
+  },
+
+  listCitations: (caseId: string) => request<CitationList>(`/cases/${caseId}/citations`),
+  createCitation: (
+    caseId: string,
+    dto: {
+      articleId: string;
+      quote?: string;
+      context?: string;
+      documentType?: CitationDocumentType;
+      documentTitle?: string;
+      at?: string;
+      force?: boolean;
+    },
+  ) => request(`/cases/${caseId}/citations`, { method: 'POST', body: dto }),
+  deleteCitation: (caseId: string, citationId: string) =>
+    request<{ success: true }>(`/cases/${caseId}/citations/${citationId}`, { method: 'DELETE' }),
+  revalidateCitations: (caseId: string) =>
+    request<{ revalidated: number; flagged: number; items: CitationList }>(
+      `/cases/${caseId}/citations/revalidate`,
+      { method: 'POST', body: {} },
+    ),
+  legalBasis: (caseId: string) => request<LegalBasis>(`/cases/${caseId}/legal-basis`),
+
+  // Integrity (F4)
+  caseIntegrity: (caseId: string) => request<CaseIntegrity>(`/integrity/cases/${caseId}`),
+  verifyIntegrity: (recordId: string, note?: string) =>
+    request<{ check: IntegrityCheck; result: IntegrityCheckResult }>(
+      `/integrity/records/${recordId}/verify`,
+      { method: 'POST', body: { note } },
+    ),
+  createAddendum: (caseId: string, dto: { recordId: string; title: string; content: string }) =>
+    request<AddendumItem>(`/integrity/cases/${caseId}/addenda`, { method: 'POST', body: dto }),
+  createReceipt: (caseId: string, dto: { recordId: string; recipientPartyId: string }) =>
+    request<DocumentReceiptItem>(`/integrity/cases/${caseId}/receipts`, {
+      method: 'POST',
+      body: dto,
+    }),
+  confirmReceipt: (receiptId: string, note?: string) =>
+    request<DocumentReceiptItem>(`/integrity/receipts/confirm`, {
+      method: 'POST',
+      body: { receiptId, note },
+    }),
+  disputeReceipt: (receiptId: string, note: string) =>
+    request<DocumentReceiptItem>(`/integrity/receipts/dispute`, {
+      method: 'POST',
+      body: { receiptId, note },
+    }),
+  createDeadline: (caseId: string, dto: { label: string; dueAt: string }) =>
+    request<CaseDeadlineItem>(`/integrity/cases/${caseId}/deadlines`, {
+      method: 'POST',
+      body: dto,
+    }),
+  extendDeadline: (id: string, dto: { reason: string; dueAt: string }) =>
+    request<CaseDeadlineItem>(`/integrity/deadlines/${id}/extend`, {
+      method: 'POST',
+      body: dto,
+    }),
+  completeDeadline: (id: string) =>
+    request<CaseDeadlineItem>(`/integrity/deadlines/${id}/complete`, {
+      method: 'POST',
+      body: {},
+    }),
+  listAnomalies: (params: { page?: number; limit?: number; status?: AnomalyStatus; caseId?: string } = {}) => {
+    const q = buildQuery(params);
+    return request<Paginated<AnomalyFlag>>(`/integrity/anomalies${q}`);
+  },
+  resolveAnomaly: (id: string, dto: { status: AnomalyStatus; note?: string }) =>
+    request<AnomalyFlag>(`/integrity/anomalies/${id}`, { method: 'PATCH', body: dto }),
 };
 
 export const statusFlow: Record<CaseStatus, CaseStatus[]> = {
@@ -309,3 +467,101 @@ export const consultationModeLabels: Record<ConsultationMode, string> = {
   PHONE: 'Telepon',
   IN_PERSON: 'Tatap Muka',
 };
+
+export const regulationTypeLabels: Record<RegulationType, string> = {
+  CONSTITUTION: 'UUD',
+  LAW: 'UU',
+  GOVERNMENT_REGULATION: 'PP',
+  PRESIDENTIAL_REGULATION: 'Perpres',
+  MINISTERIAL_REGULATION: 'Permen',
+  SUPREME_COURT_REGULATION: 'PERMA',
+  SUPREME_COURT_CIRCULAR: 'SEMA',
+  CIVIL_CODE: 'KUHPerdata',
+  CRIMINAL_CODE: 'KUHP',
+  PROCEDURAL_LAW: 'HIR/RBg',
+  LOCAL_REGULATION: 'Perda',
+  OTHER: 'Lainnya',
+};
+
+export const legalSourceStatusLabels: Record<LegalSourceStatus, string> = {
+  DRAFT: 'Rancangan',
+  ACTIVE: 'Berlaku',
+  AMENDED: 'Diubah',
+  REPEALED: 'Dicabut',
+  UNKNOWN: 'Tidak Diketahui',
+};
+
+export const citationValidationLabels = {
+  PENDING: 'Menunggu',
+  VALID: 'Sesuai',
+  WARNING: 'Perlu Perhatian',
+  INVALID: 'Tidak Valid',
+} as const;
+
+export const citationDocumentLabels: Record<CitationDocumentType, string> = {
+  GUGATAN: 'Gugatan',
+  JAWABAN: 'Jawaban',
+  REPLIK: 'Replik',
+  DUPLIK: 'Duplik',
+  KESIMPULAN: 'Kesimpulan',
+  PUTUSAN: 'Putusan',
+  MEMO: 'Memo Internal',
+  LAINNYA: 'Lainnya',
+};
+
+export const integrityCheckLabels: Record<IntegrityCheckResult, string> = {
+  MATCH: 'Utuh',
+  MISMATCH: 'Terubah',
+  MISSING_FILE: 'Berkas Hilang',
+};
+
+export const integrityEntityLabels: Record<IntegrityEntityType, string> = {
+  ATTACHMENT: 'Lampiran',
+  ADDENDUM: 'Addendum',
+  OFFICIAL_COPY: 'Salinan Resmi',
+};
+
+export const receiptStatusLabels: Record<ReceiptStatus, string> = {
+  SENT: 'Terkirim',
+  CONFIRMED: 'Dikonfirmasi',
+  DISPUTED: 'Disangkal',
+  EXPIRED: 'Kedaluwarsa',
+};
+
+export const anomalyTypeLabels: Record<AnomalyType, string> = {
+  UPLOAD_BURST: 'Upload Mendadak',
+  BACKDATE_SUSPECT: 'Tanggal Mundur Mencurigakan',
+  CLAIM_CHANGED: 'Perubahan Klaim',
+  DELAY_PATTERN: 'Pola Penundaan',
+  HASH_MISMATCH: 'Hash Tidak Cocok',
+  DEADLINE_BREACH: 'Tenggat Terlampaui',
+};
+
+export const anomalySeverityLabels: Record<string, string> = {
+  LOW: 'Rendah',
+  MEDIUM: 'Sedang',
+  HIGH: 'Tinggi',
+};
+
+export const anomalyStatusLabels: Record<AnomalyStatus, string> = {
+  OPEN: 'Terbuka',
+  ACKNOWLEDGED: 'Diketahui',
+  RESOLVED: 'Selesai',
+  DISMISSED: 'Diabaikan',
+};
+
+export const deadlineStatusLabels: Record<DeadlineStatus, string> = {
+  OPEN: 'Berjalan',
+  MET: 'Dipenuhi',
+  BREACHED: 'Terlampaui',
+  CANCELLED: 'Dibatalkan',
+};
+
+export function formatRegulationIdentity(
+  type: RegulationType,
+  number: string | null,
+  year: number | null,
+): string {
+  const prefix = regulationTypeLabels[type];
+  return [prefix, number, year].filter(Boolean).join(' ');
+}

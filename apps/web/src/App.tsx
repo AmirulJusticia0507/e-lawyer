@@ -9,7 +9,10 @@ import Clients from './pages/Clients';
 import ConsultationDetail from './pages/ConsultationDetail';
 import Consultations from './pages/Consultations';
 import Home from './pages/Home';
+import Integritas from './pages/Integritas';
 import Login from './pages/Login';
+import Regulations from './pages/Regulations';
+import RegulationDetail from './pages/RegulationDetail';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
@@ -74,6 +77,26 @@ export default function App() {
           }
         />
         <Route
+          path="/peraturan"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Regulations />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/peraturan/:slug"
+          element={
+            <RequireAuth>
+              <Layout>
+                <RegulationDetail />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/konsultasi"
           element={
             <RequireAuth>
@@ -89,6 +112,16 @@ export default function App() {
             <RequireAuth>
               <Layout>
                 <ConsultationDetail />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/integritas"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Integritas />
               </Layout>
             </RequireAuth>
           }

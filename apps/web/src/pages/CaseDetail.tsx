@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, interactionLabels, jurisdictionLabels, sideLabels, statusFlow } from '../api';
+import CitationPanel from '../components/CitationPanel';
+import IntegrityPanel from '../components/IntegrityPanel';
 import type { CaseDetail, CaseStatus, InteractionType, PartySide } from '../types';
 
 const emptyForm = { side: 'PLAINTIFF' as PartySide, name: '', clientId: '' };
@@ -211,6 +213,10 @@ export default function CaseDetail() {
           </div>
         </form>
       </div>
+
+      <CitationPanel caseId={data.id} />
+
+      <IntegrityPanel caseId={data.id} />
 
       <div className="card">
         <h3>Timeline Interaksi</h3>

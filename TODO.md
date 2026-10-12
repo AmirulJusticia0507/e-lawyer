@@ -56,7 +56,7 @@ Mapping ke kebutuhan utama:
 - [x] Pencarian full-text (Postgres FTS) + pencarian semantik (pgvector)
 - [x] API: lookup pasal, daftar "Dasar Hukum" otomatis, cross-reference
 - [x] UI: browser peraturan, panel sitasi, penanda pasal bermasalah
-- [ ] Seed & kurasi minimal set peraturan tiap lingkungan peradilan
+- [x] Seed & kurasi minimal set peraturan tiap lingkungan peradilan
 
 ## F4 — Integritas & Anti-Manipulasi  `(#2)`
 - [x] Data model: `IntegrityRecord`, `AuditLog` (append-only), `AnomalyFlag`

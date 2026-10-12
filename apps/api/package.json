@@ -16,6 +16,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "legal:ingest": "ts-node prisma/ingest-legal-sources.ts",
     "seed": "ts-node prisma/seed.ts"
   },
   "prisma": {

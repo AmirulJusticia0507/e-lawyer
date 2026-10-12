@@ -231,6 +231,19 @@ Registrasi/Login (OAuth2/JWT)
    npm run dev
    ```
 
+### Ingest Basis Peraturan
+
+Dataset JSON mengikuti contoh `data/legal-sources/example.json`. Validasi tanpa
+menulis database dan proses ingest dapat dijalankan dengan:
+
+```bash
+npm run legal:ingest --workspace=@elawyer/api -- --file data/legal-sources/example.json --dry-run
+npm run legal:ingest --workspace=@elawyer/api -- --file data/legal-sources/example.json
+```
+
+Pipeline bersifat idempotent berdasarkan `slug` peraturan dan `unitKey` pasal.
+Seluruh perubahan dalam satu dataset dijalankan dalam satu transaksi.
+
 ---
 
 ## Konfigurasi Environment

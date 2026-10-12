@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "regulations": [
+    {
+      "slug": "uu-1-2024-contoh",
+      "type": "LAW",
+      "number": "1",
+      "year": 2024,
+      "title": "Undang-Undang Contoh",
+      "jurisdiction": "CIVIL",
+      "status": "ACTIVE",
+      "issuedAt": "2024-01-01",
+      "effectiveFrom": "2024-01-01",
+      "sourceName": "Sumber resmi",
+      "sourceUrl": "https://example.go.id/uu-1-2024",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "content": "Contoh isi Pasal 1.",
+          "status": "ACTIVE",
+          "effectiveFrom": "2024-01-01"
+        }
+      ]
+    }
+  ],
+  "amendments": []
+}

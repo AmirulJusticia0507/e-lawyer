@@ -47,7 +47,7 @@ Mapping ke kebutuhan utama:
 - [~] Riwayat transkrip konsultasi tersimpan; enkripsi at-rest menyusul
 
 ## F3 — Basis Peraturan & Sitasi Pasal  `(#1)`
-- [ ] Data model: `Regulation`, `Article`, `Citation`, `Amendment`, `Jurisprudence`
+- [x] Data model: `Regulation`, `Article`, `Citation`, `Amendment`, `Jurisprudence`
 - [ ] Pipeline ingest peraturan (UU, Perma, SEMA, KUHPerdata, KUHP, HIR/RBg, dll.)
 - [ ] Katalog per-pasal + metadata (nomor, tahun, pasal, ayat, status)
 - [ ] Pelacakan versi berbasis tanggal (berlaku / diubah / dicabut)

@@ -1,6 +1,5 @@
-import { FeeSchemeType } from '@prisma/client';
-import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -13,6 +12,8 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
+import { FeeSchemeType } from '@prisma/client';
+import { Type } from 'class-transformer';
 
 export class QueryTimeEntryDto {
   @IsOptional() @IsUUID() caseId?: string;
@@ -26,7 +27,11 @@ export class StartTimerDto {
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) hourlyRate?: number;
 }
 
-export class CreateManualTimeEntryDto extends StartTimerDto {
+export class CreateManualTimeEntryDto {
+  @IsUUID() caseId!: string;
+  @IsString() description!: string;
+  @IsBoolean() billable!: boolean;
+  @IsNumber() hourlyRate!: number;
   @IsDateString() startedAt!: string;
   @IsDateString() endedAt!: string;
 }
@@ -59,4 +64,23 @@ export class CreateFeeSchemeDto {
   @Min(0)
   @Max(100)
   successPercentage?: number;
+}
+
+export class CreatePaymentDto {
+  @IsUUID() invoiceId!: string;
+  @IsString() method!: string;
+  @IsNumber() amount!: number;
+  @IsString() reference?: string;
+}
+
+export class ProcessPaymentDto {
+  @IsDateString() paidAt!: string;
+}
+
+export class CreateInvoiceDto {
+  @IsUUID() caseId?: string;
+  @IsUUID() clientId?: string;
+  @IsArray() items!: any[];
+  @IsNumber() subtotal?: number;
+  @IsNumber() taxRate?: number;
 }

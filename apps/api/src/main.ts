@@ -12,7 +12,31 @@ async function bootstrap(): Promise<void> {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  const prefix = config.get<string>('API_PREFIX', 'api');
+  // Security headers - OWASP hardening
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const forwardedProtocol = req.headers['x-forwarded-proto'];
+    const isHttps = req.secure || forwardedProtocol === 'https';
+    if (isHttps) {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+    // OWASP headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'");
+    next();
+  });
+
+  // Rate limiting sederhana berdasarkan IP
+  const rateLimit = require('express-rate-limit');
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 menit
+    max: 100, // batasi setiap IP maksimal 100 request per window
+    message: 'Terlalu banyak request dari IP ini, coba lagi nanti',
+  });
+  app.use('/api/', limiter);
+
   app.setGlobalPrefix(prefix);
 
   app.useGlobalPipes(

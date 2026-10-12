@@ -552,6 +552,10 @@ model Regulation {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
+  // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
+  searchVector Unsupported("tsvector")?    
+  embedding    Unsupported("vector(1536)")?
+
   articles           Article[]
   amendmentsMade     Amendment[] @relation("AmendingRegulation")
   amendmentsReceived Amendment[] @relation("AmendedRegulation")
@@ -575,6 +579,10 @@ model Article {
   effectiveUntil  DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
+  searchVector Unsupported("tsvector")?    
+  embedding    Unsupported("vector(1536)")?
 
   regulation Regulation  @relation(fields: [regulationId], references: [id], onDelete: Cascade)
   amendments Amendment[]
@@ -623,6 +631,10 @@ model Jurisprudence {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
+  // Kolom basis pengindeksan full-text & semantik dikelola lewat migrasi SQL.
+  searchVector Unsupported("tsvector")?    
+  embedding    Unsupported("vector(1536)")?
+
   citations Citation[]
 
   @@unique([courtName, decisionNumber])
@@ -658,7 +670,7 @@ model Citation {
 }
 
 // Ledger integritas: satu baris per berkas/dokumen yang di-hash.
-// Append-only — baris tidak pernah diubah/dihapus (ditegakkan trigger DB).
+// Append-only â€” baris tidak pernah diubah/dihapus (ditegakkan trigger DB).
 model IntegrityRecord {
   id             String              @id @default(uuid()) @db.Uuid
   entityType     IntegrityEntityType

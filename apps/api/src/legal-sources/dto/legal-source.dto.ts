@@ -1,8 +1,12 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -11,6 +15,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Jurisdiction, LegalSourceStatus, RegulationType } from '@prisma/client';
+import { EMBEDDING_DIMENSIONS } from '../search-query';
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -118,4 +123,44 @@ export class LookupArticleDto {
   @IsOptional()
   @IsDateString()
   at?: string;
+}
+
+export const SEARCH_KINDS = ['ARTICLE', 'REGULATION', 'JURISPRUDENCE'] as const;
+
+export type SearchKindDto = (typeof SEARCH_KINDS)[number];
+
+export class SearchLegalSourcesDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  q!: string;
+
+  @IsIn(SEARCH_KINDS)
+  @IsOptional()
+  kind?: SearchKindDto;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+
+  @IsOptional()
+  @IsDateString()
+  at?: string;
+}
+
+export class SemanticSearchDto {
+  @IsArray()
+  @ArrayMaxSize(EMBEDDING_DIMENSIONS)
+  @IsNumber({}, { each: true })
+  embedding!: number[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
 }

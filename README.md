@@ -280,6 +280,23 @@ belum terkurasi, lingkungan peradilan berbeda), atau `INVALID` (pasal/peraturan
 dicabut atau belum berlaku). Sitasi `INVALID` ditolak dengan HTTP 400 kecuali
 dikirim dengan `force: true`.
 
+### Pencarian Peraturan
+
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| GET | `/api/legal-sources/search` | Full-text search (GIN + `tsvector`) dengan `q`, `kind`, `limit`, `at` |
+| POST | `/api/legal-sources/search/semantic` | Pencarian semantik pgvector (cosine distance) |
+
+Migrasi `5_legal_source_fulltext` menambahkan kolom `tsvector` (GENERATED ALWAYS
+STORED) pada `Regulation`, `Article`, dan `Jurisprudence` beserta indeks GIN,
+serta kolom `embedding vector(1536)` dengan indeks ivfflat untuk pencarian
+semantik. Embedding diisi oleh pipeline AI (F8); sampai itu tersedia endpoint
+semantik mengembalikan hasil kosong.
+
+Input pencarian pengguna dinetralkan menjadi `tsquery` berawalan prefiks dan
+dihubungkan dengan operator `AND` sehingga tidak dapat menyuntikkan operator
+tsquery mentah.
+
 ---
 
 ## Konfigurasi Environment

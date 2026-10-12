@@ -53,7 +53,7 @@ Mapping ke kebutuhan utama:
 - [x] Pelacakan versi berbasis tanggal (berlaku / diubah / dicabut)
 - [x] Validasi sitasi: tolak pasal yang dicabut/diubah, tandai konflik
 - [x] Tautkan pasal ke dokumen (gugatan/jawaban/putusan)
-- [ ] Pencarian full-text (Postgres FTS/Elasticsearch) + pencarian semantik (pgvector)
+- [x] Pencarian full-text (Postgres FTS) + pencarian semantik (pgvector)
 - [x] API: lookup pasal, daftar "Dasar Hukum" otomatis, cross-reference
 - [ ] UI: browser peraturan, panel sitasi, penanda pasal bermasalah
 - [ ] Seed & kurasi minimal set peraturan tiap lingkungan peradilan

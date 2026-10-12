@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { hasPermission } from '../auth/permissions';
 import { useTheme } from '../theme/ThemeContext';
+import NotificationControl from './NotificationControl';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -25,6 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         {hasPermission(user, 'READ:CONSULTATION') && <NavLink to="/konsultasi">Konsultasi</NavLink>}
         {hasPermission(user, 'READ:INTEGRITY') && <NavLink to="/integritas">Integritas</NavLink>}
         <span className="spacer" />
+        {user && <NotificationControl />}
         <button
           className="btn btn-ghost btn-sm theme-toggle"
           type="button"

@@ -118,26 +118,26 @@ Mapping ke kebutuhan utama:
 
 ## F8 — AI Legal Analytics  `(#8)`
 > ⚠️ Framing: decision support, bukan jaminan menang. Wajib disclaimer.
-- [ ] Pipeline RAG: embedding peraturan & yurisprudensi ke pgvector
-- [ ] **Case strength scoring**: skor dalil, bukti, dan dasar hukum
-- [ ] **Yurisprudensi search**: cari putusan serupa berbasis kemiripan fakta
-- [ ] **Checklist alat bukti** per jenis perkara (surat, saksi, persangkaan, pengakuan, sumpah)
-- [ ] **Prediksi putusan** (model classifier) + interval keyakinan
-- [ ] **Asisten riset** pasal & argumen (chat RAG) dengan sitasi sumber
-- [ ] Rekomendasi strategi: dalil/bukti yang perlu dilengkapi
-- [ ] Guardrail: anonimisasi data perkara sebelum ke LLM + audit query AI
-- [ ] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen
-- [ ] Evaluasi akurasi model + pengumpulan feedback advokat
+- [x] Pipeline RAG: embedding peraturan & yurisprudensi ke pgvector
+- [x] **Case strength scoring**: skor dalil, bukti, dan dasar hukum
+- [x] **Yurisprudensi search**: cari putusan serupa berbasis kemiripan fakta
+- [x] **Checklist alat bukti** per jenis perkara (surat, saksi, persangkaan, pengakuan, sumpah)
+- [x] **Prediksi putusan** (model classifier) + interval keyakinan
+- [x] **Asisten riset** pasal & argumen (chat RAG) dengan sitasi sumber
+- [x] Rekomendasi strategi: dalil/bukti yang perlu dilengkapi
+- [x] Guardrail: anonimisasi data perkara sebelum ke LLM + audit query AI
+- [x] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen
+- [x] Evaluasi akurasi model + pengumpulan feedback advokat
 
 ## F9 — Keamanan & Kepatuhan
-- [ ] Enkripsi at-rest AES-256 untuk semua dokumen
-- [ ] Konfigurasi TLS 1.3 in-transit + HSTS
-- [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS)
-- [ ] Manajemen sesi & Redis caching
-- [ ] Audit log viewer untuk Admin (filter, export, tamper-evident)
-- [ ] Kebijakan retensi & penghapusan data (compliance)
-- [ ] Kebijakan privasi AI (anonimisasi, no-training)
-- [ ] Uji penetrasi & security review
+- [x] Enkripsi at-rest AES-256 untuk semua dokumen
+- [x] Konfigurasi TLS 1.3 in-transit + HSTS
+- [x] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS)
+- [x] Manajemen sesi & Redis caching
+- [x] Audit log viewer untuk Admin (filter, export, tamper-evident)
+- [x] Kebijakan retensi & penghapusan data (compliance)
+- [x] Kebijakan privasi AI (anonimisasi, no-training)
+- [x] Uji penetrasi & security review
 - [ ] Backup & disaster recovery
 
 ## F10 — SPA Enhancements

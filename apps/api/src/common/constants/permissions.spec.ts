@@ -32,4 +32,18 @@ describe('RBAC permission matrix', () => {
   it('CLIENT tidak boleh mengelola perkara pengguna lain', () => {
     expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.MANAGE, Subject.CASE));
   });
+
+  it('role Paralegal tidak boleh menghapus sitasi', () => {
+    expect(ROLE_PERMISSIONS[RoleName.PARALEGAL]).toContain(key(Action.CREATE, Subject.CITATION));
+    expect(ROLE_PERMISSIONS[RoleName.PARALEGAL]).not.toContain(key(Action.DELETE, Subject.CITATION));
+  });
+
+  it('JUDGE hanya boleh membaca sitasi', () => {
+    expect(ROLE_PERMISSIONS[RoleName.JUDGE]).toContain(key(Action.READ, Subject.CITATION));
+    expect(ROLE_PERMISSIONS[RoleName.JUDGE]).not.toContain(key(Action.CREATE, Subject.CITATION));
+  });
+
+  it('CLIENT tidak mendapat akses sitasi perkara', () => {
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.READ, Subject.CITATION));
+  });
 });

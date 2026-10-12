@@ -31,7 +31,8 @@ describe('validateEnv', () => {
   });
 
   it('membaca secret dari *_FILE', () => {
-    const { DATABASE_URL: _omitted, ...withoutDatabaseUrl } = base;
+    const withoutDatabaseUrl: Record<string, string> = { ...base };
+    delete withoutDatabaseUrl.DATABASE_URL;
     expect(() =>
       validateEnv({ ...withoutDatabaseUrl, DATABASE_URL_FILE: 'C:/tidak-ada.txt' }),
     ).toThrow(/tidak dapat dibaca/);

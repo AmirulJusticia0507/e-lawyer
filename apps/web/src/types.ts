@@ -129,6 +129,7 @@ export interface MetaInfo {
   legalSourceStatuses: string[];
   amendmentTypes: string[];
   citationValidationStatuses: string[];
+  citationDocumentTypes: string[];
   jurisprudenceStatuses: string[];
 }
 

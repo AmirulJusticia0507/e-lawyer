@@ -130,6 +130,17 @@ enum CitationValidationStatus {
   INVALID
 }
 
+enum CitationDocumentType {
+  GUGATAN
+  JAWABAN
+  REPLIK
+  DUPLIK
+  KESIMPULAN
+  PUTUSAN
+  MEMO
+  LAINNYA
+}
+
 enum JurisprudenceStatus {
   ACTIVE
   OVERRULED
@@ -570,6 +581,8 @@ model Citation {
   jurisprudenceId   String?                  @db.Uuid
   quote             String?
   context           String?
+  documentType      CitationDocumentType?
+  documentTitle     String?
   validationStatus  CitationValidationStatus @default(PENDING)
   validationMessage String?
   validatedAt       DateTime?
@@ -584,4 +597,5 @@ model Citation {
   @@index([caseId])
   @@index([jurisprudenceId])
   @@index([validationStatus])
+  @@index([documentType])
 }

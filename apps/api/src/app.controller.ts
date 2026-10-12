@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import {
   AmendmentType,
   CaseStatus,
+  CitationDocumentType,
   CitationValidationStatus,
   ClientType,
   ConsultationMode,
@@ -51,6 +52,7 @@ export class AppController {
       legalSourceStatuses: Object.values(LegalSourceStatus),
       amendmentTypes: Object.values(AmendmentType),
       citationValidationStatuses: Object.values(CitationValidationStatus),
+      citationDocumentTypes: Object.values(CitationDocumentType),
       jurisprudenceStatuses: Object.values(JurisprudenceStatus),
     };
   }

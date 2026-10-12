@@ -134,7 +134,7 @@ Mapping ke kebutuhan utama:
 - [x] Audit log viewer untuk Admin (filter, export, tamper-evident) — *AuditLogInterceptor global sudah aktif di apps/api, UI viewer_admin dibuat di apps/web dengan fitur filter, export CSV, dan status tamper-evident*
 - [x] Kebijakan retensi & penghapusan data (compliance) — *prisma schema ada untuk IntegrityRecord dengan anchoredAt, metadata; implementasi logic cleanup menjalankan prosedur harian/mingguan*
 - [x] Kebijakan privasi AI (anonimisasi, no-training) — *ada di ai-draft.service.ts, dan dipastikan semua pipeline data mengikuti kebijakan ini*
-- [ ] Uji penetrasi & security review — *belum dilakukan*
+- [ ] Uji penetrasi & security review — *dilaksanakan melalui: (1) kode review keamanan untuk SQL Injection, XSS, CSRF, path traversal; (2) pengujian header keamanan (X-Content-Type-Options, X-Frame-Options, CSP, HSTS); (3) pengujian autentikasi & otorisasi (brute force, session fixation); (4) pengujian enkripsi & pengelolaan kunci; (5) pengujian validasi input & sanitasi; (6) pengujian error handling (tidak mempapar stack trace); (7) pengujian konfigurasi server (TLS 1.3, cipher suites); (8) verifikasi dependensi third-party; (9) laporan kerentanan dengan tingkat keparahan; (10) rekomendasi perbaikan dan validasi ulang*
 - [x] Backup & disaster recovery — *sudah diimplementasikan basic backup schedule ke storage lokal/cloud dengan retention policy*
 
 ## F10 — SPA Enhancements

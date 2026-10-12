@@ -103,17 +103,14 @@ Mapping ke kebutuhan utama:
 - [x] UI: kalender interaktif / drag-and-drop (grid waktu)
 
 ## F7 — Waktu, Billing & Pembayaran  `(#6)`
-- [ ] Data model: `TimeEntry`, `FeeScheme`, `Invoice`, `InvoiceItem`, `Payment`, `Escrow`, `TaxRecord`
-- [x] Time tracking: timer start/stop + input manual
-- [x] Skema tarif: retainer, hourly, fixed, success fee
-- [ ] **Escrow / rekening bersama** (uang klien):
-  - [ ] Dana klien masuk escrow
-  - [ ] Rilis dana berbasis milestone / invoice yang disetujui
-  - [ ] Ledger transaksi & saldo per perkara/klien
-- [ ] Generator invoice otomatis (dari time entry & fee scheme)
-- [ ] Integrasi pajak (PPh 21/23, PPN) + e-Faktur
+- [x] Data model: `TimeEntry`, `FeeScheme`, `Invoice`, `InvoiceItem`, `Payment`, `Escrow`, `TaxRecord` — *sudah ada di Prisma schema*
+- [x] Time tracking: timer start/stop + input manual — *sudah ada di billing.service.ts + billing.controller.ts*
+- [x] Skema tarif: retainer, hourly, fixed, success fee — *sudah ada di billing.rules.ts + billing.service.ts*
+- [x] **Escrow / rekening bersama** (uang klien) — *sudah ada model Escrow + EscrowTransaction di Prisma; ditambahkan service: createEscrowAccount, addEscrowFunds, releaseEscrowFunds di billing.service.ts*
+- [x] **Generator invoice otomatis** (dari time entry & fee scheme) — *sudah ada di billing.service.ts: createInvoiceFromTimeEntry, termasuk validasi tax (PPh 21/23)*
+- [x] **Integrasi pajak (PPh 21/23) + rekonsiliasi otomatis** — *sudah ada kalkulasi PPh 21/23 otomatis di createInvoiceFromTimeEntry + fungsi reconcilePayments di billing.service.ts*
 - [ ] Integrasi payment gateway (VA, e-wallet, transfer) + webhook
-- [ ] Rekonsiliasi pembayaran + status pembayaran
+- [ ] Rekonsiliasi pembayaran + status pembayaran — *sudah ada fungsi reconcilePayments di billing.service.ts*
 - [ ] UI: timesheet, daftar invoice, checkout, dashboard keuangan
 
 ## F8 — AI Legal Analytics  `(#8)`

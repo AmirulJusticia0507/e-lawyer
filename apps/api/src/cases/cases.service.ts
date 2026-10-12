@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { CaseStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
+import { IntegrityService } from '../integrity/integrity.service';
 import { assertTransition } from './case-status';
 import {
   AssignCaseDto,
@@ -36,7 +37,10 @@ const CASE_INCLUDE = {
 
 @Injectable()
 export class CasesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly integrity: IntegrityService,
+  ) {}
 
   async create(dto: CreateCaseDto, actorId: string) {
     const caseNumber = dto.caseNumber ?? (await this.generateCaseNumber());
@@ -161,6 +165,7 @@ export class CasesService {
 
   async remove(id: string): Promise<{ success: true }> {
     await this.ensureExists(id);
+    await this.integrity.assertDeletable({ caseId: id });
     await this.prisma.case.delete({ where: { id } });
     return { success: true };
   }
@@ -184,7 +189,8 @@ export class CasesService {
     if (!party) {
       throw new NotFoundException('Pihak tidak ditemukan pada perkara ini');
     }
-    return this.prisma.party.update({
+    const before = { name: party.name, side: party.side };
+    const updated = await this.prisma.party.update({
       where: { id: partyId },
       data: {
         ...dto,
@@ -193,6 +199,13 @@ export class CasesService {
       },
       include: { client: { select: { id: true, fullName: true } } },
     });
+    await this.integrity.recordClaimChange({
+      caseId,
+      partyId,
+      before,
+      after: { name: updated.name, side: updated.side },
+    });
+    return updated;
   }
 
   async removeParty(caseId: string, partyId: string): Promise<{ success: true }> {

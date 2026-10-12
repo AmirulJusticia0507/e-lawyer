@@ -49,6 +49,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       const user: AuthenticatedUser | undefined = request.user;
       const path: string = request.originalUrl ?? request.url ?? '';
       const subject = this.deriveSubject(path);
+      const subjectId = this.deriveSubjectId(request.params);
 
       const metadata: Prisma.InputJsonValue = {
         params: request.params ?? {},
@@ -60,6 +61,7 @@ export class AuditLogInterceptor implements NestInterceptor {
           actorId: user?.id ?? null,
           action,
           subject,
+          subjectId,
           method: request.method,
           path,
           status,
@@ -79,5 +81,15 @@ export class AuditLogInterceptor implements NestInterceptor {
     const apiIndex = segments.findIndex((s) => s === 'api');
     const subject = apiIndex >= 0 ? segments[apiIndex + 1] : segments[0];
     return (subject ?? 'unknown').toUpperCase();
+  }
+
+  private deriveSubjectId(params: Record<string, string> | undefined): string | null {
+    if (!params) {
+      return null;
+    }
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const values = Object.values(params);
+    return values.find((v) => uuid.test(v)) ?? values[0] ?? null;
   }
 }

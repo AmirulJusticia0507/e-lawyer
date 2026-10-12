@@ -10,6 +10,7 @@ import { basename, join, resolve } from 'path';
 import { ConsultationStatus, Prisma, VideoSessionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
+import { IntegrityService } from '../integrity/integrity.service';
 import { assertTransition } from './consultation-status';
 import { ConsultationsGateway } from './consultations.gateway';
 import {
@@ -51,6 +52,7 @@ export class ConsultationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: ConsultationsGateway,
+    private readonly integrity: IntegrityService,
   ) {}
 
   async create(dto: CreateConsultationDto, actorId: string) {
@@ -205,7 +207,13 @@ export class ConsultationsService {
   }
 
   async addAttachment(id: string, dto: CreateAttachmentDto, actorId: string) {
-    await this.ensureExists(id);
+    const consultation = await this.prisma.consultation.findUnique({
+      where: { id },
+      select: { id: true, caseId: true },
+    });
+    if (!consultation) {
+      throw new NotFoundException('Konsultasi tidak ditemukan');
+    }
     if (dto.messageId) {
       const message = await this.prisma.message.findFirst({
         where: { id: dto.messageId, consultationId: id },
@@ -215,7 +223,7 @@ export class ConsultationsService {
         throw new NotFoundException('Pesan tidak ditemukan pada konsultasi ini');
       }
     }
-    return this.prisma.attachment.create({
+    const attachment = await this.prisma.attachment.create({
       data: {
         consultationId: id,
         messageId: dto.messageId,
@@ -227,6 +235,16 @@ export class ConsultationsService {
         sha256: dto.sha256,
       },
     });
+    await this.integrity.registerAttachment({
+      attachmentId: attachment.id,
+      consultationId: id,
+      caseId: consultation.caseId,
+      sha256: dto.sha256,
+      sizeBytes: dto.sizeBytes,
+      storageKey: dto.storageKey,
+      uploaderId: actorId,
+    });
+    return attachment;
   }
 
   async uploadAttachment(
@@ -235,7 +253,13 @@ export class ConsultationsService {
     messageId: string | undefined,
     actorId: string,
   ) {
-    await this.ensureExists(id);
+    const consultation = await this.prisma.consultation.findUnique({
+      where: { id },
+      select: { id: true, caseId: true },
+    });
+    if (!consultation) {
+      throw new NotFoundException('Konsultasi tidak ditemukan');
+    }
     if (!file) {
       throw new BadRequestException('Berkas wajib diunggah');
     }
@@ -248,8 +272,9 @@ export class ConsultationsService {
     const safeName = basename(file.originalname).replace(/[^\w.\-() ]/g, '_').slice(0, 80);
     const fileName = `${randomUUID()}-${safeName}`;
     writeFileSync(join(dir, fileName), file.buffer);
+    const storageKey = join('attachments', id, fileName).split('\\').join('/');
 
-    return this.prisma.attachment.create({
+    const attachment = await this.prisma.attachment.create({
       data: {
         consultationId: id,
         messageId,
@@ -257,10 +282,22 @@ export class ConsultationsService {
         fileName: file.originalname,
         mimeType: file.mimetype,
         sizeBytes: file.size,
-        storageKey: join('attachments', id, fileName).split('\\').join('/'),
+        storageKey,
         sha256: hash,
       },
     });
+
+    await this.integrity.registerAttachment({
+      attachmentId: attachment.id,
+      consultationId: id,
+      caseId: consultation.caseId,
+      sha256: hash,
+      sizeBytes: file.size,
+      storageKey,
+      uploaderId: actorId,
+    });
+
+    return attachment;
   }
 
   async findAttachment(id: string, attachmentId: string) {
@@ -316,6 +353,7 @@ export class ConsultationsService {
 
   async remove(id: string): Promise<{ success: true }> {
     await this.ensureExists(id);
+    await this.integrity.assertDeletable({ consultationId: id });
     await this.prisma.consultation.delete({ where: { id } });
     return { success: true };
   }

@@ -46,4 +46,23 @@ describe('RBAC permission matrix', () => {
   it('CLIENT tidak mendapat akses sitasi perkara', () => {
     expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.READ, Subject.CITATION));
   });
+
+  it('CLIENT hanya bisa membaca jejak integritas, tidak menulis/mengelola', () => {
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).toContain(key(Action.READ, Subject.INTEGRITY));
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.CREATE, Subject.INTEGRITY));
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.UPDATE, Subject.INTEGRITY));
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.UPDATE, Subject.ANOMALY));
+  });
+
+  it('Paralegal tidak boleh menyelesaikan sendiri flag anomali', () => {
+    expect(ROLE_PERMISSIONS[RoleName.PARALEGAL]).toContain(key(Action.READ, Subject.ANOMALY));
+    expect(ROLE_PERMISSIONS[RoleName.PARALEGAL]).not.toContain(key(Action.UPDATE, Subject.ANOMALY));
+  });
+
+  it('advokat senior & partner dapat mengelola anomali (pengawas)', () => {
+    for (const role of [RoleName.SENIOR_ASSOCIATE, RoleName.MANAGING_PARTNER]) {
+      expect(ROLE_PERMISSIONS[role]).toContain(key(Action.UPDATE, Subject.ANOMALY));
+      expect(ROLE_PERMISSIONS[role]).toContain(key(Action.UPDATE, Subject.INTEGRITY));
+    }
+  });
 });

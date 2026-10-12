@@ -22,6 +22,8 @@ export enum Subject {
   CITATION = 'CITATION',
   CONSULTATION = 'CONSULTATION',
   AUDIT_LOG = 'AUDIT_LOG',
+  INTEGRITY = 'INTEGRITY',
+  ANOMALY = 'ANOMALY',
 }
 
 export interface PermissionDef {
@@ -51,6 +53,11 @@ export const PERMISSIONS: PermissionDef[] = [
   { action: Action.READ, subject: Subject.REGULATION, description: 'Lihat basis peraturan' },
   ...allOf(Subject.CITATION),
   ...allOf(Subject.CONSULTATION),
+  { action: Action.CREATE, subject: Subject.INTEGRITY, description: 'Catat hash & anchoring berkas' },
+  { action: Action.READ, subject: Subject.INTEGRITY, description: 'Lihat jejak integritas & verifikasi' },
+  { action: Action.UPDATE, subject: Subject.INTEGRITY, description: 'Verifikasi integritas & konfirmasi terima' },
+  { action: Action.READ, subject: Subject.ANOMALY, description: 'Lihat flag anomali integritas' },
+  { action: Action.UPDATE, subject: Subject.ANOMALY, description: 'Akui/selesaikan flag anomali' },
 ];
 
 // Matriks role -> daftar permission ("ACTION:SUBJECT")
@@ -61,6 +68,21 @@ const citationWrite = [
   key(Action.READ, Subject.CITATION),
   key(Action.UPDATE, Subject.CITATION),
 ];
+const integrityRead = key(Action.READ, Subject.INTEGRITY);
+const integrityWrite = [
+  key(Action.CREATE, Subject.INTEGRITY),
+  key(Action.READ, Subject.INTEGRITY),
+];
+const integrityFull = [
+  key(Action.CREATE, Subject.INTEGRITY),
+  key(Action.READ, Subject.INTEGRITY),
+  key(Action.UPDATE, Subject.INTEGRITY),
+];
+const anomalyRead = key(Action.READ, Subject.ANOMALY);
+const anomalyFull = [
+  key(Action.READ, Subject.ANOMALY),
+  key(Action.UPDATE, Subject.ANOMALY),
+];
 
 export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
   [RoleName.ADMIN]: [
@@ -69,6 +91,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.AUDIT_LOG),
     key(Action.READ, Subject.REGULATION),
     ...citationAll,
+    ...integrityFull,
+    ...anomalyFull,
   ],
   [RoleName.MANAGING_PARTNER]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
@@ -82,6 +106,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.REGULATION),
     ...citationAll,
     ...allOf(Subject.CONSULTATION).map((p) => key(p.action, p.subject)),
+    ...integrityFull,
+    ...anomalyFull,
   ],
   [RoleName.SENIOR_ASSOCIATE]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
@@ -94,6 +120,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.REGULATION),
     ...citationAll,
     ...allOf(Subject.CONSULTATION).map((p) => key(p.action, p.subject)),
+    ...integrityFull,
+    ...anomalyFull,
   ],
   [RoleName.JUNIOR_ASSOCIATE]: [
     key(Action.CREATE, Subject.CASE),
@@ -109,6 +137,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.CREATE, Subject.CONSULTATION),
     key(Action.READ, Subject.CONSULTATION),
     key(Action.UPDATE, Subject.CONSULTATION),
+    ...integrityWrite,
+    anomalyRead,
   ],
   [RoleName.PARALEGAL]: [
     key(Action.READ, Subject.CASE),
@@ -119,6 +149,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.REGULATION),
     ...citationWrite,
     key(Action.READ, Subject.CONSULTATION),
+    integrityRead,
+    anomalyRead,
   ],
   [RoleName.CLIENT]: [
     key(Action.READ, Subject.CASE),
@@ -128,6 +160,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.INVOICE),
     key(Action.CREATE, Subject.CONSULTATION),
     key(Action.READ, Subject.CONSULTATION),
+    integrityRead,
   ],
   [RoleName.JUDGE]: [
     key(Action.READ, Subject.CASE),
@@ -136,6 +169,8 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.UPDATE, Subject.HEARING),
     key(Action.READ, Subject.REGULATION),
     citationRead,
+    integrityRead,
+    anomalyRead,
   ],
   [RoleName.CLERK]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
@@ -145,11 +180,14 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.JUDGMENT),
     key(Action.READ, Subject.REGULATION),
     ...citationWrite,
+    ...integrityWrite,
+    anomalyRead,
   ],
   [RoleName.BAILIFF]: [
     key(Action.READ, Subject.CASE),
     key(Action.READ, Subject.HEARING),
     key(Action.UPDATE, Subject.HEARING),
+    integrityRead,
   ],
   [RoleName.PROSECUTOR]: [
     key(Action.READ, Subject.CASE),
@@ -158,5 +196,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     key(Action.READ, Subject.HEARING),
     key(Action.READ, Subject.REGULATION),
     ...citationWrite,
+    integrityRead,
+    anomalyRead,
   ],
 };

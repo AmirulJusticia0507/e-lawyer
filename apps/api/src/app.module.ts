@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule } from './clients/clients.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { LegalSourcesModule } from './legal-sources/legal-sources.module';
+import { IntegrityModule } from './integrity/integrity.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LegalSourcesModule } from './legal-sources/legal-sources.module';
     CasesModule,
     ConsultationsModule,
     LegalSourcesModule,
+    IntegrityModule,
   ],
   controllers: [AppController],
   providers: [

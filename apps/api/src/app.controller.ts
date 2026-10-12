@@ -1,18 +1,25 @@
 import { Controller, Get } from '@nestjs/common';
 import {
   AmendmentType,
+  AnomalySeverity,
+  AnomalyStatus,
+  AnomalyType,
   CaseStatus,
   CitationDocumentType,
   CitationValidationStatus,
   ClientType,
   ConsultationMode,
   ConsultationStatus,
+  DeadlineStatus,
+  IntegrityCheckResult,
+  IntegrityEntityType,
   InteractionType,
   Jurisdiction,
   JurisprudenceStatus,
   LegalSourceStatus,
   MessageType,
   PartySide,
+  ReceiptStatus,
   RegulationType,
   VideoSessionStatus,
 } from '@prisma/client';
@@ -54,6 +61,13 @@ export class AppController {
       citationValidationStatuses: Object.values(CitationValidationStatus),
       citationDocumentTypes: Object.values(CitationDocumentType),
       jurisprudenceStatuses: Object.values(JurisprudenceStatus),
+      integrityEntityTypes: Object.values(IntegrityEntityType),
+      integrityCheckResults: Object.values(IntegrityCheckResult),
+      receiptStatuses: Object.values(ReceiptStatus),
+      anomalyTypes: Object.values(AnomalyType),
+      anomalySeverities: Object.values(AnomalySeverity),
+      anomalyStatuses: Object.values(AnomalyStatus),
+      deadlineStatuses: Object.values(DeadlineStatus),
     };
   }
 }

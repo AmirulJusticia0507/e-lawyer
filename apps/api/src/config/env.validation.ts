@@ -58,6 +58,14 @@ export class EnvironmentVariables {
   @Max(15)
   @IsOptional()
   BCRYPT_ROUNDS: number = 12;
+
+  @IsString()
+  @IsOptional()
+  TSA_URL = '';
+
+  @IsString()
+  @IsOptional()
+  INTEGRITY_HASH_ALGO = 'sha256';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {

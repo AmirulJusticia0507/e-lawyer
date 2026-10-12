@@ -130,23 +130,24 @@ Mapping ke kebutuhan utama:
 - [x] Evaluasi akurasi model + pengumpulan feedback advokat
 
 ## F9 — Keamanan & Kepatuhan
-- [x] Enkripsi at-rest AES-256 untuk semua dokumen — *prisma schema tersedia, belum di-enact pada layer middleware*
-- [x] Konfigurasi TLS 1.3 in-transit + HSTS — *sudah ada di NestJS app.module, perlu di-set di reverse proxy (nginx)*
-- [x] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS) — *ValidationPipe sudah di-set di main.ts; rate limiting & CSP masih perlu ditambahkan*
-- [x] Manajemen sesi & Redis caching — *Redis sudah di-docker-compose, koneksi Prisma sudah ada, butuh service layer*
-- [x] Audit log viewer untuk Admin (filter, export, tamper-evident) — *AuditLogInterceptor global sudah aktif, UI viewer belum dibuat*
-- [x] Kebijakan retensi & penghapusan data (compliance) — *prisma schema ada, logic cleanup belum ditulis*
-- [x] Kebijakan privasi AI (anonimisasi, no-training) — *ada di ai-draft.service.ts, perlu dipastikan di seluruh pipeline*
-- [ ] Uji penetrasi & security review — *belum dilakukan*
-- [ ] Backup & disaster recovery — *belum diimplementasikan*
+- [ ] Enkripsi at-rest AES-256 untuk semua dokumen
+- [ ] Konfigurasi TLS 1.3 in-transit + HSTS
+- [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS)
+- [ ] Manajemen sesi & Redis caching
+- [ ] Audit log viewer untuk Admin (filter, export, tamper-evident)
+- [ ] Kebijakan retensi & penghapusan data (compliance)
+- [ ] Kebijakan privasi AI (anonimisasi, no-training)
+- [ ] Uji penetrasi & security review
+- [ ] Backup & disaster recovery
+- [ ] Backup & disaster recovery
 
 ## F10 — SPA Enhancements
-- [x] Setup PWA (manifest, service worker, offline cache) — *Vite React sudah ada, perlu membuat manifest.json dan registerSW*
-- [x] Push notification di browser (reminder sidang & deadline) — *Service worker dasar bisa dikirim push, perlu FCM integration*
-- [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role) — *AuthContext + guards sudah ada di apps/web, perlu token rotation logic*
-- [x] Aksesibilitas (a11y) & tema — *Tailwind sudah support dark mode, butuh a11y audit dan aria labels*
-- [x] Optimasi performa (code splitting, lazy loading) — *belum ada React.lazy/dynamic imports, butuh implementasi*
-- [x] Rilis produksi (Vercel/Netlify/NGINX static) — *butuh config build dan deployment pipeline*
+- [ ] Setup PWA (manifest, service worker, offline cache)
+- [ ] Push notification di browser (reminder sidang & deadline)
+- [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
+- [ ] Aksesibilitas (a11y) & tema
+- [ ] Optimasi performa (code splitting, lazy loading)
+- [ ] Rilis produksi (Vercel/Netlify/NGINX static)
 
 ---
 

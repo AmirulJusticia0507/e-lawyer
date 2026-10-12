@@ -305,6 +305,7 @@ model User {
   assignmentsMade     CaseAssignment[] @relation("CaseAssignmentMadeBy")
   assignmentsHistory  CaseAssignment[] @relation("CaseAssignmentFrom")
   assignmentsReceived CaseAssignment[] @relation("CaseAssignmentTo")
+  feedbackGiven     Feedback[]         @relation("FeedbackGivenBy")
 
   consultationsRequested Consultation[] @relation("ConsultationRequestedBy")
   consultationsAssigned  Consultation[] @relation("ConsultationAssignedTo")
@@ -481,6 +482,7 @@ model Case {
   feeSchemes       FeeScheme[]
   invoices         Invoice[]
   escrowAccounts   Escrow[]
+  feedbackGiven    Feedback[]        @relation("FeedbackGivenBy")
 
   @@index([filedByUserId])
   @@index([assignedToUserId])
@@ -512,6 +514,20 @@ model TimeEntry {
   @@index([caseId, startedAt])
   @@index([userId, startedAt])
   @@index([status])
+}
+
+model Feedback {
+  id              String          @id @default(uuid()) @db.Uuid
+  caseId          String?         @db.Uuid
+  userId          String          @db.Uuid
+  predictionType  String          // 'case_strength', 'verdict_prediction', 'citations'
+  predictedValue  String
+  actualOutcome   String?
+  rating          Int?            // 1-5 scale
+  feedbackText    String?
+  createdAt       DateTime        @default(now())
+  user          User          @relation("FeedbackGivenBy", fields: [userId], references: [id], onDelete: SetNull)
+  case        Case?         @relation("FeedbackGivenBy", fields: [caseId], references: [id], onDelete: SetNull)
 }
 
 model FeeScheme {

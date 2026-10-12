@@ -62,6 +62,37 @@ export class BillingService {
     });
   }
 
+reconcilePayments(invoiceId: string) {
+    const invoice = this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) throw new NotFoundException('Invoice tidak ditemukan');
+
+    const payments = this.prisma.payment.findMany({
+      where: { invoiceId, status: 'CONFIRMED' },
+    }).then((payments: any[]) => payments);
+
+    const totalPaid = (payments as any[])?.reduce(
+      (sum: number, p: any) => sum + Number(p.amount),
+      0,
+    );
+    const totalAmount = Number(invoice.totalAmount ?? 0);
+
+    const isPaid = totalPaid >= totalAmount;
+
+    const newStatus = isPaid ? 'PAID' : 'PARTIALLY_PAID';
+    this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: newStatus },
+    });
+
+    return {
+      invoiceId,
+      totalAmount,
+      totalPaid,
+      isPaid,
+      status: newStatus,
+    };
+  }
+
   // Invoice Generator
 
   createInvoice(caseId: string, clientId: string, items: any[], subtotal: number, taxRate: number) {

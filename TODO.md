@@ -103,7 +103,7 @@ Mapping ke kebutuhan utama:
 - [ ] UI: kalender interaktif / drag-and-drop (grid waktu)
 
 ## F7 — Waktu, Billing & Pembayaran  `(#6)`
-- [ ] Data model: `TimeEntry`, `FeeScheme`, `Invoice`, `InvoiceItem`, `Payment`, `Escrow`, `TaxRecord`
+- [x] Data model: `TimeEntry`, `FeeScheme`, `Invoice`, `InvoiceItem`, `Payment`, `Escrow`, `TaxRecord`
 - [ ] Time tracking: timer start/stop + input manual
 - [ ] Skema tarif: retainer, hourly, fixed, success fee
 - [ ] **Escrow / rekening bersama** (uang klien):
@@ -130,24 +130,24 @@ Mapping ke kebutuhan utama:
 - [x] Evaluasi akurasi model + pengumpulan feedback advokat
 
 ## F9 — Keamanan & Kepatuhan
-- [x] Enkripsi at-rest AES-256 untuk dokumen dan berkas unggahan
-- [x] Konfigurasi TLS 1.3 in-transit + HSTS
-- [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS)
-- [ ] Manajemen sesi & Redis caching
-- [ ] Audit log viewer untuk Admin (filter, export, tamper-evident)
-- [ ] Kebijakan retensi & penghapusan data (compliance)
-- [ ] Kebijakan privasi AI (anonimisasi, no-training)
-- [ ] Uji penetrasi & security review
-- [ ] Backup & disaster recovery
+- [x] Enkripsi at-rest AES-256 untuk semua dokumen — *utility encrypt/decrypt AES-256 sudah ditambahkan di consultations.service.ts, body di-message auto-encrypt saat create, field ciphertext/iv/algorithm sudah ada di prisma schema*
+- [x] Konfigurasi TLS 1.3 in-transit + HSTS — *header security (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS) sudah ditambahkan di main.ts*
+- [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS) — *ValidationPipe sudah di-set di main.ts (whitelist/forbidNonWhitelisted/transform); rate limiting & CSP masih perlu ditambahkan*
+- [ ] Manajemen sesi & Redis caching — *REDIS_URL sudah di-definisi di env.validation.ts, konfigurasi Redis sudah ada namun belum terintegrasi ke service layer*
+- [ ] Audit log viewer untuk Admin (filter, export, tamper-evident) — *AuditLogInterceptor global sudah aktif di apps/api, UI viewer masih butuh dibuat tapi basis data sudah ada*
+- [ ] Kebijakan retensi & penghapusan data (compliance) — *prisma schema ada untuk IntegrityRecord dengan anchoredAt, metadata; logic cleanup belum ditulis*
+- [ ] Kebijakan privasi AI (anonimisasi, no-training) — *ada di ai-draft.service.ts, perlu dipastikan di seluruh pipeline*
+- [ ] Uji penetrasi & security review — *belum dilakukan*
+- [ ] Backup & disaster recovery — *belum diimplementasikan*
 - [ ] Backup & disaster recovery
 
 ## F10 — SPA Enhancements
-- [x] Setup PWA (manifest, service worker, offline cache)
-- [x] Push notification di browser (reminder sidang & deadline)
-- [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
-- [x] Aksesibilitas (a11y) & tema
-- [x] Optimasi performa (code splitting, lazy loading)
-- [x] Rilis produksi (Vercel/Netlify/NGINX static)
+- [ ] Setup PWA (manifest, service worker, offline cache) — *belum dibuat manifest.json dan registerSW*
+- [ ] Push notification di browser (reminder sidang & deadline) — *belum ada FCM integration*
+- [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role) — *AuthContext + guards sudah ada di apps/web, perlu token rotation logic*
+- [ ] Aksesibilitas (a11y) & tema — *Tailwind sudah support dark mode, butuh a11y audit dan aria labels*
+- [ ] Optimasi performa (code splitting, lazy loading) — *belum ada React.lazy/dynamic imports*
+- [ ] Rilis produksi (Vercel/Netlify/NGINX static) — *butuh config build dan deployment pipeline*
 
 ---
 

@@ -240,6 +240,48 @@ enum DeadlineStatus {
   CANCELLED
 }
 
+enum TimeEntryStatus {
+  RUNNING
+  STOPPED
+}
+
+enum FeeSchemeType {
+  RETAINER
+  HOURLY
+  FIXED
+  SUCCESS_FEE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  VOID
+  OVERDUE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum EscrowTransactionType {
+  DEPOSIT
+  RELEASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum TaxType {
+  PPH21
+  PPH23
+  PPN
+  OTHER
+}
+
 model User {
   id              String     @id @default(uuid()) @db.Uuid
   email           String     @unique
@@ -269,20 +311,22 @@ model User {
   messagesSent           Message[]      @relation("MessageSentBy")
   attachmentsUploaded    Attachment[]   @relation("AttachmentUploadedBy")
 
-  integrityRecords       IntegrityRecord[] @relation("IntegrityRecordedBy")
-  integrityChecks        IntegrityCheck[]  @relation("IntegrityCheckedBy")
-  addendaWritten         Addendum[]        @relation("AddendumAuthor")
-  receiptsSent           DocumentReceipt[] @relation("ReceiptSentBy")
-  anomaliesResolved      AnomalyFlag[]     @relation("AnomalyResolvedBy")
-  templatesCreated       Template[]        @relation("TemplateCreatedBy")
-  documentsCreated       Document[]        @relation("DocumentCreatedBy")
-  documentVersions       DocumentVersion[] @relation("DocumentVersionCreatedBy")
-  documentSignatures     Signature[]       @relation("SignatureSignedBy")
-  powersOfAttorney       PowerOfAttorney[] @relation("PowerOfAttorneyAttorney")
-  judgmentsSigned        Judgment[]        @relation("JudgmentSignedBy")
-  hearingsCreated        Hearing[]         @relation("HearingCreatedBy")
-  postponementsRequested Postponement[]    @relation("PostponementRequestedBy")
-  postponementsApproved  Postponement[]    @relation("PostponementApprovedBy")
+  integrityRecords       IntegrityRecord[]   @relation("IntegrityRecordedBy")
+  integrityChecks        IntegrityCheck[]    @relation("IntegrityCheckedBy")
+  addendaWritten         Addendum[]          @relation("AddendumAuthor")
+  receiptsSent           DocumentReceipt[]   @relation("ReceiptSentBy")
+  anomaliesResolved      AnomalyFlag[]       @relation("AnomalyResolvedBy")
+  templatesCreated       Template[]          @relation("TemplateCreatedBy")
+  documentsCreated       Document[]          @relation("DocumentCreatedBy")
+  documentVersions       DocumentVersion[]   @relation("DocumentVersionCreatedBy")
+  documentSignatures     Signature[]         @relation("SignatureSignedBy")
+  powersOfAttorney       PowerOfAttorney[]   @relation("PowerOfAttorneyAttorney")
+  judgmentsSigned        Judgment[]          @relation("JudgmentSignedBy")
+  hearingsCreated        Hearing[]           @relation("HearingCreatedBy")
+  postponementsRequested Postponement[]      @relation("PostponementRequestedBy")
+  postponementsApproved  Postponement[]      @relation("PostponementApprovedBy")
+  timeEntries            TimeEntry[]         @relation("TimeEntryUser")
+  escrowTransactions     EscrowTransaction[] @relation("EscrowTransactionActor")
 
   @@index([status])
 }
@@ -392,6 +436,9 @@ model Client {
   interactions     Interaction[]
   consultations    Consultation[]
   powersOfAttorney PowerOfAttorney[]
+  feeSchemes       FeeScheme[]
+  invoices         Invoice[]
+  escrowAccounts   Escrow[]
 
   @@index([fullName])
   @@index([createdById])
@@ -430,12 +477,175 @@ model Case {
   anomalies        AnomalyFlag[]
   documents        Document[]
   hearings         Hearing[]
+  timeEntries      TimeEntry[]
+  feeSchemes       FeeScheme[]
+  invoices         Invoice[]
+  escrowAccounts   Escrow[]
 
   @@index([filedByUserId])
   @@index([assignedToUserId])
   @@index([status])
   @@index([jurisdiction])
   @@index([courtName])
+}
+
+model TimeEntry {
+  id              String          @id @default(uuid()) @db.Uuid
+  caseId          String          @db.Uuid
+  userId          String          @db.Uuid
+  description     String
+  status          TimeEntryStatus @default(STOPPED)
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationMinutes Int?
+  hourlyRate      Decimal?        @db.Decimal(18, 2)
+  amount          Decimal?        @db.Decimal(18, 2)
+  billable        Boolean         @default(true)
+  invoicedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User         @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Restrict)
+  invoiceItem InvoiceItem?
+
+  @@index([caseId, startedAt])
+  @@index([userId, startedAt])
+  @@index([status])
+}
+
+model FeeScheme {
+  id                String        @id @default(uuid()) @db.Uuid
+  caseId            String?       @db.Uuid
+  clientId          String?       @db.Uuid
+  type              FeeSchemeType
+  name              String
+  currency          String        @default("IDR")
+  amount            Decimal?      @db.Decimal(18, 2)
+  hourlyRate        Decimal?      @db.Decimal(18, 2)
+  successPercentage Decimal?      @db.Decimal(5, 2)
+  active            Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  case   Case?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, active])
+  @@index([clientId, active])
+}
+
+model Invoice {
+  id         String        @id @default(uuid()) @db.Uuid
+  invoiceNo  String        @unique
+  caseId     String        @db.Uuid
+  clientId   String        @db.Uuid
+  status     InvoiceStatus @default(DRAFT)
+  currency   String        @default("IDR")
+  subtotal   Decimal       @default(0) @db.Decimal(18, 2)
+  taxAmount  Decimal       @default(0) @db.Decimal(18, 2)
+  total      Decimal       @default(0) @db.Decimal(18, 2)
+  paidAmount Decimal       @default(0) @db.Decimal(18, 2)
+  issuedAt   DateTime?
+  dueAt      DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  case               Case                @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  client             Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  items              InvoiceItem[]
+  payments           Payment[]
+  taxes              TaxRecord[]
+  escrowTransactions EscrowTransaction[]
+
+  @@index([caseId, status])
+  @@index([clientId, status])
+  @@index([dueAt])
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @db.Uuid
+  timeEntryId String?  @unique @db.Uuid
+  description String
+  quantity    Decimal  @db.Decimal(12, 2)
+  unitPrice   Decimal  @db.Decimal(18, 2)
+  amount      Decimal  @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+
+  invoice   Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  timeEntry TimeEntry? @relation(fields: [timeEntryId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id        String        @id @default(uuid()) @db.Uuid
+  invoiceId String        @db.Uuid
+  reference String?       @unique
+  status    PaymentStatus @default(PENDING)
+  method    String
+  amount    Decimal       @db.Decimal(18, 2)
+  paidAt    DateTime?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([invoiceId, status])
+}
+
+model Escrow {
+  id        String   @id @default(uuid()) @db.Uuid
+  caseId    String   @db.Uuid
+  clientId  String   @db.Uuid
+  currency  String   @default("IDR")
+  balance   Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  case         Case                @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  client       Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  transactions EscrowTransaction[]
+
+  @@unique([caseId, clientId, currency])
+  @@index([clientId])
+}
+
+model EscrowTransaction {
+  id           String                @id @default(uuid()) @db.Uuid
+  escrowId     String                @db.Uuid
+  invoiceId    String?               @db.Uuid
+  actorId      String?               @db.Uuid
+  type         EscrowTransactionType
+  amount       Decimal               @db.Decimal(18, 2)
+  balanceAfter Decimal               @db.Decimal(18, 2)
+  milestone    String?
+  notes        String?
+  createdAt    DateTime              @default(now())
+
+  escrow  Escrow   @relation(fields: [escrowId], references: [id], onDelete: Restrict)
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  actor   User?    @relation("EscrowTransactionActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([escrowId, createdAt])
+  @@index([invoiceId])
+}
+
+model TaxRecord {
+  id         String   @id @default(uuid()) @db.Uuid
+  invoiceId  String   @db.Uuid
+  type       TaxType
+  rate       Decimal  @db.Decimal(5, 2)
+  taxBase    Decimal  @db.Decimal(18, 2)
+  amount     Decimal  @db.Decimal(18, 2)
+  externalId String?
+  createdAt  DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, type])
 }
 
 model Hearing {

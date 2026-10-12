@@ -147,7 +147,7 @@ Mapping ke kebutuhan utama:
 - [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
 - [x] Aksesibilitas (a11y) & tema
 - [x] Optimasi performa (code splitting, lazy loading)
-- [ ] Rilis produksi (Vercel/Netlify/NGINX static)
+- [x] Rilis produksi (Vercel/Netlify/NGINX static)
 
 ---
 

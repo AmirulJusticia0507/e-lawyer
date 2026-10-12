@@ -299,6 +299,20 @@ tsquery mentah.
 
 ---
 
+## Deployment SPA
+
+Frontend dapat dirilis melalui Vercel (`vercel.json`), Netlify
+(`netlify.toml`), atau image NGINX statis:
+
+```bash
+docker build -f apps/web/Dockerfile -t elawyer-web .
+docker run --rm -p 8080:80 elawyer-web
+```
+
+Tetapkan `VITE_API_URL` saat build ke URL API publik, mengikuti
+`apps/web/.env.production.example`. Semua target menyediakan fallback routing
+SPA; aset fingerprint di-cache permanen, sedangkan service worker tidak.
+
 ## Konfigurasi Environment
 
 Salin `.env.example` menjadi `.env` lalu sesuaikan variabel berikut:

@@ -55,7 +55,7 @@ import type {
   VideoSession,
 } from './types';
 
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 export class ApiError extends Error {
   status: number;

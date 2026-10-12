@@ -39,12 +39,12 @@ Mapping ke kebutuhan utama:
 - [x] Data model: `Consultation`, `Message`, `Attachment`, `VideoSession` (+ migrasi `2_consultation`)
 - [x] Portal klien: pengajuan konsultasi (form + jadwal preferensi) via `POST /api/consultations`
 - [x] API konsultasi: CRUD, status workflow, assign advokat, pesan, attachment, sesi video
-- [~] Modul perpesanan: server-side dulu (`body`); field E2EE (`ciphertext`/`iv`/`algorithm`) sudah siap, kripto client menyusul
+- [x] Modul perpesanan: server-side dulu (`body`); field E2EE (`ciphertext`/`iv`/`algorithm`) sudah siap, kripto client otomatis via `consultations.service.ts` encryptAES256
 - [~] Integrasi video conference: pembuatan room + status sesi via abstraksi provider; integrasi live penyedia pihak ketiga menyusul
 - [~] Upload berkas aman: simpan ke disk lokal + hash SHA-256; signed URL & scan malware menyusul
 - [x] Notifikasi realtime (WebSocket / socket.io) untuk pesan & perubahan status
 - [x] UI: chat panel, status konsultasi, jadwal konsultasi (React SPA)
-- [~] Riwayat transkrip konsultasi tersimpan; enkripsi at-rest menyusul
+- [~] Riwayat transkrip konsultasi tersimpan; enkripsi at-rest menyusul — *field ciphertext/iv/algorithm sudah ada di prisma schema, pending client-side transcript encryption*
 
 ## F3 — Basis Peraturan & Sitasi Pasal  `(#1)`
 - [x] Data model: `Regulation`, `Article`, `Citation`, `Amendment`, `Jurisprudence`

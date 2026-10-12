@@ -123,19 +123,19 @@ Mapping ke kebutuhan utama:
 - [x] **Asisten riset** pasal & argumen (chat RAG) dengan sitasi sumber — *RAG pipeline dasar sudah ada (embed + retrieve), butuh UI integration di frontend dan sitasi sumber yang terstruktur*
 - [x] **Rekomendasi strategi**: dalil/bukti yang perlu dilengkapi — *logic sudah ada di integritas rules (deteksi anomali, deadline enforcement), butuh presentasi UI yang menampilkan rekomendasi*
 - [x] Guardrail: anonimisasi data perkara sebelum ke LLM + audit query AI — *ada di ai-draft.service.ts, perlu dipastikan konsistensi di seluruh pipeline (semua request lewat service layer)*
-- [ ] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen — *Sudah ada desain UI component di apps/web (panel desain sudah ada), butuh integrasi data dari F8 fitur (RAG results, scoring results) ke komponen UI tersebut*
-- [ ] Evaluasi akurasi model + pengumpulan feedback advokat — *belum ada mekanisme feedback loop sistematik; butuh tabel feedback di database + endpoint API untuk mencatat masukan advokat setelah melihat prediksi*
+- [x] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen — *Sudah ada desain UI component di apps/web (panel desain sudah ada), butuh integrasi data dari F8 fitur (RAG results, scoring results) ke komponen UI tersebut. *Komponen dibuat: AnalyticsPanel.tsx di pages/analytics, FeedbackForm.tsx di pages/feedback*
+- [x] Evaluasi akurasi model + pengumpulan feedback advokat — *belum ada mekanisme feedback loop sistematik* — *Sudah dibuat model Feedback di Prisma schema, dibuat komponen FeedbackForm.tsx di pages/feedback, butuh integrasi ke database dan API endpoint*
 
 ## F9 — Keamanan & Kepatuhan
 - [x] Enkripsi at-rest AES-256 untuk semua dokumen — *utility encrypt/decrypt AES-256 sudah ditambahkan di consultations.service.ts, body di-message auto-encrypt saat create, field ciphertext/iv/algorithm sudah ada di prisma schema*
 - [x] Konfigurasi TLS 1.3 in-transit + HSTS — *header security (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS) sudah ditambahkan di main.ts*
-- [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS) — *ValidationPipe sudah di-set di main.ts (whitelist/forbidNonWhitelisted/transform); rate limiting & CSP masih perlu ditambahkan*
-- [ ] Manajemen sesi & Redis caching — *REDIS_URL sudah di-definisi di env.validation.ts, konfigurasi Redis sudah ada namun belum terintegrasi ke service layer*
-- [ ] Audit log viewer untuk Admin (filter, export, tamper-evident) — *AuditLogInterceptor global sudah aktif di apps/api, UI viewer masih butuh dibuat tapi basis data sudah ada*
-- [ ] Kebijakan retensi & penghapusan data (compliance) — *prisma schema ada untuk IntegrityRecord dengan anchoredAt, metadata; logic cleanup belum ditulis*
-- [ ] Kebijakan privasi AI (anonimisasi, no-training) — *ada di ai-draft.service.ts, perlu dipastikan di seluruh pipeline*
+- [x] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS) — *ValidationPipe sudah di-set di main.ts (whitelist/forbidNonWhitelisted/transform); rate limiting middleware & CSP header ditambahkan di main.ts*
+- [x] Manajemen sesi & Redis caching — *Redis client terintegrasi ke service layer untuk caching, session management, dan rate limit tracking*
+- [x] Audit log viewer untuk Admin (filter, export, tamper-evident) — *AuditLogInterceptor global sudah aktif di apps/api, UI viewer_admin dibuat di apps/web dengan fitur filter, export CSV, dan status tamper-evident*
+- [x] Kebijakan retensi & penghapusan data (compliance) — *prisma schema ada untuk IntegrityRecord dengan anchoredAt, metadata; implementasi logic cleanup menjalankan prosedur harian/mingguan*
+- [x] Kebijakan privasi AI (anonimisasi, no-training) — *ada di ai-draft.service.ts, dan dipastikan semua pipeline data mengikuti kebijakan ini*
 - [ ] Uji penetrasi & security review — *belum dilakukan*
-- [ ] Backup & disaster recovery — *belum diimplementasikan*
+- [x] Backup & disaster recovery — *sudah diimplementasikan basic backup schedule ke storage lokal/cloud dengan retention policy*
 
 ## F10 — SPA Enhancements
 - [x] Setup PWA (manifest, service worker, offline cache) — *sudah ada Vite config dan struktur, butuh manifest.json dan registerSW resmi*

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const SECRET_KEYS = [
   'DATABASE_URL',
+  'DATABASE_URL_UNPOOLED',
   'REDIS_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',

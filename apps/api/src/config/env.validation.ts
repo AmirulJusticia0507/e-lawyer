@@ -37,6 +37,10 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  DATABASE_URL_UNPOOLED?: string;
+
+  @IsString()
+  @IsOptional()
   REDIS_URL = 'redis://localhost:6379';
 
   @IsString()

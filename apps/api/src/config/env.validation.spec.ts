@@ -20,6 +20,14 @@ describe('validateEnv', () => {
     expect(result.BCRYPT_ROUNDS).toBe(12);
   });
 
+  it('menerima URL database direct opsional untuk migrasi', () => {
+    const result = validateEnv({
+      ...base,
+      DATABASE_URL_UNPOOLED: 'postgresql://localhost/elawyer',
+    });
+    expect(result.DATABASE_URL_UNPOOLED).toBe('postgresql://localhost/elawyer');
+  });
+
   it('memakai endpoint AI yang disediakan dan menerima model dari environment', () => {
     const result = validateEnv({ ...base, AI_MODEL: 'router/model-slug' });
     expect(result.AI_BASE_URL).toBe('https://griphubrouter.web.id/v1');

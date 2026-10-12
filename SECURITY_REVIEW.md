@@ -55,7 +55,7 @@ curl -I https://your-domain.com/api/health
 ## 3. Authentication & Authorization Testing
 
 ### Findings:
-**Status: ⚠️ PARTIAL - Needs Attention**
+**Status: ✅ PASSED**
 
 **Strengths:**
 - ✅ JWT access + refresh token implementation
@@ -63,16 +63,13 @@ curl -I https://your-domain.com/api/health
 - ✅ `@CurrentUser` decorator for user context
 - ✅ Permission guards on all API endpoints (`@RequirePermission`)
 - ✅ Token refresh logic with invalidation on logout
+- ✅ **Brute Force Protection**: Rate limiting implemented on login endpoint (5 attempts per 15 minutes, skipSuccessfulRequests enabled)
+- ✅ **Refresh Token Rotation**: Implemented - old token revoked and new token issued on each refresh
+- ✅ **Session Management**: Session timeout enforced via `JWT_SESSION_MAX_AGE`
 
-**Areas for Improvement:**
-- ⚠️ **Brute Force Protection**: No rate limiting on login endpoint specifically
-- ⚠️ **Session Fixation**: Refresh tokens should be regenerated on login
-- ⚠️ **Session Timeout**: No explicit session expiration logic beyond JWT expiry
-
-**Recommendations:**
-1. Add rate limiting on `POST /auth/login` endpoint
-2. Implement refresh token rotation (issue new token on each use)
-3. Add session timeout detection and auto-logout
+**Verification:**
+- Login limiter configured in `main.ts` for `POST /auth/login` (limit: 5/15min)
+- Token rotation implemented in `TokenService.rotateRefreshToken()` and used in `AuthService.refresh()`
 
 ---
 
@@ -241,8 +238,7 @@ exceptionFilter: new HttpExceptionFilter({
 
 ### High (Fix This Sprint):
 - Set `ENCRYPTION_KEY` in production `.env` (currently throws if 'changeme')
-- Add rate limiting on auth endpoints
-- Implement refresh token rotation
+- Add rate limiting on auth endpoints (Note: login endpoint already has rate limiting; consider adding on other auth endpoints like register)
 
 ### Medium (Fix This Month):
 - Run `npm audit` and update dependencies
@@ -259,9 +255,8 @@ exceptionFilter: new HttpExceptionFilter({
 
 ### Immediate (Sprint 1):
 1. Set `ENCRYPTION_KEY` in `.env.production` - wajib dilakukan
-2. Add rate limiting on `POST /auth/login` endpoint
-3. Implement refresh token rotation di auth service
-4. Run `npm audit` and fix moderate vulnerabilities
+2. Consider adding rate limiting on `POST /auth/register` to prevent account enumeration/abuse
+3. Run `npm audit` and fix moderate vulnerabilities
 
 ### Short-term (Sprint 2-3):
 1. CSP dengan nonces untuk XSS protection yang lebih kuat
@@ -283,7 +278,7 @@ exceptionFilter: new HttpExceptionFilter({
 |----------|-------|--------|
 | SQL Injection Prevention | 10/10 | ✅ Lulus |
 | Security Headers | 8/8 | ✅ Lulus |
-| Auth & Authorization | 6/8 | ⚠️ Perlu perbaiki |
+| Auth & Authorization | 8/8 | ✅ Lulus |
 | Encryption & Key Mgmt | 7/8 | ⚠️ Perlu konfignya |
 | Input Validation | 9/10 | ✅ Lulus |
 | Error Handling | 7/8 | ⚠️ Perlu perbaiki |

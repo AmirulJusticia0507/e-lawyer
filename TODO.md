@@ -49,8 +49,8 @@ Mapping ke kebutuhan utama:
 ## F3 — Basis Peraturan & Sitasi Pasal  `(#1)`
 - [x] Data model: `Regulation`, `Article`, `Citation`, `Amendment`, `Jurisprudence`
 - [x] Pipeline ingest peraturan (UU, Perma, SEMA, KUHPerdata, KUHP, HIR/RBg, dll.)
-- [ ] Katalog per-pasal + metadata (nomor, tahun, pasal, ayat, status)
-- [ ] Pelacakan versi berbasis tanggal (berlaku / diubah / dicabut)
+- [x] Katalog per-pasal + metadata (nomor, tahun, pasal, ayat, status)
+- [x] Pelacakan versi berbasis tanggal (berlaku / diubah / dicabut)
 - [ ] Validasi sitasi: tolak pasal yang dicabut/diubah, tandai konflik
 - [ ] Tautkan pasal ke dokumen (gugatan/jawaban/putusan)
 - [ ] Pencarian full-text (Postgres FTS/Elasticsearch) + pencarian semantik (pgvector)

@@ -244,6 +244,22 @@ npm run legal:ingest --workspace=@elawyer/api -- --file data/legal-sources/examp
 Pipeline bersifat idempotent berdasarkan `slug` peraturan dan `unitKey` pasal.
 Seluruh perubahan dalam satu dataset dijalankan dalam satu transaksi.
 
+### API Basis Peraturan
+
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| GET | `/api/regulations` | Katalog peraturan (filter `type`, `status`, `jurisdiction`, `year`, `search`, `at`) |
+| GET | `/api/regulations/:slug` | Detail peraturan + riwayat versi (`at` = tanggal acuan) |
+| GET | `/api/regulations/:slug/articles` | Katalog pasal sebuah peraturan |
+| GET | `/api/articles` | Katalog pasal lintas peraturan |
+| GET | `/api/articles/lookup` | Lookup pasal via `regulationSlug` + `articleNumber` (+`paragraphNumber`, `at`) |
+| GET | `/api/articles/:id` | Detail pasal + linimasa versi |
+
+Setiap respons menyertakan `applicability` (`Berlaku`, `Belum Berlaku`,
+`Berakhir Berlaku`, `Dicabut`, `Rancangan`, `Status Tidak Diketahui`) dan
+`statusAt` yang dihitung dari periode berlaku beserta amendment yang sudah
+berlaku pada tanggal acuan.
+
 ---
 
 ## Konfigurasi Environment

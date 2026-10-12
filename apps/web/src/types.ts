@@ -125,6 +125,11 @@ export interface MetaInfo {
   consultationStatuses: string[];
   messageTypes: string[];
   videoSessionStatuses: string[];
+  regulationTypes: string[];
+  legalSourceStatuses: string[];
+  amendmentTypes: string[];
+  citationValidationStatuses: string[];
+  jurisprudenceStatuses: string[];
 }
 
 export interface ConsultationAttachment {

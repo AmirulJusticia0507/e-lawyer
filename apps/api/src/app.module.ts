@@ -12,6 +12,7 @@ import { getEnvironmentFilePaths } from './config/environment-files';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule } from './clients/clients.module';
 import { ConsultationsModule } from './consultations/consultations.module';
+import { LegalSourcesModule } from './legal-sources/legal-sources.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ConsultationsModule } from './consultations/consultations.module';
     ClientsModule,
     CasesModule,
     ConsultationsModule,
+    LegalSourcesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -17,6 +17,18 @@ export type PartySide =
   | 'THIRD_PARTY'
   | 'OTHER';
 export type InteractionType = 'CALL' | 'EMAIL' | 'MEETING' | 'HEARING' | 'DOCUMENT' | 'OTHER';
+export type DocumentType =
+  | 'POWER_OF_ATTORNEY'
+  | 'COMPLAINT'
+  | 'ANSWER'
+  | 'REPLY'
+  | 'DUPLICATION'
+  | 'CONCLUSION'
+  | 'JUDGMENT'
+  | 'OTHER';
+export type DocumentStatus = 'DRAFT' | 'SUBMITTED' | 'SIGNED' | 'ARCHIVED';
+export type PowerOfAttorneyType = 'GENERAL' | 'SPECIFIC' | 'SPECIAL';
+export type JudgmentVerdict = 'GRANTED' | 'REJECTED' | 'INADMISSIBLE' | 'SETTLED' | 'DEFAULT' | 'OTHER';
 
 export type ConsultationMode = 'CHAT' | 'VIDEO' | 'PHONE' | 'IN_PERSON';
 export type ConsultationStatus = 'REQUESTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
@@ -113,6 +125,55 @@ export interface CaseDetail extends Omit<CaseSummary, 'parties' | '_count'> {
   parties: Party[];
   interactions: Interaction[];
   assignments: Assignment[];
+}
+
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  documentType: DocumentType;
+  jurisdiction: Jurisdiction;
+  version: number;
+  content: string;
+  isActive: boolean;
+}
+
+export interface LegalDocument {
+  id: string;
+  caseId: string;
+  templateId?: string | null;
+  type: DocumentType;
+  status: DocumentStatus;
+  title: string;
+  content: string;
+  sha256?: string | null;
+  submittedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  case?: Pick<CaseSummary, 'id' | 'caseNumber' | 'title' | 'jurisdiction'>;
+  template?: { id: string; name: string; version: number } | null;
+  _count?: { versions: number; signatures: number };
+  versions?: { id: string; version: number; content: string; changeSummary?: string | null; createdAt: string }[];
+  signatures?: {
+    id: string;
+    signerName: string;
+    signerRole: string;
+    status: string;
+    metadata?: { providerStatus?: string } | null;
+  }[];
+  powerOfAttorney?: {
+    principalName: string;
+    principalNik?: string | null;
+    attorneyName: string;
+    attorneyLicenseNo?: string | null;
+    type: PowerOfAttorneyType;
+  } | null;
+  judgment?: {
+    verdict: JudgmentVerdict;
+    caseSummary: string;
+    considerations: string;
+    disposition: string;
+    closing: string;
+  } | null;
 }
 
 export interface MetaInfo {

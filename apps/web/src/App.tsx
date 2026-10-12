@@ -13,6 +13,7 @@ import Integritas from './pages/Integritas';
 import Login from './pages/Login';
 import Regulations from './pages/Regulations';
 import RegulationDetail from './pages/RegulationDetail';
+import Documents from './pages/Documents';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
@@ -122,6 +123,16 @@ export default function App() {
             <RequireAuth>
               <Layout>
                 <Integritas />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/dokumen"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Documents />
               </Layout>
             </RequireAuth>
           }

@@ -164,7 +164,9 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
   ],
   [RoleName.JUDGE]: [
     key(Action.READ, Subject.CASE),
+    key(Action.CREATE, Subject.DOCUMENT),
     key(Action.READ, Subject.DOCUMENT),
+    key(Action.UPDATE, Subject.DOCUMENT),
     ...allOf(Subject.JUDGMENT).map((p) => key(p.action, p.subject)),
     key(Action.UPDATE, Subject.HEARING),
     key(Action.READ, Subject.REGULATION),
@@ -175,7 +177,9 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
   [RoleName.CLERK]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
     key(Action.READ, Subject.CLIENT),
+    key(Action.CREATE, Subject.DOCUMENT),
     key(Action.READ, Subject.DOCUMENT),
+    key(Action.UPDATE, Subject.DOCUMENT),
     ...allOf(Subject.HEARING).map((p) => key(p.action, p.subject)),
     key(Action.READ, Subject.JUDGMENT),
     key(Action.READ, Subject.REGULATION),

@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <NavLink to="/perkara">Perkara</NavLink>
         <NavLink to="/klien">Klien</NavLink>
         <NavLink to="/peraturan">Peraturan</NavLink>
+        <NavLink to="/dokumen">Dokumen</NavLink>
         <NavLink to="/konsultasi">Konsultasi</NavLink>
         <NavLink to="/integritas">Integritas</NavLink>
         <span className="spacer" />

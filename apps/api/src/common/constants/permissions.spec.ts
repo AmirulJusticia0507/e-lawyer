@@ -43,6 +43,12 @@ describe('RBAC permission matrix', () => {
     expect(ROLE_PERMISSIONS[RoleName.JUDGE]).not.toContain(key(Action.CREATE, Subject.CITATION));
   });
 
+  it('JUDGE dapat membuat dokumen dan putusan, CLIENT tidak dapat membuat putusan', () => {
+    expect(ROLE_PERMISSIONS[RoleName.JUDGE]).toContain(key(Action.CREATE, Subject.DOCUMENT));
+    expect(ROLE_PERMISSIONS[RoleName.JUDGE]).toContain(key(Action.CREATE, Subject.JUDGMENT));
+    expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.CREATE, Subject.JUDGMENT));
+  });
+
   it('CLIENT tidak mendapat akses sitasi perkara', () => {
     expect(ROLE_PERMISSIONS[RoleName.CLIENT]).not.toContain(key(Action.READ, Subject.CITATION));
   });

@@ -24,6 +24,9 @@ import type {
   ConsultationSummary,
   DeadlineStatus,
   DocumentReceiptItem,
+  DocumentTemplate,
+  DocumentType,
+  LegalDocument,
   Interaction,
   InteractionType,
   IntegrityCheck,
@@ -195,6 +198,44 @@ export const api = {
     request<Party>(`/cases/${id}/parties`, { method: 'POST', body: dto }),
   addInteraction: (id: string, dto: { type: InteractionType; title: string; description?: string; occurredAt?: string }) =>
     request<Interaction>(`/cases/${id}/interactions`, { method: 'POST', body: dto }),
+
+  // Dokumen, surat kuasa, putusan (F5)
+  listDocuments: (params: { caseId?: string; type?: DocumentType; page?: number; limit?: number } = {}) =>
+    request<{ items: LegalDocument[]; meta: Paginated<LegalDocument>['meta'] }>(`/documents${buildQuery(params)}`),
+  getDocument: (id: string) => request<LegalDocument>(`/documents/${id}`),
+  listDocumentTemplates: (type?: DocumentType) =>
+    request<DocumentTemplate[]>(`/documents/templates${buildQuery({ type })}`),
+  createDocumentTemplate: (dto: {
+    name: string;
+    documentType: DocumentType;
+    jurisdiction: Jurisdiction;
+    content?: string;
+  }) => request<DocumentTemplate>('/documents/templates', { method: 'POST', body: dto }),
+  createDocumentTemplateVersion: (
+    id: string,
+    dto: { name: string; documentType: DocumentType; jurisdiction: Jurisdiction; content?: string },
+  ) => request<DocumentTemplate>(`/documents/templates/${id}/versions`, { method: 'POST', body: dto }),
+  archiveDocumentTemplate: (id: string) =>
+    request<{ success: true }>(`/documents/templates/${id}`, { method: 'DELETE' }),
+  createDocument: (dto: {
+    caseId: string;
+    templateId?: string;
+    type: DocumentType;
+    title: string;
+    content?: string;
+    data?: Record<string, unknown>;
+    powerOfAttorney?: Record<string, unknown>;
+    judgment?: Record<string, unknown>;
+  }) => request<LegalDocument>('/documents', { method: 'POST', body: dto }),
+  updateDocument: (id: string, dto: { title?: string; content?: string; changeSummary?: string }) =>
+    request<LegalDocument>(`/documents/${id}`, { method: 'PATCH', body: dto }),
+  submitDocument: (id: string) =>
+    request<LegalDocument>(`/documents/${id}/submit`, { method: 'POST', body: {} }),
+  requestDocumentSignature: (id: string, dto: { signerName: string; signerRole: string; signerEmail?: string }) =>
+    request<LegalDocument['signatures'] extends (infer T)[] | undefined ? T : never>(
+      `/documents/${id}/signatures`,
+      { method: 'POST', body: dto },
+    ),
 
   // Consultations
   listConsultations: (

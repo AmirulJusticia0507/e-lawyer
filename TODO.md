@@ -71,20 +71,20 @@ Mapping ke kebutuhan utama:
 
 ## F5 — Otomatisasi Dokumen & Putusan  `(#3, #4)`
 - [x] Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`
-- [ ] **Generator Surat Kuasa** (khusus/umum/istimewa) — dasar KUHPerdata Ps. 1792 dst.
-  - [ ] Validasi nomor izin advokat (PERADI), KTP/NPWP, relasi ke perkara
-  - [ ] Auto-generate dari data klien & perkara
-  - [ ] E-signature + e-meterai + verifikasi keaslian (QR/hash)
-- [ ] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan
-- [ ] **Penyusun Berkas Putusan**:
-  - [ ] Template terstruktur (Kepala → Identitas → Duduk Perkara → Pertimbangan → Amar → Penutup)
-  - [ ] Validasi wajib sitasi pasal pada bagian pertimbangan hukum (link ke F3)
-  - [ ] Template verdict: dikabulkan / ditolak / tidak dapat diterima / damai / verstek
-  - [ ] Export PDF format MA + e-signature hakim (BSrE)
+- [~] **Generator Surat Kuasa** (khusus/umum/istimewa) — dasar KUHPerdata Ps. 1792 dst.
+  - [~] Validasi format nomor izin advokat, KTP/NPWP, dan relasi dokumen ke perkara (verifikasi resmi PERADI belum terhubung)
+  - [x] Auto-generate draf dari data perkara dan pemberi/penerima kuasa
+  - [~] Permintaan tanda tangan + hash SHA-256; e-signature resmi, e-meterai, dan QR belum terhubung
+- [x] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan
+- [~] **Penyusun Berkas Putusan**:
+  - [x] Template terstruktur (Kepala → Identitas → Duduk Perkara → Pertimbangan → Amar → Penutup)
+  - [x] Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3)
+  - [x] Template verdict: dikabulkan / ditolak / tidak dapat diterima / damai / verstek
+  - [~] Cetak/Save as PDF melalui browser; format MA dan e-signature hakim (BSrE) belum terhubung
   - [ ] Distribusi ke para pihak + publikasi (opsional, anonimisasi)
-- [ ] Version control dokumen + diff antar revisi
-- [ ] Manajemen template (CRUD, versioning, kunci per lingkungan peradilan)
-- [ ] UI: editor dokumen, pemilihan template, alur tanda tangan, riwayat revisi
+- [x] Version control dokumen + perbandingan antar revisi
+- [x] Manajemen template (buat, arsipkan, versioning, kunci per lingkungan peradilan)
+- [~] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (provider tanda tangan eksternal belum terhubung)
 
 ## F6 — Jadwal Sidang & Anti-Molor  `(#7)`
 - [ ] Data model: `Hearing`, `Courtroom`, `JudgeSchedule`, `Postponement`, `Reminder`

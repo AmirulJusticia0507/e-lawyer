@@ -76,6 +76,7 @@ Mapping ke kebutuhan utama:
   - [x] Auto-generate draf dari data perkara dan pemberi/penerima kuasa
   - [~] Permintaan tanda tangan + hash SHA-256; e-signature resmi, e-meterai, dan QR belum terhubung
 - [x] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan
+- [~] Asisten AI untuk usulan draf; instruksi/teks sumber dikirim eksplisit, menunggu API key dan slug model
 - [~] **Penyusun Berkas Putusan**:
   - [x] Template terstruktur (Kepala → Identitas → Duduk Perkara → Pertimbangan → Amar → Penutup)
   - [x] Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3)

@@ -20,6 +20,12 @@ describe('validateEnv', () => {
     expect(result.BCRYPT_ROUNDS).toBe(12);
   });
 
+  it('memakai endpoint AI yang disediakan dan menerima model dari environment', () => {
+    const result = validateEnv({ ...base, AI_MODEL: 'router/model-slug' });
+    expect(result.AI_BASE_URL).toBe('https://griphubrouter.web.id/v1');
+    expect(result.AI_MODEL).toBe('router/model-slug');
+  });
+
   it('menolak nilai numerik di luar rentang', () => {
     expect(() => validateEnv({ ...base, BCRYPT_ROUNDS: '99' })).toThrow(
       /Konfigurasi environment tidak valid/,

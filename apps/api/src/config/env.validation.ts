@@ -51,6 +51,18 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  AI_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  AI_BASE_URL = 'https://griphubrouter.web.id/v1';
+
+  @IsString()
+  @IsOptional()
+  AI_MODEL = '';
+
+  @IsString()
+  @IsOptional()
   JWT_REFRESH_EXPIRES_IN = '7d';
 
   @IsInt()

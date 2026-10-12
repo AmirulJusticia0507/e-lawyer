@@ -228,3 +228,18 @@ export class CreateSignatureDto {
   @IsEmail()
   signerEmail?: string;
 }
+
+export class GenerateAiDraftDto {
+  @IsEnum(DocumentType)
+  documentType!: DocumentType;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(3000)
+  instruction!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  sourceText?: string;
+}

@@ -61,6 +61,9 @@ export default function Documents() {
   const [selected, setSelected] = useState<LegalDocument | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [content, setContent] = useState('');
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiSourceText, setAiSourceText] = useState('');
+  const [aiDraft, setAiDraft] = useState('');
   const [poa, setPoa] = useState({
     type: 'SPECIFIC' as PowerOfAttorneyType,
     principalName: '',
@@ -118,9 +121,31 @@ export default function Documents() {
       setSelected(detail);
       setEditTitle(detail.title);
       setContent(detail.content);
+      setAiDraft('');
       setError('');
     } catch (reason) {
       setError(errorMessage(reason));
+    }
+  };
+
+  const generateAiDraft = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!selected || !aiInstruction.trim()) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.generateAiDocumentDraft({
+        documentType: selected.type,
+        instruction: aiInstruction.trim(),
+        sourceText: aiSourceText.trim() || undefined,
+      });
+      setAiDraft(result.draft);
+      setNotice('Draf AI siap ditinjau. Hasil belum disimpan ke dokumen.');
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -350,6 +375,14 @@ export default function Documents() {
                 <>
                   <div className="field"><label>Judul</label><input className="input" value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></div>
                   <div className="field"><label>Isi dokumen</label><textarea className="input document-content" value={content} onChange={(event) => setContent(event.target.value)} /></div>
+                  <form className="ai-draft-panel" onSubmit={(event) => void generateAiDraft(event)}>
+                    <h3>Asisten AI untuk draf</h3>
+                    <p className="muted">Instruksi dan teks sumber yang Anda masukkan di bawah ini akan dikirim ke provider eksternal. Isi dokumen dan data perkara tidak disertakan otomatis. Tinjau hasil sebelum digunakan.</p>
+                    <div className="field"><label htmlFor="ai-instruction">Instruksi</label><textarea id="ai-instruction" className="input" rows={3} maxLength={3000} value={aiInstruction} onChange={(event) => setAiInstruction(event.target.value)} required /></div>
+                    <div className="field"><label htmlFor="ai-source-text">Teks sumber pilihan Anda (opsional)</label><textarea id="ai-source-text" className="input" rows={4} maxLength={20000} value={aiSourceText} onChange={(event) => setAiSourceText(event.target.value)} /></div>
+                    <button className="btn btn-ghost" type="submit" disabled={busy || !aiInstruction.trim()}>{busy ? 'Memproses…' : 'Buat usulan draf AI'}</button>
+                    {aiDraft && <div className="ai-draft-result"><h4>Usulan draf — belum disimpan</h4><pre>{aiDraft}</pre><button className="btn btn-ghost" type="button" onClick={() => { setContent(aiDraft); setAiDraft(''); }}>Gunakan di editor</button></div>}
+                  </form>
                   <div className="document-actions">
                     <button className="btn" onClick={() => void save()} disabled={busy}>Simpan revisi</button>
                     <button className="btn btn-ghost" onClick={() => void submit()} disabled={busy}>Kirim & kunci</button>

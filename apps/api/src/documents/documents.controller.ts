@@ -19,15 +19,26 @@ import {
   CreatePowerOfAttorneyDto,
   CreateSignatureDto,
   CreateTemplateDto,
+  GenerateAiDraftDto,
   JudgmentInputDto,
   QueryDocumentsDto,
   UpdateDocumentDto,
 } from './dto/document.dto';
 import { DocumentsService } from './documents.service';
+import { AiDraftService } from './ai-draft.service';
 
 @Controller()
 export class DocumentsController {
-  constructor(private readonly documents: DocumentsService) {}
+  constructor(
+    private readonly documents: DocumentsService,
+    private readonly aiDraft: AiDraftService,
+  ) {}
+
+  @Post('documents/ai-draft')
+  @RequirePermission(Action.CREATE, Subject.DOCUMENT)
+  generateAiDraft(@Body() dto: GenerateAiDraftDto) {
+    return this.aiDraft.generate(dto);
+  }
 
   @Get('documents/templates')
   @RequirePermission(Action.READ, Subject.DOCUMENT)

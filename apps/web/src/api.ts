@@ -227,6 +227,8 @@ export const api = {
     powerOfAttorney?: Record<string, unknown>;
     judgment?: Record<string, unknown>;
   }) => request<LegalDocument>('/documents', { method: 'POST', body: dto }),
+  generateAiDocumentDraft: (dto: { documentType: DocumentType; instruction: string; sourceText?: string }) =>
+    request<{ draft: string }>('/documents/ai-draft', { method: 'POST', body: dto }),
   updateDocument: (id: string, dto: { title?: string; content?: string; changeSummary?: string }) =>
     request<LegalDocument>(`/documents/${id}`, { method: 'PATCH', body: dto }),
   submitDocument: (id: string) =>

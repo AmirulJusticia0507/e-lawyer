@@ -18,7 +18,7 @@ export class EnvironmentVariables {
   @Min(0)
   @Max(65535)
   @IsOptional()
-  APP_PORT = 3000;
+  APP_PORT: number = 3000;
 
   @IsString()
   @IsOptional()
@@ -57,7 +57,7 @@ export class EnvironmentVariables {
   @Min(4)
   @Max(15)
   @IsOptional()
-  BCRYPT_ROUNDS = 12;
+  BCRYPT_ROUNDS: number = 12;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {

@@ -250,6 +250,10 @@ langsung dan versi `_FILE` secara bersamaan. Secret yang didukung mencakup URL
 database/Redis, JWT, storage, encryption, AI, signature, payment, notification,
 dan video provider.
 
+Jika PostgreSQL atau Redis lokal sudah memakai port default, jalankan Docker
+Compose dengan port alternatif, misalnya `POSTGRES_PORT=5433` dan
+`REDIS_PORT=6380`, lalu sesuaikan `DATABASE_URL`/`REDIS_URL`.
+
 ```env
 # Application
 NODE_ENV=development

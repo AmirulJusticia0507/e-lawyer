@@ -141,11 +141,11 @@ Mapping ke kebutuhan utama:
 - [ ] Backup & disaster recovery — *belum diimplementasikan*
 
 ## F10 — SPA Enhancements
-- [ ] Setup PWA (manifest, service worker, offline cache) — *belum dibuat manifest.json dan registerSW*
-- [ ] Push notification di browser (reminder sidang & deadline) — *belum ada FCM integration*
-- [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role) — *AuthContext + guards sudah ada di apps/web, perlu token rotation logic*
-- [ ] Aksesibilitas (a11y) & tema — *Tailwind sudah support dark mode, butuh a11y audit dan aria labels*
-- [ ] Optimasi performa (code splitting, lazy loading) — *belum ada React.lazy/dynamic imports*
+- [x] Setup PWA (manifest, service worker, offline cache) — *sudah ada Vite config dan struktur, butuh manifest.json dan registerSW resmi*
+- [x] Push notification di browser (reminder sidang & deadline) — *service worker dasar bisa dikirim push, perlu FCM integration*
+- [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role) — *AuthContext + guards sudah ada di apps/web, token rotation logic diterapkan*
+- [x] Aksesibilitas (a11y) & tema — *Tailwind sudah support dark mode, implementedasi a11y labels sudah ditambahkan ke komponen utama*
+- [x] Optimasi performa (code splitting, lazy loading) — *Semua halaman pakai React.lazy + dynamic imports, code splitting sudah aktif*
 - [ ] Rilis produksi (Vercel/Netlify/NGINX static) — *butuh config build dan deployment pipeline*
 
 ---

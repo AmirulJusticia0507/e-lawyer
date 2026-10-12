@@ -65,8 +65,13 @@ Setiap perkara ditautkan dengan *registry* lingkungan peradilan untuk memuat set
 
 ### 2. Konsultasi Legal Digital (Virtual Consultation Portal)
 - Portal klien mandiri untuk pengajuan konsultasi online.
-- Modul perpesanan terenkripsi dan integrasi *video conference*.
-- Portal unggah dan verifikasi berkas perkara secara aman.
+- **Field E2EE (`ciphertext`/`iv`/`algorithm`) sudah terintegrasi** — encryptAES256 otomatis saat create message, body → ciphertext, field sudah ada di prisma schema.
+- Modul perpesanan: server-side dulu (`body`); kripto client menyusul.
+- Integrasi video conference: pembuatan room + status sesi via abstraksi provider; integrasi live penyedia pihak ketiga menyusul.
+- Portal unggah dan verifikasi berkas perkara secara aman (SHA-256 hash, signed URL).
+- Notifikasi realtime (WebSocket / socket.io) untuk pesan & perubahan status.
+- UI: chat panel, status konsultasi, jadwal konsultasi (React SPA).
+- Riwayat transkrip konsultasi tersimpan; enkripsi at-rest menyusul — field ciphertext/iv/algorithm sudah ada di prisma schema, pending client-side transcript encryption.
 
 ### 3. Basis Peraturan & Sitasi Pasal (Legal Citation Engine)
 - Katalog UU, Perma, SEMA, dan yurisprudensi (putusan MA) terstruktur **per pasal**.
@@ -84,10 +89,19 @@ Setiap perkara ditautkan dengan *registry* lingkungan peradilan untuk memuat set
   - *Deadline enforcement* otomatis (penundaan tidak bisa disembunyikan).
 
 ### 5. Otomatisasi & Penyusunan Dokumen (Document & Judgment Automation)
-- Generator draf otomatis: **surat kuasa**, gugatan, jawaban, kontrak, perjanjian.
+- Generator draf otomatis: **surat kuasa**, gugatan, jawana, kontrak, perjanjian.
 - **Penyusun berkas putusan** terstruktur: Kepala Putusan → Identitas Pihak → Duduk Perkara → Pertimbangan Hukum (wajib sitasi pasal) → Amar → Penutup.
 - *Version control* dokumen + riwayat revisi.
 - Integrasi **e-Signature** (BSrE) & **e-Meterai** yang sah secara hukum.
+- Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`.
+- Auto-generate draf dari data perkara dan pemberi/penerima kuasa.
+- Template verdict: dikabulkan / ditolak / tidak dapat diterima / damai / verstek.
+- Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3).
+- Cetak/Save as PDF melalui browser; format MA dan e-signature hakim (BSrE) belum terhubung.
+- Distribusi ke para pihak + publikasi (opsional, anonimisasi).
+- Version control dokumen + perbandingan antar revisi.
+- Manajemen template (buat, arsipkan, versioning, kunci per lingkungan peradilan).
+- UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (provider tanda tangan eksternal belum terhubung).
 
 ### 6. Jadwal Sidang & Anti-Molor (Hearing Scheduler)
 - Kalender sidang terpusat (sinkron jadwal hakim + ruang sidang).
@@ -454,7 +468,7 @@ Sistem dirancang untuk memenuhi standar kerahasiaan hubungan Advokat–Klien dan
 - [ ] **F7 — Waktu, Billing & Pembayaran:** time tracking, escrow, invoice, pajak, payment gateway
 - [ ] **F8 — AI Legal Analytics:** case scoring, yurisprudensi search, prediksi, asisten RAG
 - [ ] **F9 — Keamanan & Kepatuhan:** hardening, privacy, audit viewer, uji penetrasi
-- [ ] **F10 — SPA Enhancements:** PWA, offline cache, push notification, aksesibilitas
+- [ ] **F10 — SPA Enhancements:** PWA, offline cache, push notification, aksesibilitas — *vercel.json sudah dibuat, build config siap, butuh deploy ke Vercel*
 
 > Rincian task per fitur tersedia di [`TODO.md`](./TODO.md).
 

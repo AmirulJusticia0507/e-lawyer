@@ -216,6 +216,8 @@ enum AnomalyType {
   DELAY_PATTERN
   HASH_MISMATCH
   DEADLINE_BREACH
+  SLA_BREACH
+  UNJUSTIFIED_POSTPONEMENT
 }
 
 enum AnomalySeverity {
@@ -267,18 +269,20 @@ model User {
   messagesSent           Message[]      @relation("MessageSentBy")
   attachmentsUploaded    Attachment[]   @relation("AttachmentUploadedBy")
 
-  integrityRecords   IntegrityRecord[]  @relation("IntegrityRecordedBy")
-  integrityChecks    IntegrityCheck[]   @relation("IntegrityCheckedBy")
-  addendaWritten     Addendum[]         @relation("AddendumAuthor")
-  receiptsSent       DocumentReceipt[]  @relation("ReceiptSentBy")
-  anomaliesResolved  AnomalyFlag[]      @relation("AnomalyResolvedBy")
-  templatesCreated   Template[]         @relation("TemplateCreatedBy")
-  documentsCreated   Document[]         @relation("DocumentCreatedBy")
-  documentVersions   DocumentVersion[]  @relation("DocumentVersionCreatedBy")
-  documentSignatures Signature[]        @relation("SignatureSignedBy")
-  powersOfAttorney   PowerOfAttorney[]  @relation("PowerOfAttorneyAttorney")
-  judgmentsSigned    Judgment[]         @relation("JudgmentSignedBy")
-  hearingsCreated    Hearing[]         @relation("HearingCreatedBy")
+  integrityRecords       IntegrityRecord[] @relation("IntegrityRecordedBy")
+  integrityChecks        IntegrityCheck[]  @relation("IntegrityCheckedBy")
+  addendaWritten         Addendum[]        @relation("AddendumAuthor")
+  receiptsSent           DocumentReceipt[] @relation("ReceiptSentBy")
+  anomaliesResolved      AnomalyFlag[]     @relation("AnomalyResolvedBy")
+  templatesCreated       Template[]        @relation("TemplateCreatedBy")
+  documentsCreated       Document[]        @relation("DocumentCreatedBy")
+  documentVersions       DocumentVersion[] @relation("DocumentVersionCreatedBy")
+  documentSignatures     Signature[]       @relation("SignatureSignedBy")
+  powersOfAttorney       PowerOfAttorney[] @relation("PowerOfAttorneyAttorney")
+  judgmentsSigned        Judgment[]        @relation("JudgmentSignedBy")
+  hearingsCreated        Hearing[]         @relation("HearingCreatedBy")
+  postponementsRequested Postponement[]    @relation("PostponementRequestedBy")
+  postponementsApproved  Postponement[]    @relation("PostponementApprovedBy")
 
   @@index([status])
 }
@@ -383,10 +387,10 @@ model Client {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  createdBy     User?          @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  parties       Party[]
-  interactions  Interaction[]
-  consultations Consultation[]
+  createdBy        User?             @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  parties          Party[]
+  interactions     Interaction[]
+  consultations    Consultation[]
   powersOfAttorney PowerOfAttorney[]
 
   @@index([fullName])
@@ -447,13 +451,117 @@ model Hearing {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  case      Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  createdBy User? @relation("HearingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  case          Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy     User?          @relation("HearingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  slaTimers     HearingSla[]
+  postponements Postponement[]
+  reminders     Reminder[]
 
   @@index([startsAt, endsAt, status])
   @@index([courtroom, startsAt, endsAt])
   @@index([judgeName, startsAt, endsAt])
   @@index([caseId, startsAt])
+}
+
+enum HearingStage {
+  PERSIANGAN
+  PEMBUKTIAN
+  PEMBAHASAN
+  PUTUSAN
+}
+
+enum SlaStatus {
+  ON_TRACK
+  AT_RISK
+  BREACHED
+  COMPLETED
+}
+
+enum PostponementStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReminderType {
+  H7
+  H3
+  H1
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model HearingSla {
+  id          String       @id @default(uuid()) @db.Uuid
+  hearingId   String       @db.Uuid
+  hearing     Hearing      @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+  stage       HearingStage
+  label       String
+  startedAt   DateTime
+  deadlineAt  DateTime
+  completedAt DateTime?
+  status      SlaStatus    @default(ON_TRACK)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  SlaAlert    SlaAlert[]
+
+  @@index([hearingId])
+  @@index([status])
+  @@index([deadlineAt])
+}
+
+model SlaAlert {
+  id             String     @id @default(uuid()) @db.Uuid
+  slaTimerId     String     @db.Uuid
+  slaTimer       HearingSla @relation(fields: [slaTimerId], references: [id], onDelete: Cascade)
+  level          String
+  message        String
+  triggeredAt    DateTime   @default(now())
+  acknowledgedAt DateTime?
+
+  @@index([slaTimerId])
+  @@index([level])
+}
+
+model Postponement {
+  id             String             @id @default(uuid()) @db.Uuid
+  hearingId      String             @db.Uuid
+  hearing        Hearing            @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+  reason         String
+  requestedById  String?            @db.Uuid
+  requestedBy    User?              @relation("PostponementRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  approvedById   String?            @db.Uuid
+  approvedBy     User?              @relation("PostponementApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  status         PostponementStatus @default(PENDING)
+  extensionCount Int                @default(0)
+  newStartsAt    DateTime?
+  newEndsAt      DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([hearingId])
+  @@index([status])
+}
+
+model Reminder {
+  id        String         @id @default(uuid()) @db.Uuid
+  hearingId String         @db.Uuid
+  hearing   Hearing        @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+  type      ReminderType
+  triggerAt DateTime
+  status    ReminderStatus @default(PENDING)
+  channel   String         @default("push")
+  sentAt    DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([hearingId])
+  @@index([type])
+  @@index([status])
 }
 
 model Party {
@@ -537,13 +645,13 @@ model Consultation {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
-  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  case          Case?          @relation(fields: [caseId], references: [id], onDelete: SetNull)
-  requestedBy   User?          @relation("ConsultationRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
-  assignedTo    User?          @relation("ConsultationAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
-  messages      Message[]
-  attachments   Attachment[]
-  videoSessions VideoSession[]
+  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  case             Case?             @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  requestedBy      User?             @relation("ConsultationRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  assignedTo       User?             @relation("ConsultationAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  messages         Message[]
+  attachments      Attachment[]
+  videoSessions    VideoSession[]
   integrityRecords IntegrityRecord[]
 
   @@index([clientId])
@@ -769,9 +877,9 @@ model IntegrityRecord {
   recordedById   String?             @db.Uuid
   createdAt      DateTime            @default(now())
 
-  case         Case?           @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  consultation Consultation?   @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-  recordedBy   User?           @relation("IntegrityRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  case         Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  consultation Consultation? @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  recordedBy   User?         @relation("IntegrityRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
 
   checks    IntegrityCheck[]
   addenda   Addendum[]
@@ -793,17 +901,17 @@ enum IntegrityCheckResult {
 
 // Hasil verifikasi ulang integritas (bandingkan hash tersimpan vs isi berkas saat ini).
 model IntegrityCheck {
-  id               String                @id @default(uuid()) @db.Uuid
-  recordId         String                @db.Uuid
-  expectedSha256   String
-  actualSha256     String?
-  result           IntegrityCheckResult
-  note             String?
-  checkedById      String?               @db.Uuid
-  createdAt        DateTime              @default(now())
+  id             String               @id @default(uuid()) @db.Uuid
+  recordId       String               @db.Uuid
+  expectedSha256 String
+  actualSha256   String?
+  result         IntegrityCheckResult
+  note           String?
+  checkedById    String?              @db.Uuid
+  createdAt      DateTime             @default(now())
 
-  record     IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  checkedBy  User?           @relation("IntegrityCheckedBy", fields: [checkedById], references: [id], onDelete: SetNull)
+  record    IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  checkedBy User?           @relation("IntegrityCheckedBy", fields: [checkedById], references: [id], onDelete: SetNull)
 
   @@index([recordId])
   @@index([result])
@@ -812,17 +920,17 @@ model IntegrityCheck {
 
 // Dokumen bersifat immutable setelah submit; revisi hanya melalui Addendum.
 model Addendum {
-  id         String   @id @default(uuid()) @db.Uuid
-  caseId     String   @db.Uuid
-  recordId   String   @db.Uuid
-  authorId   String?  @db.Uuid
-  title      String
-  content    String
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid()) @db.Uuid
+  caseId    String   @db.Uuid
+  recordId  String   @db.Uuid
+  authorId  String?  @db.Uuid
+  title     String
+  content   String
+  createdAt DateTime @default(now())
 
-  case     Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  record   IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  author   User?           @relation("AddendumAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  case   Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  record IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  author User?           @relation("AddendumAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([caseId])
   @@index([recordId])
@@ -869,9 +977,9 @@ model AnomalyFlag {
   resolutionNote String?
   createdAt      DateTime        @default(now())
 
-  case       Case?           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case       Case?            @relation(fields: [caseId], references: [id], onDelete: Cascade)
   record     IntegrityRecord? @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  resolvedBy User?           @relation("AnomalyResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedBy User?            @relation("AnomalyResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@index([caseId])
   @@index([recordId])

@@ -26,26 +26,32 @@ import type {
   DocumentReceiptItem,
   DocumentTemplate,
   DocumentType,
-  LegalDocument,
-  Interaction,
-  InteractionType,
   Hearing,
+  HearingSla,
+  HearingStage,
   IntegrityCheck,
   IntegrityCheckResult,
   IntegrityEntityType,
+  Interaction,
+  InteractionType,
   Jurisdiction,
   LegalBasis,
+  LegalDocument,
   LegalSourceStatus,
   MetaInfo,
   Paginated,
   Party,
   PartySide,
+  Postponement,
   ReceiptStatus,
+  RegulationDetail,
   RegulationListItem,
   RegulationType,
-  RegulationDetail,
+  Reminder,
+  ReminderType,
   SearchKind,
   SearchResult,
+  SlaStatistics,
   VideoSession,
 } from './types';
 
@@ -211,6 +217,18 @@ export const api = {
     judgeName: string;
     notes?: string;
   }) => request<Hearing>('/hearings', { method: 'POST', body: dto }),
+  listSlaTimers: (hearingId: string) => request<HearingSla[]>(`/hearings/${hearingId}/sla`),
+  advanceSlaStage: (hearingId: string, stage: HearingStage) =>
+    request<HearingSla>(`/hearings/${hearingId}/sla/advance`, { method: 'POST', body: { stage } }),
+  slaStatistics: () => request<SlaStatistics>('/hearings/sla/statistics'),
+  slaSweep: () => request<{ breached: number; atRisk: number }>('/hearings/sla/sweep', { method: 'POST', body: {} }),
+  listPostponements: (hearingId: string) => request<Postponement[]>(`/hearings/${hearingId}/postponements`),
+  requestPostponement: (hearingId: string, dto: { reason: string; newStartsAt?: string; newEndsAt?: string }) =>
+    request<Postponement>(`/hearings/${hearingId}/postponements`, { method: 'POST', body: dto }),
+  processPostponement: (id: string, decision: 'APPROVED' | 'REJECTED') =>
+    request<Postponement>(`/hearings/postponements/${id}`, { method: 'PATCH', body: { decision } }),
+  listReminders: (hearingId: string) => request<Reminder[]>(`/hearings/${hearingId}/reminders`),
+  reminderSweep: () => request<{ sent: number }>('/hearings/reminders/sweep', { method: 'POST', body: {} }),
 
   // Dokumen, surat kuasa, putusan (F5)
   listDocuments: (params: { caseId?: string; type?: DocumentType; page?: number; limit?: number } = {}) =>

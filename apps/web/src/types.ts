@@ -30,6 +30,11 @@ export type DocumentStatus = 'DRAFT' | 'SUBMITTED' | 'SIGNED' | 'ARCHIVED';
 export type PowerOfAttorneyType = 'GENERAL' | 'SPECIFIC' | 'SPECIAL';
 export type JudgmentVerdict = 'GRANTED' | 'REJECTED' | 'INADMISSIBLE' | 'SETTLED' | 'DEFAULT' | 'OTHER';
 export type HearingStatus = 'SCHEDULED' | 'COMPLETED' | 'POSTPONED' | 'CANCELLED';
+export type HearingStage = 'PERSIANGAN' | 'PEMBUKTIAN' | 'PEMBAHASAN' | 'PUTUSAN';
+export type SlaStatus = 'ON_TRACK' | 'AT_RISK' | 'BREACHED' | 'COMPLETED';
+export type PostponementStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ReminderType = 'H7' | 'H3' | 'H1';
+export type ReminderStatus = 'PENDING' | 'SENT' | 'FAILED';
 
 export type ConsultationMode = 'CHAT' | 'VIDEO' | 'PHONE' | 'IN_PERSON';
 export type ConsultationStatus = 'REQUESTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
@@ -138,6 +143,67 @@ export interface Hearing {
   status: HearingStatus;
   notes?: string | null;
   case: Pick<CaseSummary, 'id' | 'caseNumber' | 'title' | 'courtName'>;
+}
+
+export interface HearingSla {
+  id: string;
+  hearingId: string;
+  stage: HearingStage;
+  label: string;
+  startedAt: string;
+  deadlineAt: string;
+  completedAt?: string | null;
+  status: SlaStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SlaAlert {
+  id: string;
+  slaTimerId: string;
+  level: string;
+  message: string;
+  triggeredAt: string;
+  acknowledgedAt?: string | null;
+}
+
+export interface Postponement {
+  id: string;
+  hearingId: string;
+  reason: string;
+  requestedById?: string | null;
+  approvedById?: string | null;
+  status: PostponementStatus;
+  extensionCount: number;
+  newStartsAt?: string | null;
+  newEndsAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  requestedBy?: { id: string; fullName: string } | null;
+  approvedBy?: { id: string; fullName: string } | null;
+}
+
+export interface Reminder {
+  id: string;
+  hearingId: string;
+  type: ReminderType;
+  triggerAt: string;
+  status: ReminderStatus;
+  channel: string;
+  sentAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SlaStatistics {
+  total: number;
+  byStatus: { status: SlaStatus; count: number }[];
+  byStage: { stage: HearingStage; count: number }[];
+  recentAlerts: (SlaAlert & {
+    slaTimer: HearingSla & {
+      hearing: Hearing & { case: Pick<CaseSummary, 'id' | 'caseNumber' | 'title'> };
+    };
+  })[];
 }
 
 export interface DocumentTemplate {

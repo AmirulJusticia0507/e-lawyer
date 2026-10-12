@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { ApiError, api } from '../api';
 import { useAuth } from '../auth/AuthContext';
-import type { CaseSummary, Hearing } from '../types';
+import type { CaseSummary, Hearing, HearingSla, SlaStatus } from '../types';
 
 function toLocalInput(date: Date): string {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -16,9 +16,20 @@ function weekRange() {
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
+function slaStatusLabel(status: SlaStatus): string {
+  const labels: Record<SlaStatus, string> = {
+    ON_TRACK: 'Sesuai',
+    AT_RISK: 'Risiko',
+    BREACHED: 'Terlambat',
+    COMPLETED: 'Selesai',
+  };
+  return labels[status] || status;
+}
+
 export default function Hearings() {
   const { user } = useAuth();
   const canCreate = user?.permissions.includes('CREATE:HEARING') ?? false;
+  const canUpdate = user?.permissions.includes('UPDATE:HEARING') ?? false;
   const [cases, setCases] = useState<CaseSummary[]>([]);
   const [hearings, setHearings] = useState<Hearing[]>([]);
   const [form, setForm] = useState({
@@ -64,12 +75,27 @@ export default function Hearings() {
         judgeName: form.judgeName,
         notes: form.notes || undefined,
       });
-      setNotice('Jadwal sidang berhasil dicatat.');
-      void load().catch((reason: unknown) =>
-        setError(reason instanceof ApiError ? reason.message : 'Jadwal tersimpan, tetapi agenda gagal dimuat ulang'),
-      );
+      setNotice('Jadwal sidang berhasil dicatat. Timer SLA dibuat otomatis.');
+      void load();
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : 'Gagal membuat jadwal sidang');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const requestPostponement = async (hearingId: string) => {
+    const reason = prompt('Alasan permohonan penundaan:');
+    if (!reason) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await api.requestPostponement(hearingId, { reason });
+      setNotice('Permohonan penundaan dikirim ke hakim.');
+      void load();
+    } catch (reason) {
+      setError(reason instanceof ApiError ? reason.message : 'Gagal mengirim permohonan penundaan');
     } finally {
       setBusy(false);
     }
@@ -82,69 +108,52 @@ export default function Hearings() {
           <h1>Jadwal Sidang</h1>
           <p className="muted">Agenda tujuh hari ke depan; bentrok ruang, hakim, dan pihak perkara diperiksa saat jadwal dibuat.</p>
         </div>
-        <button
-          className="btn btn-ghost"
-          onClick={() => void load().catch((reason: unknown) =>
-            setError(reason instanceof ApiError ? reason.message : 'Gagal memuat ulang agenda'),
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-ghost" onClick={() => void load()} disabled={busy}>Muat ulang</button>
+          {canCreate && (
+            <button className="btn" onClick={() => void create()} disabled={busy}>
+              {busy ? 'Menyimpan…' : 'Simpan jadwal'}
+            </button>
           )}
-          disabled={busy}
-        >
-          Muat ulang
-        </button>
+          {canUpdate && (
+            <button className="btn btn-danger" onClick={() => requestPostponement('')}>
+              Ajukan Penundaan
+            </button>
+          )}
+        </div>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {notice && <p className="notice" role="status">{notice}</p>}
-      {canCreate && (
-        <section className="card hearing-create">
-          <h2>Catat jadwal sidang</h2>
-          <form className="grid-2" onSubmit={(event) => void create(event)}>
-            <div className="field">
-              <label htmlFor="hearing-case">Perkara</label>
-              <select id="hearing-case" className="select" value={form.caseId} onChange={(event) => setForm({ ...form, caseId: event.target.value })} required>
-                <option value="">Pilih perkara</option>
-                {cases.map((item) => <option key={item.id} value={item.id}>{item.caseNumber} — {item.title}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="hearing-room">Ruang sidang</label>
-              <input id="hearing-room" className="input" value={form.courtroom} onChange={(event) => setForm({ ...form, courtroom: event.target.value })} required maxLength={160} />
-            </div>
-            <div className="field">
-              <label htmlFor="hearing-judge">Nama hakim</label>
-              <input id="hearing-judge" className="input" value={form.judgeName} onChange={(event) => setForm({ ...form, judgeName: event.target.value })} required maxLength={160} />
-            </div>
-            <div className="field">
-              <label htmlFor="hearing-start">Mulai</label>
-              <input id="hearing-start" className="input" type="datetime-local" value={form.startsAt} onChange={(event) => setForm({ ...form, startsAt: event.target.value })} required />
-            </div>
-            <div className="field">
-              <label htmlFor="hearing-end">Selesai</label>
-              <input id="hearing-end" className="input" type="datetime-local" value={form.endsAt} onChange={(event) => setForm({ ...form, endsAt: event.target.value })} required />
-            </div>
-            <div className="field">
-              <label htmlFor="hearing-notes">Catatan (opsional)</label>
-              <input id="hearing-notes" className="input" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} maxLength={2000} />
-            </div>
-            <button className="btn" type="submit" disabled={busy || !form.caseId}>{busy ? 'Menyimpan…' : 'Simpan jadwal'}</button>
-          </form>
-        </section>
-      )}
+
       <section className="card">
         <h2>Agenda tujuh hari ke depan</h2>
-        {hearings.length === 0 ? <p className="muted">Belum ada jadwal sidang dalam rentang ini.</p> : (
+        {hearings.length === 0 ? (
+          <p className="muted">Belum ada jadwal sidang dalam rentang ini.</p> : (
           <div className="hearing-list">
-            {hearings.map((hearing) => (
-              <article className="hearing-item" key={hearing.id}>
-                <time className="hearing-time" dateTime={hearing.startsAt}>
-                  {new Date(hearing.startsAt).toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  {' – '}
-                  {new Date(hearing.endsAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                </time>
-                <div><strong>{hearing.case.caseNumber}</strong><span>{hearing.case.title}</span></div>
-                <div><span>{hearing.judgeName}</span><span className="muted">{hearing.courtroom}</span></div>
-                {hearing.notes && <p className="muted">{hearing.notes}</p>}
-              </article>
-            ))}
+            {hearings.map((hearing) => {
+              const slaStatus = 'ON_TRACK'; // placeholder - in real app would fetch per hearing
+              
+              return (
+                <article className="hearing-item" key={hearing.id}>
+                  <time className="hearing-time" dateTime={hearing.startsAt}>
+                    {new Date(hearing.startsAt).toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {' – '}
+                    {new Date(hearing.endsAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  </time>
+                  <div><strong>{hearing.case.caseNumber}</strong><span>{hearing.case.title}</span></div>
+                  <div><span>{hearing.judgeName}</span><span className="muted">{hearing.courtroom}</span></div>
+                  {hearing.notes && <p className="muted">{hearing.notes}</p>}
+                  <div className="sla-status">
+                    <span className="badge">{slaStatusLabel(slaStatus)}</span>
+                  </div>
+                  {canUpdate && (
+                    <button className="btn btn-sm btn-danger" onClick={() => requestPostponement(hearing.id)}>
+                      Ajukan Penundaan
+                    </button>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

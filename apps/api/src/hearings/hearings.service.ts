@@ -1,7 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { HearingStatus, Prisma } from '@prisma/client';
+import { HearingStatus, Prisma, ReminderType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHearingDto, QueryHearingsDto } from './dto/hearing.dto';
+
+const REMINDER_OFFSETS: Record<ReminderType, number> = {
+  [ReminderType.H7]: 7 * 24 * 60 * 60 * 1000,
+  [ReminderType.H3]: 3 * 24 * 60 * 60 * 1000,
+  [ReminderType.H1]: 1 * 24 * 60 * 60 * 1000,
+};
 
 const HEARING_INCLUDE = {
   case: { select: { id: true, caseNumber: true, title: true, courtName: true } },
@@ -87,7 +93,7 @@ export class HearingsService {
             throw new ConflictException(`Jadwal bentrok: ${[...reasons].join(', ')}`);
           }
 
-          return tx.hearing.create({
+          const hearing = await tx.hearing.create({
             data: {
               caseId: dto.caseId,
               startsAt,
@@ -99,6 +105,30 @@ export class HearingsService {
             },
             include: HEARING_INCLUDE,
           });
+
+          const stages = [
+            { stage: 'PERSIANGAN' as const, label: 'Persiapan & Sidang', days: 7 },
+            { stage: 'PEMBUKTIAN' as const, label: 'Pembuktian', days: 30 },
+            { stage: 'PEMBAHASAN' as const, label: 'Pembahasan', days: 14 },
+            { stage: 'PUTUSAN' as const, label: 'Putusan', days: 30 },
+          ];
+          let cursor = startsAt;
+          const slaData = stages.map((s) => {
+            const deadline = new Date(cursor.getTime() + s.days * 24 * 60 * 60 * 1000);
+            const item = { hearingId: hearing.id, stage: s.stage, label: s.label, startedAt: cursor, deadlineAt: deadline };
+            cursor = deadline;
+            return item;
+          });
+          await tx.hearingSla.createMany({ data: slaData });
+
+          const reminderData = (Object.values(ReminderType) as ReminderType[]).map((type) => ({
+            hearingId: hearing.id,
+            type,
+            triggerAt: new Date(startsAt.getTime() - REMINDER_OFFSETS[type]),
+          }));
+          await tx.reminder.createMany({ data: reminderData });
+
+          return hearing;
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );

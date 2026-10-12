@@ -2,6 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 
@@ -23,6 +24,15 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const forwardedProtocol = req.headers['x-forwarded-proto'];
+    const isHttps = req.secure || forwardedProtocol === 'https';
+    if (isHttps) {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+    next();
+  });
+
   const origins = config
     .get<string>('CORS_ORIGINS', '')
     .split(',')
@@ -39,7 +49,10 @@ async function bootstrap(): Promise<void> {
   const port = config.get<number>('APP_PORT', 3000);
   await app.listen(port);
 
-  Logger.log(`e-Lawyer API berjalan di ${config.get('APP_URL', 'http://localhost:' + port)}/${prefix}`, 'Bootstrap');
+  Logger.log(
+    `e-Lawyer API berjalan di ${config.get('APP_URL', 'http://localhost:' + port)}/${prefix}`,
+    'Bootstrap',
+  );
 }
 
 void bootstrap();

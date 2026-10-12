@@ -313,6 +313,12 @@ Tetapkan `VITE_API_URL` saat build ke URL API publik, mengikuti
 `apps/web/.env.production.example`. Semua target menyediakan fallback routing
 SPA; aset fingerprint di-cache permanen, sedangkan service worker tidak.
 
+Untuk terminasi HTTPS mandiri, gunakan `docker/nginx/tls.conf.example` sebagai
+konfigurasi NGINX, pasang sertifikat pada `/etc/nginx/tls`, lalu ganti nilai
+`server_name`. Konfigurasi tersebut hanya menerima TLS 1.3, mengalihkan HTTP ke
+HTTPS, dan mengirim HSTS. Jika API berada di belakang reverse proxy, proxy wajib
+mengirim `X-Forwarded-Proto: https`; API juga menambahkan HSTS pada respons HTTPS.
+
 ## Konfigurasi Environment
 
 Salin `.env.example` menjadi `.env` lalu sesuaikan variabel berikut:

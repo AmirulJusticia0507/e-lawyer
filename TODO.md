@@ -131,7 +131,7 @@ Mapping ke kebutuhan utama:
 
 ## F9 — Keamanan & Kepatuhan
 - [x] Enkripsi at-rest AES-256 untuk dokumen dan berkas unggahan
-- [ ] Konfigurasi TLS 1.3 in-transit + HSTS
+- [x] Konfigurasi TLS 1.3 in-transit + HSTS
 - [ ] Hardening OWASP (rate limiting, input validation, CSP, proteksi CSRF/XSS)
 - [ ] Manajemen sesi & Redis caching
 - [ ] Audit log viewer untuk Admin (filter, export, tamper-evident)

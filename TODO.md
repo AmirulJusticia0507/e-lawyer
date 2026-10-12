@@ -55,7 +55,7 @@ Mapping ke kebutuhan utama:
 - [x] Tautkan pasal ke dokumen (gugatan/jawaban/putusan)
 - [x] Pencarian full-text (Postgres FTS) + pencarian semantik (pgvector)
 - [x] API: lookup pasal, daftar "Dasar Hukum" otomatis, cross-reference
-- [ ] UI: browser peraturan, panel sitasi, penanda pasal bermasalah
+- [x] UI: browser peraturan, panel sitasi, penanda pasal bermasalah
 - [ ] Seed & kurasi minimal set peraturan tiap lingkungan peradilan
 
 ## F4 — Integritas & Anti-Manipulasi  `(#2)`
@@ -70,7 +70,7 @@ Mapping ke kebutuhan utama:
 - [x] Notifikasi pelanggaran integritas ke pengawas
 
 ## F5 — Otomatisasi Dokumen & Putusan  `(#3, #4)`
-- [ ] Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`
+- [x] Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`
 - [ ] **Generator Surat Kuasa** (khusus/umum/istimewa) — dasar KUHPerdata Ps. 1792 dst.
   - [ ] Validasi nomor izin advokat (PERADI), KTP/NPWP, relasi ke perkara
   - [ ] Auto-generate dari data klien & perkara

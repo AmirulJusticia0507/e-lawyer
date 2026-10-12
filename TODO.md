@@ -146,7 +146,7 @@ Mapping ke kebutuhan utama:
 - [ ] Push notification di browser (reminder sidang & deadline)
 - [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
 - [x] Aksesibilitas (a11y) & tema
-- [ ] Optimasi performa (code splitting, lazy loading)
+- [x] Optimasi performa (code splitting, lazy loading)
 - [ ] Rilis produksi (Vercel/Netlify/NGINX static)
 
 ---

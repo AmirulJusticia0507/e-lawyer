@@ -1,0 +1,384 @@
+{
+  "version": 1,
+  "regulations": [
+    {
+      "slug": "kuhperdata",
+      "type": "CIVIL_CODE",
+      "year": 1848,
+      "title": "Kitab Undang-Undang Hukum Perdata (Burgerlijk Wetboek)",
+      "jurisdiction": "CIVIL",
+      "status": "ACTIVE",
+      "sourceName": "Staatblad van Nederlandsch-Indië 1847 No. 23 (Stbw 1848)",
+      "articles": [
+        {
+          "unitKey": "pasal-1233",
+          "articleNumber": "1233",
+          "heading": "Asal-usul perikatan",
+          "content": "Perikatan lahir dari persetujuan ataupun dari undang-undang."
+        },
+        {
+          "unitKey": "pasal-1320",
+          "articleNumber": "1320",
+          "heading": "Syarat sahnya perjanjian",
+          "content": "Untuk sahnya suatu perjanjian diperlukan empat syarat: pertama, sepakat yang mengikat mereka yang mengadakannya; kedua, kecakapan untuk membuat suatu perikatan; ketiga, suatu hal tertentu; keempat, suatu sebab yang halal."
+        },
+        {
+          "unitKey": "pasal-1338",
+          "articleNumber": "1338",
+          "heading": "Kekuatan mengikat perjanjian",
+          "content": "Semua perjanjian yang dibuat sesuai dengan undang-undang berlaku sebagaimana undang-undang bagi mereka yang membuatnya. Perjanjian tersebut hanya dapat dibatalkan dengan kesepakatan kedua belah pihak atau karena alasan yang ditentukan undang-undang. Perjanjian harus dilaksanakan dengan itikad baik."
+        },
+        {
+          "unitKey": "pasal-1365",
+          "articleNumber": "1365",
+          "heading": "Perbuatan melawan hukum",
+          "content": "Setiap perbuatan yang melanggar kewajiban hukum seseorang, yang mengakibatkan kerugian kepada orang lain, mewajibkan orang yang karena perbuatannya menyebabkan kerugian itu untuk mengganti kerugian yang ditimbulkannya."
+        }
+      ]
+    },
+    {
+      "slug": "uu-5-1960-upa",
+      "type": "LAW",
+      "number": "5",
+      "year": 1960,
+      "title": "Undang-Undang Pokok Agraria",
+      "jurisdiction": "CIVIL",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1960",
+      "articles": [
+        {
+          "unitKey": "pasal-2",
+          "articleNumber": "2",
+          "heading": "Penguasaan bumi, air, dan ruang angkasa",
+          "content": "Bumi, air dan ruang angkasa, termasuk kekayaan alam yang terkandung di dalamnya, dikuasai oleh negara dan dipergunakan sebesar-besarnya untuk kemakmuran rakyat."
+        },
+        {
+          "unitKey": "pasal-3",
+          "articleNumber": "3",
+          "heading": "Hak ulayat dan hak milik adat",
+          "content": "Hak-hak ulayat dan hak-hak milik adat sepanjang mengenai bumi sebagaimana dimaksud dalam Pasal 2 masih ada, sepanjang masih sesuai dengan kepentingan dan peruntukannya menurut Undang-Undang ini dan peraturan pelaksanaannya lebih lanjut."
+        }
+      ]
+    },
+    {
+      "slug": "kuhp",
+      "type": "CRIMINAL_CODE",
+      "year": 1915,
+      "title": "Kitab Undang-Undang Hukum Pidana (Wetboek van Strafrecht)",
+      "jurisdiction": "CRIMINAL",
+      "status": "REPEALED",
+      "effectiveUntil": "2025-01-01",
+      "sourceName": "Staatblad van Nederlandsch-Indië 1915 No. 732 (Stbw 1915)",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "heading": "Asas legalitas",
+          "content": "Tidak dipidana siapa pun atas suatu perbuatan yang tidak diancam pidana berdasarkan peraturan pidana yang berlaku pada waktu perbuatan dilakukan, kecuali perbuatan itu diancam pidana oleh peraturan pidana yang lebih ringan yang berlaku sesudah perbuatan dilakukan.",
+          "status": "REPEALED",
+          "effectiveUntil": "2025-01-01"
+        },
+        {
+          "unitKey": "pasal-362",
+          "articleNumber": "362",
+          "heading": "Pencurian",
+          "content": "Barangsiapa dengan sengaja dan melawan hukum mengambil barang yang seluruhnya atau sebagian kepunyaan orang lain, dengan maksud untuk menguasai secara melawan hukum barang itu, diancam karena pencurian dengan pidana penjara paling lama lima tahun atau denda paling banyak sembilan ratus rupiah.",
+          "status": "REPEALED",
+          "effectiveUntil": "2025-01-01"
+        },
+        {
+          "unitKey": "pasal-378",
+          "articleNumber": "378",
+          "heading": "Penipuan",
+          "content": "Barangsiapa dengan maksud untuk menguntungkan diri sendiri secara melawan hukum, dengan memakai nama palsu atau tipu muslihat, atau dengan menimbulkan salah paham pada orang lain seolah-olah ada keadaan yang tidak ada, membuat orang lain menyerahkan barang atau menghapuskan utang, diancam karena penipuan dengan pidana penjara paling lama empat tahun.",
+          "status": "REPEALED",
+          "effectiveUntil": "2025-01-01"
+        }
+      ]
+    },
+    {
+      "slug": "kuhp-uu-1-2023",
+      "type": "LAW",
+      "number": "1",
+      "year": 2023,
+      "title": "Kitab Undang-Undang Hukum Pidana (Undang-Undang Nomor 1 Tahun 2023)",
+      "jurisdiction": "CRIMINAL",
+      "status": "ACTIVE",
+      "issuedAt": "2023-01-02",
+      "effectiveFrom": "2025-01-02",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2023",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "heading": "Asas legalitas",
+          "content": "Tidak seorang pun dapat dipidana kecuali terdapat ketentuan peraturan pidana yang mengatur perbuatannya dan menentukan ancaman pidana yang berlaku sebelum perbuatan dilakukan.",
+          "effectiveFrom": "2025-01-02"
+        },
+        {
+          "unitKey": "pasal-453",
+          "articleNumber": "453",
+          "heading": "Pencurian",
+          "content": "Barangsiapa mengambil barang yang seluruhnya atau sebagian kepunyaan orang lain dengan maksud untuk menguasai secara melawan hukum, diancam karena pencurian dengan pidana penjara paling lama lima tahun atau pidana denda.",
+          "effectiveFrom": "2025-01-02"
+        }
+      ]
+    },
+    {
+      "slug": "kuhap-uu-8-1981",
+      "type": "LAW",
+      "number": "8",
+      "year": 1981,
+      "title": "Kitab Undang-Undang Hukum Acara Pidana",
+      "jurisdiction": "CRIMINAL",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1981",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "heading": "Pengertian umum",
+          "content": "Dalam hal-hal dan untuk maksud-maksud yang ditentukan Undang-Undang ini, yang dimaksud dengan: a. tindak pidana adalah perbuatan yang dilarang dan diancam dengan pidana oleh peraturan perundang-undangan; b. penyidikan adalah serangkaian tindakan penyidik dalam hal dan menurut cara yang diatur dalam Undang-Undang ini untuk mencari serta mengumpulkan bukti yang dengan bukti itu membuat terang tentang tindak pidana dan guna menemukan tersangkanya."
+        },
+        {
+          "unitKey": "pasal-48",
+          "articleNumber": "48",
+          "heading": "Hak tersangka atau terdakwa",
+          "content": "Tersangka atau terdakwa berhak tidak memberikan keterangan apapun dalam segala tahap pemeriksaan yang dimulai sejak penangkapan, penahanan, penyidikan, sampai dengan pemeriksaan di sidang pengadilan."
+        },
+        {
+          "unitKey": "pasal-184",
+          "articleNumber": "184",
+          "heading": "Alat bukti yang sah",
+          "content": "Keterangan saksi, surat, keterangan ahli, keterangan tersangka atau terdakwa dan/atau terdakwa, serta petunjuk, merupakan alat bukti yang sah. Suatu perkara pidana hanya dapat diputus apabila tersangka atau terdakwa ternyata bersalah dan perbuatannya terbukti dengan didukung alat bukti yang sah."
+        }
+      ]
+    },
+    {
+      "slug": "uu-5-1986-peradilan-tun",
+      "type": "LAW",
+      "number": "5",
+      "year": 1986,
+      "title": "Undang-Undang Nomor 5 Tahun 1986 tentang Peradilan Tata Usaha Negara",
+      "jurisdiction": "ADMINISTRATIVE",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1986",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "heading": "Pengertian dan kewenangan",
+          "content": "Pengadilan Tata Usaha Negara adalah pengadilan yang mempunyai kewenangan mengadili perkara Tata Usaha Negara yang diajukan oleh seseorang, kelompok orang, badan hukum atau pejabat Tata Usaha Negara yang merasa dirugikan karena dikeluarkannya suatu Keputusan Tata Usaha Negara. Keputusan Tata Usaha Negara adalah suatu keputusan yang bersifat final yang dikeluarkan oleh pejabat Tata Usaha Negara yang dalam hal ini mewakili pemerintah/negara."
+        },
+        {
+          "unitKey": "pasal-54",
+          "articleNumber": "54",
+          "heading": "Jangka waktu pengajuan gugatan",
+          "content": "Gugatan kepada Pengadilan Tata Usaha Negara diajukan secara tertulis paling lama 90 (sembilan puluh) hari kerja terhitung sejak Keputusan Tata Usaha Negara diterima atau diberitahukan kepada pemohon atau gugat."
+        }
+      ]
+    },
+    {
+      "slug": "uu-30-2014-administrasi-pemerintahan",
+      "type": "LAW",
+      "number": "30",
+      "year": 2014,
+      "title": "Undang-Undang Nomor 30 Tahun 2014 tentang Administrasi Pemerintahan",
+      "jurisdiction": "ADMINISTRATIVE",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2014",
+      "articles": [
+        {
+          "unitKey": "pasal-10",
+          "articleNumber": "10",
+          "heading": "Asas umum pemerintahan yang baik",
+          "content": "Penyelenggaraan pemerintahan negara diselenggarakan berdasarkan asas-asas umum pemerintahan yang baik dan benar yang meliputi kewajaran, kecermatan, ketidakberpihakan, kepastian hukum, keterbukaan, pelayanan yang baik, dan kepercayaan masyarakat."
+        }
+      ]
+    },
+    {
+      "slug": "uu-7-1989-peradilan-agama",
+      "type": "LAW",
+      "number": "7",
+      "year": 1989,
+      "title": "Undang-Undang Nomor 7 Tahun 1989 tentang Peradilan Agama",
+      "jurisdiction": "RELIGIOUS",
+      "status": "AMENDED",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1989",
+      "articles": [
+        {
+          "unitKey": "pasal-49",
+          "articleNumber": "49",
+          "heading": "Kompetensi Pengadilan Agama",
+          "content": "Pengadilan Agama bertugas dan berwenang memeriksa, memutus, dan menyelesaikan di tingkat pertama perkara-perkara di antara orang-orang yang beragama Islam mengenai: a. asal muasal; b. perkawinan; c. wasiat dan wakaf; d. zakat, infak, dan sedekah; e. ekonomi syariah; dan f. sumpah jabatan notaris yang beragama Islam."
+        }
+      ]
+    },
+    {
+      "slug": "uu-3-2006-peradilan-agama",
+      "type": "LAW",
+      "number": "3",
+      "year": 2006,
+      "title": "Undang-Undang Nomor 3 Tahun 2006 tentang Perubahan atas Undang-Undang Nomor 7 Tahun 1989 tentang Peradilan Agama",
+      "jurisdiction": "RELIGIOUS",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2006",
+      "articles": []
+    },
+    {
+      "slug": "uu-2-1974-perkawinan",
+      "type": "LAW",
+      "number": "2",
+      "year": 1974,
+      "title": "Undang-Undang Nomor 2 Tahun 1974 tentang Perkawinan",
+      "jurisdiction": "RELIGIOUS",
+      "status": "AMENDED",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1974",
+      "articles": [
+        {
+          "unitKey": "pasal-2",
+          "articleNumber": "2",
+          "heading": "Sahnya perkawinan menurut agama",
+          "content": "Perkawinan sah apabila dilakukan menurut hukum masing-masing agamanya dan kepercayaannya itu."
+        },
+        {
+          "unitKey": "pasal-4",
+          "articleNumber": "4",
+          "heading": "Syarat melangsungkan perkawinan",
+          "content": "Untuk melangsungkan perkawinan, harus dipenuhi dua syarat: a. adanya persetujuan kedua calon mempelai; b. adanya pernikahan."
+        },
+        {
+          "unitKey": "pasal-7",
+          "articleNumber": "7",
+          "heading": "Umur minimal perkawinan",
+          "content": "Untuk melangsungkan perkawinan, seorang pria harus mencapai umur 19 (sembilan belas) tahun dan seorang wanita harus mencapai umur 19 (sembilan belas) tahun.",
+          "effectiveFrom": "2019-10-16"
+        }
+      ]
+    },
+    {
+      "slug": "uu-16-2019-perkawinan",
+      "type": "LAW",
+      "number": "16",
+      "year": 2019,
+      "title": "Undang-Undang Nomor 16 Tahun 2019 tentang Perubahan atas Undang-Undang Nomor 2 Tahun 1974 tentang Perkawinan",
+      "jurisdiction": "RELIGIOUS",
+      "status": "ACTIVE",
+      "issuedAt": "2019-10-16",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2019",
+      "articles": []
+    },
+    {
+      "slug": "uu-31-1997-peradilan-militer",
+      "type": "LAW",
+      "number": "31",
+      "year": 1997,
+      "title": "Undang-Undang Nomor 31 Tahun 1997 tentang Peradilan Militer",
+      "jurisdiction": "MILITARY",
+      "status": "AMENDED",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1997",
+      "articles": [
+        {
+          "unitKey": "pasal-9",
+          "articleNumber": "9",
+          "heading": "Kewenangan Peradilan Militer",
+          "content": "Peradilan Militer berwenang mengadili perkara: a. anggota angkatan bersenjata Republik Indonesia; dan b. setiap orang yang melakukan tindak pidana militer sebagaimana diatur dalam Undang-Undang ini."
+        }
+      ]
+    },
+    {
+      "slug": "uu-34-2014-peradilan-militer",
+      "type": "LAW",
+      "number": "34",
+      "year": 2014,
+      "title": "Undang-Undang Nomor 34 Tahun 2014 tentang Perubahan atas Undang-Undang Nomor 31 Tahun 1997 tentang Peradilan Militer",
+      "jurisdiction": "MILITARY",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2014",
+      "articles": []
+    },
+    {
+      "slug": "uu-30-1999-arbitrase",
+      "type": "LAW",
+      "number": "30",
+      "year": 1999,
+      "title": "Undang-Undang Nomor 30 Tahun 1999 tentang Arbitrase dan Alternatif Penyelesaian Sengketa",
+      "jurisdiction": "ARBITRATION",
+      "status": "AMENDED",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 1999",
+      "articles": [
+        {
+          "unitKey": "pasal-1",
+          "articleNumber": "1",
+          "heading": "Pengertian arbitrase dan alternatif penyelesaian sengketa",
+          "content": "Arbitrase adalah suatu cara penyelesaian sengketa di luar peradilan umum berdasarkan perjanjian arbitrase yang diikat secara tertulis oleh para pihak. Alternatif Penyelesaian Sengketa atau ADR adalah suatu proses penyelesaian sengketa atau perbedaan pendapat yang melalui proses negosiasi, mediasi, konsiliasi, atau evaluasi netral."
+        },
+        {
+          "unitKey": "pasal-9",
+          "articleNumber": "9",
+          "heading": "Batas campur tangan pengadilan",
+          "content": "Pengadilan hanya dapat campur tangan dalam hal-hal yang diatur dalam Undang-Undang ini."
+        },
+        {
+          "unitKey": "pasal-10",
+          "articleNumber": "10",
+          "heading": "Perjanjian arbitrase tertulis",
+          "content": "Setiap sengketa yang akan diselesaikan melalui arbitrase harus diperjanjikan secara tertulis dalam klausul arbitrase, baik yang termuat dalam perjanjian tertulis yang bersifat khusus maupun yang terpisah dari perjanjian pokok."
+        },
+        {
+          "unitKey": "pasal-56",
+          "articleNumber": "56",
+          "heading": "Pelaksanaan keputusan arbitrase",
+          "content": "Para pihak wajib melaksanakan keputusan arbitrase dalam waktu 30 (tiga puluh) hari kerja terhitung sejak keputusan arbitrase diterima oleh para pihak. Keputusan arbitrase yang tidak dilaksanakan secara sukarela dapat dieksekusi melalui pengadilan yang berwenang."
+        }
+      ]
+    },
+    {
+      "slug": "uu-55-2003-arbitrase",
+      "type": "LAW",
+      "number": "55",
+      "year": 2003,
+      "title": "Undang-Undang Nomor 55 Tahun 2003 tentang Perubahan atas Undang-Undang Nomor 30 Tahun 1999 tentang Arbitrase dan Alternatif Penyelesaian Sengketa",
+      "jurisdiction": "ARBITRATION",
+      "status": "ACTIVE",
+      "sourceName": "Lembaran Negara Republik Indonesia Tahun 2003",
+      "articles": []
+    }
+  ],
+  "amendments": [
+    {
+      "amendingRegulationSlug": "uu-16-2019-perkawinan",
+      "amendedRegulationSlug": "uu-2-1974-perkawinan",
+      "articleUnitKey": "pasal-7",
+      "type": "AMENDS",
+      "effectiveAt": "2019-10-16",
+      "note": "Umur minimal perkawinan diseragamkan menjadi 19 tahun bagi pria dan wanita."
+    },
+    {
+      "amendingRegulationSlug": "uu-3-2006-peradilan-agama",
+      "amendedRegulationSlug": "uu-7-1989-peradilan-agama",
+      "articleUnitKey": "pasal-49",
+      "type": "AMENDS",
+      "note": "Kompetensi Pengadilan Agama ditambah: ekonomi syariah dan sumpah jabatan notaris yang beragama Islam."
+    },
+    {
+      "amendingRegulationSlug": "uu-34-2014-peradilan-militer",
+      "amendedRegulationSlug": "uu-31-1997-peradilan-militer",
+      "type": "AMENDS",
+      "note": "Penyesuaian ketentuan Peradilan Militer (perubahan atas UU 31/1997)."
+    },
+    {
+      "amendingRegulationSlug": "uu-55-2003-arbitrase",
+      "amendedRegulationSlug": "uu-30-1999-arbitrase",
+      "type": "AMENDS",
+      "note": "Penambahan ketentuan Arbitrase Internasional dan penguatan Alternatif Penyelesaian Sengketa."
+    },
+    {
+      "amendingRegulationSlug": "kuhp-uu-1-2023",
+      "amendedRegulationSlug": "kuhp",
+      "type": "REPLACES",
+      "effectiveAt": "2025-01-02",
+      "note": "KUHP baru (UU 1/2023) menggantikan KUHP Stbw 1915 dan mulai berlaku 2 Januari 2025."
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import {
@@ -6,6 +9,8 @@ import {
   key,
 } from '../src/common/constants/permissions';
 import { ROLE_DESCRIPTIONS, RoleName } from '../src/common/constants/roles';
+import { countDataset, ingestLegalSourceDataset } from '../src/legal-sources/ingest';
+import { parseLegalSourceDataset } from '../src/legal-sources/ingest-schema';
 
 const prisma = new PrismaClient();
 
@@ -67,11 +72,28 @@ async function seedAdmin(): Promise<void> {
   console.log(`Admin siap: ${email}`);
 }
 
+async function seedLegalSources(): Promise<void> {
+  const datasetPath = resolve(__dirname, 'legal-sources.seed.json');
+  if (!existsSync(datasetPath)) {
+    console.warn('legal-sources.seed.json tidak ditemukan, seed katalog hukum dilewati');
+    return;
+  }
+  const dataset = parseLegalSourceDataset(
+    JSON.parse(await readFile(datasetPath, 'utf8')) as unknown,
+  );
+  await ingestLegalSourceDataset(prisma, dataset);
+  const counts = countDataset(dataset);
+  console.log(
+    `Katalog hukum siap: ${counts.regulations} peraturan, ${counts.articles} pasal, ${counts.amendments} perubahan`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log('Seeding e-Lawyer...');
   const permissionIds = await seedPermissions();
   await seedRoles(permissionIds);
   await seedAdmin();
+  await seedLegalSources();
   console.log('Seeding selesai.');
 }
 

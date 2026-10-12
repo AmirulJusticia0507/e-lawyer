@@ -2,13 +2,18 @@ import { Link, NavLink } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { hasPermission } from '../auth/permissions';
+import { useTheme } from '../theme/ThemeContext';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div>
-      <nav className="nav">
+      <a className="skip-link" href="#main-content">
+        Lewati ke konten utama
+      </a>
+      <nav className="nav" aria-label="Navigasi utama">
         <Link to="/" className="brand">
           e-Lawyer
         </Link>
@@ -20,6 +25,14 @@ export default function Layout({ children }: { children: ReactNode }) {
         {hasPermission(user, 'READ:CONSULTATION') && <NavLink to="/konsultasi">Konsultasi</NavLink>}
         {hasPermission(user, 'READ:INTEGRITY') && <NavLink to="/integritas">Integritas</NavLink>}
         <span className="spacer" />
+        <button
+          className="btn btn-ghost btn-sm theme-toggle"
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Aktifkan tema ${theme === 'dark' ? 'terang' : 'gelap'}`}
+        >
+          {theme === 'dark' ? '☀ Tema terang' : '☾ Tema gelap'}
+        </button>
         {user ? (
           <>
             <span className="muted">{user.fullName}</span>
@@ -31,7 +44,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           <NavLink to="/login">Masuk</NavLink>
         )}
       </nav>
-      <div className="container">{children}</div>
+      <main className="container" id="main-content" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }

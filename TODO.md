@@ -145,7 +145,7 @@ Mapping ke kebutuhan utama:
 - [x] Setup PWA (manifest, service worker, offline cache)
 - [ ] Push notification di browser (reminder sidang & deadline)
 - [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
-- [ ] Aksesibilitas (a11y) & tema
+- [x] Aksesibilitas (a11y) & tema
 - [ ] Optimasi performa (code splitting, lazy loading)
 - [ ] Rilis produksi (Vercel/Netlify/NGINX static)
 

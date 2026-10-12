@@ -19,7 +19,7 @@ import { hasPermission } from './auth/permissions';
 
 function RequireAuth({ children, permission }: { children: ReactNode; permission?: string }) {
   const { user, ready } = useAuth();
-  if (!ready) return null;
+  if (!ready) return <p role="status">Memuat sesi…</p>;
   if (!user) return <Navigate to="/login" replace />;
   if (!hasPermission(user, permission)) return <Navigate to="/" replace />;
   return <>{children}</>;

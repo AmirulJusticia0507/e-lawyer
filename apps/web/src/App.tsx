@@ -15,11 +15,13 @@ import Regulations from './pages/Regulations';
 import RegulationDetail from './pages/RegulationDetail';
 import Documents from './pages/Documents';
 import Hearings from './pages/Hearings';
+import { hasPermission } from './auth/permissions';
 
-function RequireAuth({ children }: { children: ReactNode }) {
+function RequireAuth({ children, permission }: { children: ReactNode; permission?: string }) {
   const { user, ready } = useAuth();
   if (!ready) return null;
   if (!user) return <Navigate to="/login" replace />;
+  if (!hasPermission(user, permission)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -41,7 +43,7 @@ export default function App() {
         <Route
           path="/klien"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CLIENT">
               <Layout>
                 <Clients />
               </Layout>
@@ -51,7 +53,7 @@ export default function App() {
         <Route
           path="/klien/:id"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CLIENT">
               <Layout>
                 <ClientDetail />
               </Layout>
@@ -61,7 +63,7 @@ export default function App() {
         <Route
           path="/perkara"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CASE">
               <Layout>
                 <Cases />
               </Layout>
@@ -71,7 +73,7 @@ export default function App() {
         <Route
           path="/perkara/:id"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CASE">
               <Layout>
                 <CaseDetail />
               </Layout>
@@ -81,7 +83,7 @@ export default function App() {
         <Route
           path="/peraturan"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:REGULATION">
               <Layout>
                 <Regulations />
               </Layout>
@@ -91,7 +93,7 @@ export default function App() {
         <Route
           path="/peraturan/:slug"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:REGULATION">
               <Layout>
                 <RegulationDetail />
               </Layout>
@@ -101,7 +103,7 @@ export default function App() {
         <Route
           path="/konsultasi"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CONSULTATION">
               <Layout>
                 <Consultations />
               </Layout>
@@ -111,7 +113,7 @@ export default function App() {
         <Route
           path="/konsultasi/:id"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:CONSULTATION">
               <Layout>
                 <ConsultationDetail />
               </Layout>
@@ -121,7 +123,7 @@ export default function App() {
         <Route
           path="/integritas"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:INTEGRITY">
               <Layout>
                 <Integritas />
               </Layout>
@@ -131,7 +133,7 @@ export default function App() {
         <Route
           path="/dokumen"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:DOCUMENT">
               <Layout>
                 <Documents />
               </Layout>
@@ -141,7 +143,7 @@ export default function App() {
         <Route
           path="/sidang"
           element={
-            <RequireAuth>
+            <RequireAuth permission="READ:HEARING">
               <Layout>
                 <Hearings />
               </Layout>

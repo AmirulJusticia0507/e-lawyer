@@ -68,6 +68,11 @@ export class ApiError extends Error {
 
 const ACCESS_KEY = 'el.access';
 const REFRESH_KEY = 'el.refresh';
+export const AUTH_CHANGED_EVENT = 'elawyer:auth-changed';
+
+function notifyAuthChanged(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+}
 
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_KEY);
@@ -80,11 +85,13 @@ export function getRefreshToken(): string | null {
 export function setTokens(t: { accessToken: string; refreshToken: string }): void {
   localStorage.setItem(ACCESS_KEY, t.accessToken);
   localStorage.setItem(REFRESH_KEY, t.refreshToken);
+  notifyAuthChanged();
 }
 
 export function clearTokens(): void {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);
+  notifyAuthChanged();
 }
 
 let refreshing: Promise<string | null> | null = null;
@@ -168,7 +175,14 @@ export const api = {
     request<AuthResult>('/auth/login', { method: 'POST', body: dto, auth: false }),
   logout: (refreshToken: string) =>
     request<{ success: true }>('/auth/logout', { method: 'POST', body: { refreshToken } }),
-  me: () => request<{ id: string; email: string; fullName: string; roles: string[]; permissions: string[] }>('/auth/me'),
+  me: () =>
+    request<{
+      id: string;
+      email: string;
+      fullName: string;
+      roles: string[];
+      permissions: string[];
+    }>('/auth/me'),
 
   // Misc
   meta: () => request<MetaInfo>('/meta'),
@@ -180,20 +194,31 @@ export const api = {
     ).toString();
     return request<Paginated<Client>>(`/clients${q ? `?${q}` : ''}`);
   },
-  createClient: (dto: Partial<Client>) => request<Client>('/clients', { method: 'POST', body: dto }),
+  createClient: (dto: Partial<Client>) =>
+    request<Client>('/clients', { method: 'POST', body: dto }),
   updateClient: (id: string, dto: Partial<Client>) =>
     request<Client>(`/clients/${id}`, { method: 'PATCH', body: dto }),
-  getClient: (id: string) => request<Client & { parties: Party[]; interactions: Interaction[] }>(`/clients/${id}`),
+  getClient: (id: string) =>
+    request<Client & { parties: Party[]; interactions: Interaction[] }>(`/clients/${id}`),
   deleteClient: (id: string) => request<{ success: true }>(`/clients/${id}`, { method: 'DELETE' }),
 
   // Cases
-  listCases: (params: { page?: number; limit?: number; search?: string; status?: CaseStatus; jurisdiction?: Jurisdiction } = {}) => {
+  listCases: (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: CaseStatus;
+      jurisdiction?: Jurisdiction;
+    } = {},
+  ) => {
     const q = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== '') as [string, string][],
     ).toString();
     return request<Paginated<CaseSummary>>(`/cases${q ? `?${q}` : ''}`);
   },
-  createCase: (dto: Partial<CaseSummary>) => request<CaseDetail>('/cases', { method: 'POST', body: dto }),
+  createCase: (dto: Partial<CaseSummary>) =>
+    request<CaseDetail>('/cases', { method: 'POST', body: dto }),
   getCase: (id: string) => request<CaseDetail>(`/cases/${id}`),
   updateCase: (id: string, dto: Partial<CaseSummary>) =>
     request<CaseDetail>(`/cases/${id}`, { method: 'PATCH', body: dto }),
@@ -201,10 +226,14 @@ export const api = {
     request<CaseDetail>(`/cases/${id}/status`, { method: 'POST', body: { status } }),
   assignCase: (id: string, toUserId: string, note?: string) =>
     request<CaseDetail>(`/cases/${id}/assign`, { method: 'POST', body: { toUserId, note } }),
-  addParty: (id: string, dto: { side: PartySide; name: string; clientId?: string; notes?: string }) =>
-    request<Party>(`/cases/${id}/parties`, { method: 'POST', body: dto }),
-  addInteraction: (id: string, dto: { type: InteractionType; title: string; description?: string; occurredAt?: string }) =>
-    request<Interaction>(`/cases/${id}/interactions`, { method: 'POST', body: dto }),
+  addParty: (
+    id: string,
+    dto: { side: PartySide; name: string; clientId?: string; notes?: string },
+  ) => request<Party>(`/cases/${id}/parties`, { method: 'POST', body: dto }),
+  addInteraction: (
+    id: string,
+    dto: { type: InteractionType; title: string; description?: string; occurredAt?: string },
+  ) => request<Interaction>(`/cases/${id}/interactions`, { method: 'POST', body: dto }),
 
   // Jadwal sidang (F6)
   listHearings: (params: { from?: string; to?: string; caseId?: string } = {}) =>
@@ -221,18 +250,30 @@ export const api = {
   advanceSlaStage: (hearingId: string, stage: HearingStage) =>
     request<HearingSla>(`/hearings/${hearingId}/sla/advance`, { method: 'POST', body: { stage } }),
   slaStatistics: () => request<SlaStatistics>('/hearings/sla/statistics'),
-  slaSweep: () => request<{ breached: number; atRisk: number }>('/hearings/sla/sweep', { method: 'POST', body: {} }),
-  listPostponements: (hearingId: string) => request<Postponement[]>(`/hearings/${hearingId}/postponements`),
-  requestPostponement: (hearingId: string, dto: { reason: string; newStartsAt?: string; newEndsAt?: string }) =>
-    request<Postponement>(`/hearings/${hearingId}/postponements`, { method: 'POST', body: dto }),
+  slaSweep: () =>
+    request<{ breached: number; atRisk: number }>('/hearings/sla/sweep', {
+      method: 'POST',
+      body: {},
+    }),
+  listPostponements: (hearingId: string) =>
+    request<Postponement[]>(`/hearings/${hearingId}/postponements`),
+  requestPostponement: (
+    hearingId: string,
+    dto: { reason: string; newStartsAt?: string; newEndsAt?: string },
+  ) => request<Postponement>(`/hearings/${hearingId}/postponements`, { method: 'POST', body: dto }),
   processPostponement: (id: string, decision: 'APPROVED' | 'REJECTED') =>
     request<Postponement>(`/hearings/postponements/${id}`, { method: 'PATCH', body: { decision } }),
   listReminders: (hearingId: string) => request<Reminder[]>(`/hearings/${hearingId}/reminders`),
-  reminderSweep: () => request<{ sent: number }>('/hearings/reminders/sweep', { method: 'POST', body: {} }),
+  reminderSweep: () =>
+    request<{ sent: number }>('/hearings/reminders/sweep', { method: 'POST', body: {} }),
 
   // Dokumen, surat kuasa, putusan (F5)
-  listDocuments: (params: { caseId?: string; type?: DocumentType; page?: number; limit?: number } = {}) =>
-    request<{ items: LegalDocument[]; meta: Paginated<LegalDocument>['meta'] }>(`/documents${buildQuery(params)}`),
+  listDocuments: (
+    params: { caseId?: string; type?: DocumentType; page?: number; limit?: number } = {},
+  ) =>
+    request<{ items: LegalDocument[]; meta: Paginated<LegalDocument>['meta'] }>(
+      `/documents${buildQuery(params)}`,
+    ),
   getDocument: (id: string) => request<LegalDocument>(`/documents/${id}`),
   listDocumentTemplates: (type?: DocumentType) =>
     request<DocumentTemplate[]>(`/documents/templates${buildQuery({ type })}`),
@@ -245,7 +286,8 @@ export const api = {
   createDocumentTemplateVersion: (
     id: string,
     dto: { name: string; documentType: DocumentType; jurisdiction: Jurisdiction; content?: string },
-  ) => request<DocumentTemplate>(`/documents/templates/${id}/versions`, { method: 'POST', body: dto }),
+  ) =>
+    request<DocumentTemplate>(`/documents/templates/${id}/versions`, { method: 'POST', body: dto }),
   archiveDocumentTemplate: (id: string) =>
     request<{ success: true }>(`/documents/templates/${id}`, { method: 'DELETE' }),
   createDocument: (dto: {
@@ -258,13 +300,19 @@ export const api = {
     powerOfAttorney?: Record<string, unknown>;
     judgment?: Record<string, unknown>;
   }) => request<LegalDocument>('/documents', { method: 'POST', body: dto }),
-  generateAiDocumentDraft: (dto: { documentType: DocumentType; instruction: string; sourceText?: string }) =>
-    request<{ draft: string }>('/documents/ai-draft', { method: 'POST', body: dto }),
+  generateAiDocumentDraft: (dto: {
+    documentType: DocumentType;
+    instruction: string;
+    sourceText?: string;
+  }) => request<{ draft: string }>('/documents/ai-draft', { method: 'POST', body: dto }),
   updateDocument: (id: string, dto: { title?: string; content?: string; changeSummary?: string }) =>
     request<LegalDocument>(`/documents/${id}`, { method: 'PATCH', body: dto }),
   submitDocument: (id: string) =>
     request<LegalDocument>(`/documents/${id}/submit`, { method: 'POST', body: {} }),
-  requestDocumentSignature: (id: string, dto: { signerName: string; signerRole: string; signerEmail?: string }) =>
+  requestDocumentSignature: (
+    id: string,
+    dto: { signerName: string; signerRole: string; signerEmail?: string },
+  ) =>
     request<LegalDocument['signatures'] extends (infer T)[] | undefined ? T : never>(
       `/documents/${id}/signatures`,
       { method: 'POST', body: dto },
@@ -300,12 +348,23 @@ export const api = {
   updateConsultation: (id: string, dto: Partial<ConsultationDetail>) =>
     request<ConsultationDetail>(`/consultations/${id}`, { method: 'PATCH', body: dto }),
   changeConsultationStatus: (id: string, status: ConsultationStatus) =>
-    request<ConsultationDetail>(`/consultations/${id}/status`, { method: 'POST', body: { status } }),
-  assignConsultation: (id: string, dto: { toUserId: string; scheduledAt?: string; durationMinutes?: number }) =>
-    request<ConsultationDetail>(`/consultations/${id}/assign`, { method: 'POST', body: dto }),
+    request<ConsultationDetail>(`/consultations/${id}/status`, {
+      method: 'POST',
+      body: { status },
+    }),
+  assignConsultation: (
+    id: string,
+    dto: { toUserId: string; scheduledAt?: string; durationMinutes?: number },
+  ) => request<ConsultationDetail>(`/consultations/${id}/assign`, { method: 'POST', body: dto }),
   sendMessage: (
     id: string,
-    dto: { body?: string; type?: ConsultationMessage['type']; ciphertext?: string; iv?: string; algorithm?: string },
+    dto: {
+      body?: string;
+      type?: ConsultationMessage['type'];
+      ciphertext?: string;
+      iv?: string;
+      algorithm?: string;
+    },
   ) => request<ConsultationMessage>(`/consultations/${id}/messages`, { method: 'POST', body: dto }),
   uploadAttachment: async (id: string, file: File, messageId?: string) => {
     const form = new FormData();
@@ -350,7 +409,10 @@ export const api = {
     return response.blob();
   },
   createVideoSession: (id: string, provider?: string) =>
-    request<VideoSession>(`/consultations/${id}/video-sessions`, { method: 'POST', body: provider ? { provider } : {} }),
+    request<VideoSession>(`/consultations/${id}/video-sessions`, {
+      method: 'POST',
+      body: provider ? { provider } : {},
+    }),
   updateVideoSessionStatus: (id: string, sessionId: string, status: VideoSession['status']) =>
     request<VideoSession>(`/consultations/${id}/video-sessions/${sessionId}`, {
       method: 'PATCH',
@@ -358,16 +420,18 @@ export const api = {
     }),
 
   // Basis peraturan & sitasi pasal
-  listRegulations: (params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: RegulationType;
-    status?: LegalSourceStatus;
-    jurisdiction?: Jurisdiction;
-    year?: number;
-    at?: string;
-  } = {}) => {
+  listRegulations: (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      type?: RegulationType;
+      status?: LegalSourceStatus;
+      jurisdiction?: Jurisdiction;
+      year?: number;
+      at?: string;
+    } = {},
+  ) => {
     const q = buildQuery(params);
     return request<Paginated<RegulationListItem>>(`/regulations${q}`);
   },
@@ -380,17 +444,19 @@ export const api = {
     const q = buildQuery(params);
     return request<Paginated<ArticleCatalogItem>>(`/regulations/${slug}/articles${q}`);
   },
-  listArticles: (params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: RegulationType;
-    status?: LegalSourceStatus;
-    jurisdiction?: Jurisdiction;
-    regulationSlug?: string;
-    articleNumber?: string;
-    at?: string;
-  } = {}) => {
+  listArticles: (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      type?: RegulationType;
+      status?: LegalSourceStatus;
+      jurisdiction?: Jurisdiction;
+      regulationSlug?: string;
+      articleNumber?: string;
+      at?: string;
+    } = {},
+  ) => {
     const q = buildQuery(params);
     return request<Paginated<ArticleCatalogItem>>(`/articles${q}`);
   },
@@ -473,7 +539,9 @@ export const api = {
       method: 'POST',
       body: {},
     }),
-  listAnomalies: (params: { page?: number; limit?: number; status?: AnomalyStatus; caseId?: string } = {}) => {
+  listAnomalies: (
+    params: { page?: number; limit?: number; status?: AnomalyStatus; caseId?: string } = {},
+  ) => {
     const q = buildQuery(params);
     return request<Paginated<AnomalyFlag>>(`/integrity/anomalies${q}`);
   },

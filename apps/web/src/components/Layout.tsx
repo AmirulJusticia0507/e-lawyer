@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { hasPermission } from '../auth/permissions';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -11,13 +12,13 @@ export default function Layout({ children }: { children: ReactNode }) {
         <Link to="/" className="brand">
           e-Lawyer
         </Link>
-        <NavLink to="/perkara">Perkara</NavLink>
-        <NavLink to="/klien">Klien</NavLink>
-        <NavLink to="/peraturan">Peraturan</NavLink>
-        <NavLink to="/dokumen">Dokumen</NavLink>
-        <NavLink to="/sidang">Sidang</NavLink>
-        <NavLink to="/konsultasi">Konsultasi</NavLink>
-        <NavLink to="/integritas">Integritas</NavLink>
+        {hasPermission(user, 'READ:CASE') && <NavLink to="/perkara">Perkara</NavLink>}
+        {hasPermission(user, 'READ:CLIENT') && <NavLink to="/klien">Klien</NavLink>}
+        {hasPermission(user, 'READ:REGULATION') && <NavLink to="/peraturan">Peraturan</NavLink>}
+        {hasPermission(user, 'READ:DOCUMENT') && <NavLink to="/dokumen">Dokumen</NavLink>}
+        {hasPermission(user, 'READ:HEARING') && <NavLink to="/sidang">Sidang</NavLink>}
+        {hasPermission(user, 'READ:CONSULTATION') && <NavLink to="/konsultasi">Konsultasi</NavLink>}
+        {hasPermission(user, 'READ:INTEGRITY') && <NavLink to="/integritas">Integritas</NavLink>}
         <span className="spacer" />
         {user ? (
           <>

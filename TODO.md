@@ -144,7 +144,7 @@ Mapping ke kebutuhan utama:
 ## F10 — SPA Enhancements
 - [x] Setup PWA (manifest, service worker, offline cache)
 - [ ] Push notification di browser (reminder sidang & deadline)
-- [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
+- [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
 - [ ] Aksesibilitas (a11y) & tema
 - [ ] Optimasi performa (code splitting, lazy loading)
 - [ ] Rilis produksi (Vercel/Netlify/NGINX static)

@@ -1,12 +1,12 @@
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { api, clearTokens, getAccessToken, getRefreshToken, setTokens } from '../api';
+  api,
+  AUTH_CHANGED_EVENT,
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from '../api';
 import type { UserInfo } from '../types';
 
 interface AuthContextValue {
@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const boot = async () => {
-      if (!getAccessToken()) {
+      if (!getAccessToken() && !getRefreshToken()) {
         setReady(true);
         return;
       }
@@ -44,6 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void boot();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncToken = () => {
+      const accessToken = getAccessToken();
+      setToken(accessToken);
+      if (!accessToken && !getRefreshToken()) setUser(null);
+    };
+    window.addEventListener(AUTH_CHANGED_EVENT, syncToken);
+    window.addEventListener('storage', syncToken);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncToken);
+      window.removeEventListener('storage', syncToken);
     };
   }, []);
 

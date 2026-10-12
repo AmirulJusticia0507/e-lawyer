@@ -20,7 +20,7 @@ Mapping ke kebutuhan utama:
 - [x] Auth: JWT access + refresh token (verifikasi email/OTP menyusul)
 - [x] RBAC middleware (10 role: advokat, pengadilan, klien) + permission matrix
 - [x] Factory audit log global + middleware pencatat aktivitas
-- [ ] Struktur environment (dev/staging/prod) + secret manager
+- [x] Struktur environment (dev/staging/prod) + secret manager
 - [x] CI/CD pipeline: lint, typecheck, test, build
 - [ ] Setup observability (logging, error tracking, metrics)
 

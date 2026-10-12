@@ -13,8 +13,16 @@ out/
 # Environment
 .env
 .env.local
+.env.development
+.env.staging
+.env.production
+.env.test
 .env.*.local
 !.env.example
+!.env.*.example
+
+# Local secret-manager mounts
+secrets/
 
 # Logs
 logs/

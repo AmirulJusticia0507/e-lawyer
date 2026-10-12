@@ -1,8 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
+import { resolveSecretFiles } from './secret-files';
 
 enum Environment {
   Development = 'development',
+  Staging = 'staging',
   Production = 'production',
   Test = 'test',
 }
@@ -59,7 +61,8 @@ export class EnvironmentVariables {
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
-  const validated = plainToInstance(EnvironmentVariables, config, {
+  const resolvedConfig = resolveSecretFiles(config);
+  const validated = plainToInstance(EnvironmentVariables, resolvedConfig, {
     enableImplicitConversion: true,
   });
   const errors = validateSync(validated, { skipMissingProperties: false });

@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { validateEnv } from './config/env.validation';
+import { getEnvironmentFilePaths } from './config/environment-files';
 import { PrismaModule } from './prisma/prisma.module';
 import { ClientsModule } from './clients/clients.module';
 import { ConsultationsModule } from './consultations/consultations.module';
@@ -16,7 +17,7 @@ import { ConsultationsModule } from './consultations/consultations.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '../../.env'],
+      envFilePath: getEnvironmentFilePaths(),
       validate: validateEnv,
     }),
     PrismaModule,

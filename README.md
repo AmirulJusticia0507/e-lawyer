@@ -237,6 +237,19 @@ Registrasi/Login (OAuth2/JWT)
 
 Salin `.env.example` menjadi `.env` lalu sesuaikan variabel berikut:
 
+Untuk konfigurasi per lingkungan, gunakan template `.env.development.example`,
+`.env.staging.example`, atau `.env.production.example`. Salin menjadi file tanpa
+akhiran `.example`, lalu tetapkan `NODE_ENV` dari runtime/deployment. File dibaca
+dengan prioritas `.env.<environment>.local` → `.env.<environment>` → `.env.local`
+→ `.env`.
+
+Pada staging/production, secret dapat disediakan oleh Docker/Kubernetes secret
+mount menggunakan akhiran `_FILE`, misalnya
+`JWT_ACCESS_SECRET_FILE=/run/secrets/jwt_access_secret`. Jangan mengisi variabel
+langsung dan versi `_FILE` secara bersamaan. Secret yang didukung mencakup URL
+database/Redis, JWT, storage, encryption, AI, signature, payment, notification,
+dan video provider.
+
 ```env
 # Application
 NODE_ENV=development

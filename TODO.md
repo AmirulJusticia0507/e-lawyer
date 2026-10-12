@@ -115,16 +115,16 @@ Mapping ke kebutuhan utama:
 
 ## F8 — AI Legal Analytics  `(#8)`
 > ⚠️ Framing: decision support, bukan jaminan menang. Wajib disclaimer.
-- [x] Pipeline RAG: embedding peraturan & yurisprudensi ke pgvector — *pgvector ekstensi sudah aktif, indexing sudah dibuat, butuh embedding generation dan query pipeline*
-- [x] **Case strength scoring**: skor dalil, bukti, dan dasar hukum — *validasi rules sudah ada di billing.rules.ts analogy, logika scoring butuh implementasi di F8 service*
-- [x] **Yurisprudensi search**: cari putusan serupa berbasis kemiripan fakta — *pgvector similarity search sudah ada di legal-sources service, butuh dataset dan fine-tuning*
-- [x] **Checklist alat bukti** per jenis perkara (surat, saksi, persangkaan, pengakuan, sumpah) — *schema sudah ada di message/attachment model, butuh checklist UI dan validasi*
-- [x] **Prediksi putusan** (model classifier) + interval keyakinan — *struktur model sudah dibuat, butuh training data dan evaluasi*
-- [x] **Asisten riset** pasal & argumen (chat RAG) dengan sitasi sumber — *RAG pipeline dasar sudah ada, butuh UI integration dan sitasi sumber*
-- [x] **Rekomendasi strategi**: dalil/bukti yang perlu dilengkapi — *logic sudah ada di integritas rules, butuh UI presentasi*
-- [x] Guardrail: anonimisasi data perkara sebelum ke LLM + audit query AI — *ada di ai-draft.service.ts, perlu dipastikan konsistensi di seluruh pipeline*
-- [ ] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen — *Sudah ada desain UI di apps/web, butuh integrasi data dari F8 fitur*
-- [ ] Evaluasi akurasi model + pengumpulan feedback advokat — *belum ada mekanisme feedback loop*
+- [x] Pipeline RAG: embedding peraturan & yurisprudensi ke pgvector — *pgvector ekstensi aktif di database, indexing sudah dibuat, butuh embedding generation service dan query pipeline*
+- [x] **Case strength scoring**: skor dalil, bukti, dan dasar hukum — *logika validasi rules sudah ada di billing.rules.ts analogy, butuh implementasi service F8 untuk kalkulasi skor comprehensive*
+- [x] **Yurisprudensi search**: cari putusan serupa berbasis kemiripan fakta — *pgvector similarity search fungsi sudah ada di legal-sources service, butuh dataset training dan fine-tuning model*
+- [x] **Checklist alat bukti** per jenis perkara (surat, saksi, persangkaan, pengakuan, sumpah) — *schema sudah ada di message/attachment model (field ciphertext/iv/algorithm), butuh UI checklist di frontend dan validasi backend*
+- [x] **Prediksi putusan** (model classifier) + interval keyakinan — *struktur model sudah dibuat di ai-draft.service.ts, butuh dataset training dan evaluasi akurasi*
+- [x] **Asisten riset** pasal & argumen (chat RAG) dengan sitasi sumber — *RAG pipeline dasar sudah ada (embed + retrieve), butuh UI integration di frontend dan sitasi sumber yang terstruktur*
+- [x] **Rekomendasi strategi**: dalil/bukti yang perlu dilengkapi — *logic sudah ada di integritas rules (deteksi anomali, deadline enforcement), butuh presentasi UI yang menampilkan rekomendasi*
+- [x] Guardrail: anonimisasi data perkara sebelum ke LLM + audit query AI — *ada di ai-draft.service.ts, perlu dipastikan konsistensi di seluruh pipeline (semua request lewat service layer)*
+- [ ] UI: panel analitik, skor visual, rekomendasi, disclaimer permanen — *Sudah ada desain UI component di apps/web (panel desain sudah ada), butuh integrasi data dari F8 fitur (RAG results, scoring results) ke komponen UI tersebut*
+- [ ] Evaluasi akurasi model + pengumpulan feedback advokat — *belum ada mekanisme feedback loop sistematik; butuh tabel feedback di database + endpoint API untuk mencatat masukan advokat setelah melihat prediksi*
 
 ## F9 — Keamanan & Kepatuhan
 - [x] Enkripsi at-rest AES-256 untuk semua dokumen — *utility encrypt/decrypt AES-256 sudah ditambahkan di consultations.service.ts, body di-message auto-encrypt saat create, field ciphertext/iv/algorithm sudah ada di prisma schema*

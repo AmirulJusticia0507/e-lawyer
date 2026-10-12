@@ -148,6 +148,48 @@ enum JurisprudenceStatus {
   UNKNOWN
 }
 
+enum IntegrityEntityType {
+  ATTACHMENT
+  ADDENDUM
+  OFFICIAL_COPY
+}
+
+enum ReceiptStatus {
+  SENT
+  CONFIRMED
+  DISPUTED
+  EXPIRED
+}
+
+enum AnomalyType {
+  UPLOAD_BURST
+  BACKDATE_SUSPECT
+  CLAIM_CHANGED
+  DELAY_PATTERN
+  HASH_MISMATCH
+  DEADLINE_BREACH
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AnomalyStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum DeadlineStatus {
+  OPEN
+  MET
+  BREACHED
+  CANCELLED
+}
+
 model User {
   id              String     @id @default(uuid()) @db.Uuid
   email           String     @unique
@@ -176,6 +218,12 @@ model User {
   consultationsAssigned  Consultation[] @relation("ConsultationAssignedTo")
   messagesSent           Message[]      @relation("MessageSentBy")
   attachmentsUploaded    Attachment[]   @relation("AttachmentUploadedBy")
+
+  integrityRecords   IntegrityRecord[]  @relation("IntegrityRecordedBy")
+  integrityChecks    IntegrityCheck[]   @relation("IntegrityCheckedBy")
+  addendaWritten     Addendum[]         @relation("AddendumAuthor")
+  receiptsSent       DocumentReceipt[]  @relation("ReceiptSentBy")
+  anomaliesResolved  AnomalyFlag[]      @relation("AnomalyResolvedBy")
 
   @@index([status])
 }
@@ -315,6 +363,12 @@ model Case {
   consultations Consultation[]
   citations     Citation[]
 
+  integrityRecords IntegrityRecord[]
+  addenda          Addendum[]
+  receipts         DocumentReceipt[]
+  deadlines        CaseDeadline[]
+  anomalies        AnomalyFlag[]
+
   @@index([filedByUserId])
   @@index([assignedToUserId])
   @@index([status])
@@ -341,6 +395,8 @@ model Party {
 
   case   Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
   client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  receipts DocumentReceipt[]
 
   @@unique([caseId, side, name])
   @@index([clientId])
@@ -408,6 +464,7 @@ model Consultation {
   messages      Message[]
   attachments   Attachment[]
   videoSessions VideoSession[]
+  integrityRecords IntegrityRecord[]
 
   @@index([clientId])
   @@index([caseId])
@@ -598,4 +655,157 @@ model Citation {
   @@index([jurisprudenceId])
   @@index([validationStatus])
   @@index([documentType])
+}
+
+// Ledger integritas: satu baris per berkas/dokumen yang di-hash.
+// Append-only — baris tidak pernah diubah/dihapus (ditegakkan trigger DB).
+model IntegrityRecord {
+  id             String              @id @default(uuid()) @db.Uuid
+  entityType     IntegrityEntityType
+  entityId       String              @db.Uuid
+  caseId         String?             @db.Uuid
+  consultationId String?             @db.Uuid
+  sha256         String
+  algorithm      String              @default("sha256")
+  sizeBytes      Int?
+  storageKey     String?
+  tsaToken       String?
+  tsaUrl         String?
+  anchorHash     String?
+  anchoredAt     DateTime?
+  metadata       Json?
+  recordedById   String?             @db.Uuid
+  createdAt      DateTime            @default(now())
+
+  case         Case?           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  consultation Consultation?   @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  recordedBy   User?           @relation("IntegrityRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  checks    IntegrityCheck[]
+  addenda   Addendum[]
+  receipts  DocumentReceipt[]
+  anomalies AnomalyFlag[]
+
+  @@unique([entityType, entityId])
+  @@index([caseId])
+  @@index([consultationId])
+  @@index([sha256])
+  @@index([createdAt])
+}
+
+enum IntegrityCheckResult {
+  MATCH
+  MISMATCH
+  MISSING_FILE
+}
+
+// Hasil verifikasi ulang integritas (bandingkan hash tersimpan vs isi berkas saat ini).
+model IntegrityCheck {
+  id               String                @id @default(uuid()) @db.Uuid
+  recordId         String                @db.Uuid
+  expectedSha256   String
+  actualSha256     String?
+  result           IntegrityCheckResult
+  note             String?
+  checkedById      String?               @db.Uuid
+  createdAt        DateTime              @default(now())
+
+  record     IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  checkedBy  User?           @relation("IntegrityCheckedBy", fields: [checkedById], references: [id], onDelete: SetNull)
+
+  @@index([recordId])
+  @@index([result])
+  @@index([createdAt])
+}
+
+// Dokumen bersifat immutable setelah submit; revisi hanya melalui Addendum.
+model Addendum {
+  id         String   @id @default(uuid()) @db.Uuid
+  caseId     String   @db.Uuid
+  recordId   String   @db.Uuid
+  authorId   String?  @db.Uuid
+  title      String
+  content    String
+  createdAt  DateTime @default(now())
+
+  case     Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  record   IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  author   User?           @relation("AddendumAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([recordId])
+  @@index([createdAt])
+}
+
+// Dual-confirmation: pihak lawan menerima salinan resmi + konfirmasi terima.
+model DocumentReceipt {
+  id               String        @id @default(uuid()) @db.Uuid
+  caseId           String        @db.Uuid
+  recordId         String        @db.Uuid
+  recipientPartyId String        @db.Uuid
+  senderId         String?       @db.Uuid
+  status           ReceiptStatus @default(SENT)
+  token            String        @unique
+  sentAt           DateTime      @default(now())
+  confirmedAt      DateTime?
+  confirmNote      String?
+
+  case           Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  record         IntegrityRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  recipientParty Party           @relation(fields: [recipientPartyId], references: [id], onDelete: Cascade)
+  sender         User?           @relation("ReceiptSentBy", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([recordId])
+  @@index([recipientPartyId])
+  @@index([status])
+}
+
+model AnomalyFlag {
+  id             String          @id @default(uuid()) @db.Uuid
+  type           AnomalyType
+  severity       AnomalySeverity @default(MEDIUM)
+  status         AnomalyStatus   @default(OPEN)
+  caseId         String?         @db.Uuid
+  recordId       String?         @db.Uuid
+  subject        String
+  subjectId      String?
+  message        String
+  details        Json?
+  resolvedById   String?         @db.Uuid
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime        @default(now())
+
+  case       Case?           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  record     IntegrityRecord? @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  resolvedBy User?           @relation("AnomalyResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([recordId])
+  @@index([type])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+// Enforcement deadline otomatis: keterlambatan ditandai sistem, perpanjangan wajib beralasan.
+model CaseDeadline {
+  id                  String         @id @default(uuid()) @db.Uuid
+  caseId              String         @db.Uuid
+  label               String
+  dueAt               DateTime
+  status              DeadlineStatus @default(OPEN)
+  extensionCount      Int            @default(0)
+  lastExtensionReason String?
+  extendedAt          DateTime?
+  breachedAt          DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([status])
+  @@index([dueAt])
 }

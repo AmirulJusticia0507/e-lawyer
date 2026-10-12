@@ -51,10 +51,10 @@ Mapping ke kebutuhan utama:
 - [x] Pipeline ingest peraturan (UU, Perma, SEMA, KUHPerdata, KUHP, HIR/RBg, dll.)
 - [x] Katalog per-pasal + metadata (nomor, tahun, pasal, ayat, status)
 - [x] Pelacakan versi berbasis tanggal (berlaku / diubah / dicabut)
-- [ ] Validasi sitasi: tolak pasal yang dicabut/diubah, tandai konflik
-- [ ] Tautkan pasal ke dokumen (gugatan/jawaban/putusan)
+- [x] Validasi sitasi: tolak pasal yang dicabut/diubah, tandai konflik
+- [x] Tautkan pasal ke dokumen (gugatan/jawaban/putusan)
 - [ ] Pencarian full-text (Postgres FTS/Elasticsearch) + pencarian semantik (pgvector)
-- [ ] API: lookup pasal, daftar "Dasar Hukum" otomatis, cross-reference
+- [x] API: lookup pasal, daftar "Dasar Hukum" otomatis, cross-reference
 - [ ] UI: browser peraturan, panel sitasi, penanda pasal bermasalah
 - [ ] Seed & kurasi minimal set peraturan tiap lingkungan peradilan
 

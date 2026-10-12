@@ -34,8 +34,8 @@ export interface CitationValidationResult {
   issues: ValidationIssue[];
 }
 
-const REGULATION_LABEL = 'peraturan';
-const ARTICLE_LABEL = 'pasal';
+const REGULATION_LABEL = 'Peraturan';
+const ARTICLE_LABEL = 'Pasal';
 
 export interface ValidateCitationInput {
   article: CitationSubject;

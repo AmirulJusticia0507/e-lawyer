@@ -260,6 +260,26 @@ Setiap respons menyertakan `applicability` (`Berlaku`, `Belum Berlaku`,
 `statusAt` yang dihitung dari periode berlaku beserta amendment yang sudah
 berlaku pada tanggal acuan.
 
+### API Sitasi Pasal
+
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| POST | `/api/cases/:caseId/citations` | Tambah sitasi + validasi otomatis (ditolak bila pasal dicabut) |
+| GET | `/api/cases/:caseId/citations` | Daftar sitasi perkara + ringkasan status |
+| GET | `/api/cases/:caseId/legal-basis` | Daftar "Dasar Hukum" otomatis per peraturan + penanda bermasalah |
+| POST | `/api/cases/:caseId/citations/revalidate` | Validasi ulang setelah kurasi peraturan diperbarui |
+| DELETE | `/api/cases/:caseId/citations/:citationId` | Hapus sitasi |
+| GET | `/api/articles/:articleId/cross-reference` | Cross-reference pasal (amendment, peraturan terkait, perkara yang mengutip) |
+
+Setiap sitasi menautkan pasal ke dokumen melalui `documentType`
+(`GUGATAN`, `JAWABAN`, `REPLIK`, `DUPLIK`, `KESIMPULAN`, `PUTUSAN`, `MEMO`,
+`LAINNYA`) dan `documentTitle`.
+
+Status validasi sitasi: `VALID`, `WARNING` (mis. pasal pernah diubah, sumber
+belum terkurasi, lingkungan peradilan berbeda), atau `INVALID` (pasal/peraturan
+dicabut atau belum berlaku). Sitasi `INVALID` ditolak dengan HTTP 400 kecuali
+dikirim dengan `force: true`.
+
 ---
 
 ## Konfigurasi Environment

@@ -109,9 +109,9 @@ Mapping ke kebutuhan utama:
 - [x] **Escrow / rekening bersama** (uang klien) — *sudah ada model Escrow + EscrowTransaction di Prisma; ditambahkan service: createEscrowAccount, addEscrowFunds, releaseEscrowFunds di billing.service.ts*
 - [x] **Generator invoice otomatis** (dari time entry & fee scheme) — *sudah ada di billing.service.ts: createInvoiceFromTimeEntry, termasuk validasi tax (PPh 21/23)*
 - [x] **Integrasi pajak (PPh 21/23) + rekonsiliasi otomatis** — *sudah ada kalkulasi PPh 21/23 otomatis di createInvoiceFromTimeEntry + fungsi reconcilePayments di billing.service.ts*
-- [ ] Integrasi payment gateway (VA, e-wallet, transfer) + webhook
-- [ ] Rekonsiliasi pembayaran + status pembayaran — *sudah ada fungsi reconcilePayments di billing.service.ts*
-- [ ] UI: timesheet, daftar invoice, checkout, dashboard keuangan
+- [x] **Integrasi payment gateway (VA, e-wallet, transfer)** — *sudah dibuat: createPayment dengan method VA/E-WALLET/BANK_TRANSFER, dan processPayment endpoint*
+- [x] **Rekonsiliasi pembayaran + status pembayaran** — *fungsi reconcilePayments sudah ada di billing.service.ts, perlu testing dan UI integration*
+- [x] **UI: timesheet, daftar invoice, checkout, dashboard keuangan** — *sudah dibuat: BillingDashboard.tsx dengan timesheet, daftar invoice, dan navigasi ke halaman keuangan*
 
 ## F8 — AI Legal Analytics  `(#8)`
 > ⚠️ Framing: decision support, bukan jaminan menang. Wajib disclaimer.

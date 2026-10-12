@@ -62,19 +62,19 @@ export class BillingService {
     });
   }
 
-reconcilePayments(invoiceId: string) {
+reconcilePayments(invoiceId: string) async 
     const invoice = this.prisma.invoice.findUnique({ where: { id: invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice tidak ditemukan');
 
-    const payments = this.prisma.payment.findMany({
-      where: { invoiceId, status: 'CONFIRMED' },
-    }).then((payments: any[]) => payments);
+    const payments = await this.prisma.payment.findMany({
+      where: { invoiceId, status: 'CONFIRMED' as any },
+    });
 
     const totalPaid = (payments as any[])?.reduce(
       (sum: number, p: any) => sum + Number(p.amount),
       0,
     );
-    const totalAmount = Number(invoice.totalAmount ?? 0);
+    const totalAmount = Number(invoice?.totalAmount ?? 0);
 
     const isPaid = totalPaid >= totalAmount;
 
@@ -86,11 +86,11 @@ reconcilePayments(invoiceId: string) {
 
     return {
       invoiceId,
-      totalAmount,
-      totalPaid,
+      totalAmount: totalAmount ?? 0,
+      totalPaid: totalPaid ?? 0,
       isPaid,
       status: newStatus,
-    };
+    } as any;
   }
 
   // Invoice Generator

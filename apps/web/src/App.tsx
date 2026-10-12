@@ -142,12 +142,22 @@ export default function App() {
               </RequireAuth>
             }
           />
-          <Route
-            path="/sidang"
+<Route
+            path="/integritas"
             element={
-              <RequireAuth permission="READ:HEARING">
+              <RequireAuth permission="READ:INTEGRITY">
                 <Layout>
-                  <Hearings />
+                  <Integritas />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/keuangan"
+            element={
+              <RequireAuth permission="READ:INVOICE">
+                <Layout>
+                  <BillingDashboard />
                 </Layout>
               </RequireAuth>
             }

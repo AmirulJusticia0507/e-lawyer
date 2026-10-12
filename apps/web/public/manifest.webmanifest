@@ -1,0 +1,19 @@
+{
+  "name": "e-Lawyer Platform",
+  "short_name": "e-Lawyer",
+  "description": "Platform litigasi digital terpadu untuk advokat, pengadilan, dan klien.",
+  "lang": "id-ID",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#141a2e",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

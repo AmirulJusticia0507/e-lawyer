@@ -142,7 +142,7 @@ Mapping ke kebutuhan utama:
 - [ ] Backup & disaster recovery
 
 ## F10 — SPA Enhancements
-- [ ] Setup PWA (manifest, service worker, offline cache)
+- [x] Setup PWA (manifest, service worker, offline cache)
 - [ ] Push notification di browser (reminder sidang & deadline)
 - [ ] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role)
 - [ ] Aksesibilitas (a11y) & tema

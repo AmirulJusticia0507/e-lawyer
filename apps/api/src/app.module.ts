@@ -16,6 +16,7 @@ import { LegalSourcesModule } from './legal-sources/legal-sources.module';
 import { IntegrityModule } from './integrity/integrity.module';
 import { DocumentsModule } from './documents/documents.module';
 import { HearingsModule } from './hearings/hearings.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { HearingsModule } from './hearings/hearings.module';
     IntegrityModule,
     DocumentsModule,
     HearingsModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [

@@ -7,9 +7,24 @@ import {
   anomalyStatusLabels,
   anomalyTypeLabels,
 } from '../api';
+import { Button, Card, Badge, Select, EmptyState } from '../components/ui';
 import type { AnomalyFlag, AnomalyStatus, Paginated } from '../types';
 
 const STATUSES: (AnomalyStatus | '')[] = ['', 'OPEN', 'ACKNOWLEDGED', 'RESOLVED', 'DISMISSED'];
+
+const SEVERITY_TONES: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+  LOW: 'info',
+  MEDIUM: 'warning',
+  HIGH: 'danger',
+  CRITICAL: 'danger',
+};
+
+const STATUS_TONES: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+  OPEN: 'info',
+  ACKNOWLEDGED: 'warning',
+  RESOLVED: 'success',
+  DISMISSED: 'neutral',
+};
 
 export default function Integritas() {
   const [data, setData] = useState<Paginated<AnomalyFlag> | null>(null);
@@ -24,7 +39,9 @@ export default function Integritas() {
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Gagal memuat anomali'));
   }, [status]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const update = (id: string, next: AnomalyStatus) => {
     const note =
@@ -44,118 +61,143 @@ export default function Integritas() {
     load();
   };
 
-  if (error) return <p className="error">{error}</p>;
-
   return (
-    <div>
-      <h1>Integritas & Anti-Manipulasi</h1>
-      <p className="muted">
-        Monitoring anomali integritas lintas perkara: upload mendadak, tanggal mundur
-        mencurigakan, perubahan klaim, pola penundaan, hash berubah, dan tenggat terlampaui.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Integritas & Anti-Manipulasi</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Monitoring anomali integritas lintas perkara: upload mendadak, tanggal mundur
+          mencurigakan, perubahan klaim, pola penundaan, hash berubah, dan tenggat terlampaui.
+        </p>
+      </div>
 
-      <form onSubmit={onSubmit} style={{ display: 'flex', gap: '0.5rem', alignItems: 'end' }}>
-        <div className="field">
-          <label>Status</label>
-          <select
-            className="select"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as AnomalyStatus | '')}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s ? anomalyStatusLabels[s] : 'Semua'}
-              </option>
-            ))}
-          </select>
+      {error && (
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-600" role="alert">
+          {error}
         </div>
-        <button className="btn" type="submit">
-          Filter
-        </button>
-      </form>
+      )}
+
+      <Card>
+        <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-4">
+          <Field label="Status">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as AnomalyStatus | '')}
+              options={STATUSES.map((s) => ({ value: s, label: s ? anomalyStatusLabels[s] : 'Semua' }))}
+            />
+          </Field>
+          <Button type="submit" disabled={busy}>Filter</Button>
+        </form>
+      </Card>
 
       {!data || data.items.length === 0 ? (
-        <p className="muted" style={{ marginTop: '1rem' }}>
-          Tidak ada flag anomali.
-        </p>
+        <Card>
+          <EmptyState title="Tidak ada flag anomali" description="Sistem tidak mendeteksi anomali integritas pada filter saat ini." />
+        </Card>
       ) : (
-        <table className="table" style={{ marginTop: '1rem' }}>
-          <thead>
-            <tr>
-              <th>Jenis</th>
-              <th>Severity</th>
-              <th>Status</th>
-              <th>Perkara</th>
-              <th>Pesan</th>
-              <th>Waktu</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {data.items.map((a) => (
-              <tr key={a.id}>
-                <td>{anomalyTypeLabels[a.type]}</td>
-                <td>{anomalySeverityLabels[a.severity]}</td>
-                <td>
-                  <span className="badge">{anomalyStatusLabels[a.status]}</span>
-                </td>
-                <td>
-                  {a.case ? (
-                    <Link to={`/perkara/${a.case.id}`}>{a.case.caseNumber}</Link>
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <td style={{ maxWidth: 360 }}>
-                  {a.message}
-                  {a.resolutionNote && (
-                    <div className="muted" style={{ fontSize: '0.75rem' }}>
-                      Catatan: {a.resolutionNote}
-                      {a.resolvedBy ? ` - ${a.resolvedBy.fullName}` : ''}
-                    </div>
-                  )}
-                </td>
-                <td className="muted">{new Date(a.createdAt).toLocaleString('id-ID')}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  {a.status === 'OPEN' && (
-                    <button
-                      className="btn btn-sm"
-                      disabled={busy}
-                      onClick={() => update(a.id, 'ACKNOWLEDGED')}
-                    >
-                      Akui
-                    </button>
-                  )}
-                  {(a.status === 'OPEN' || a.status === 'ACKNOWLEDGED') && (
-                    <>
-                      {' '}
-                      <button
-                        className="btn btn-sm"
-                        disabled={busy}
-                        onClick={() => update(a.id, 'RESOLVED')}
-                      >
-                        Selesai
-                      </button>{' '}
-                      <button
-                        className="btn btn-sm btn-ghost"
-                        disabled={busy}
-                        onClick={() => update(a.id, 'DISMISSED')}
-                      >
-                        Abaikan
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {data && data.meta.totalPages > 1 && (
-        <p className="muted">
-          Halaman {data.meta.page} / {data.meta.totalPages} - total {data.meta.total} flag
-        </p>
+        <>
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-xs uppercase text-[var(--muted)]">
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="px-4 py-3">Jenis</th>
+                    <th className="px-4 py-3">Severity</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Perkara</th>
+                    <th className="px-4 py-3">Pesan</th>
+                    <th className="px-4 py-3">Waktu</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((a) => (
+                    <tr key={a.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/50">
+                      <td className="px-4 py-4">{anomalyTypeLabels[a.type]}</td>
+                      <td className="px-4 py-4">
+                        <Badge tone={SEVERITY_TONES[a.severity] || 'neutral'}>{anomalySeverityLabels[a.severity]}</Badge>
+                      </td>
+                      <td className="px-4 py-4">
+                        <Badge tone={STATUS_TONES[a.status] || 'neutral'}>
+                          {anomalyStatusLabels[a.status]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-4">
+                        {a.case ? (
+                          <Link to={`/perkara/${a.case.id}`} className="text-[var(--accent)] hover:underline">
+                            {a.case.caseNumber}
+                          </Link>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-4 py-4 max-w-xs">
+                        <div>{a.message}</div>
+                        {a.resolutionNote && (
+                          <div className="mt-1 text-xs text-[var(--muted)]">
+                            Catatan: {a.resolutionNote}
+                            {a.resolvedBy ? ` - ${a.resolvedBy.fullName}` : ''}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-[var(--muted)]">
+                        {new Date(a.createdAt).toLocaleString('id-ID')}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {a.status === 'OPEN' && (
+                          <Button
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => update(a.id, 'ACKNOWLEDGED')}
+                          >
+                            Akui
+                          </Button>
+                        )}
+                        {(a.status === 'OPEN' || a.status === 'ACKNOWLEDGED') && (
+                          <div className="inline-flex gap-2">
+                            <Button
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => update(a.id, 'RESOLVED')}
+                            >
+                              Selesai
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => update(a.id, 'DISMISSED')}
+                            >
+                              Abaikan
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {data.meta.totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-sm text-[var(--muted)]">
+                  Halaman {data.meta.page} / {data.meta.totalPages} — total {data.meta.total} flag
+                </div>
+              </div>
+            )}
+          </Card>
+        </>
       )}
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm font-medium">
+      <span>{label}</span>
+      {children}
+    </label>
   );
 }

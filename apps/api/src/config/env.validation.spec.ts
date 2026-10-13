@@ -55,6 +55,20 @@ describe('validateEnv', () => {
     expect(() => validateEnv({})).toThrow(/Konfigurasi environment tidak valid/);
   });
 
+  it('mewajibkan secret kuat, kunci enkripsi, dan CORS pada production', () => {
+    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).toThrow();
+    expect(() =>
+      validateEnv({
+        ...base,
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        ENCRYPTION_KEY: 'c'.repeat(32),
+        CORS_ORIGINS: 'https://app.example.com',
+      }),
+    ).not.toThrow();
+  });
+
   it('membaca secret dari *_FILE', () => {
     const withoutDatabaseUrl: Record<string, string> = { ...base };
     delete withoutDatabaseUrl.DATABASE_URL;
@@ -64,8 +78,8 @@ describe('validateEnv', () => {
   });
 
   it('menolak secret yang diisi ganda lewat nilai dan *_FILE', () => {
-    expect(() =>
-      validateEnv({ ...base, DATABASE_URL_FILE: 'C:/tidak-ada.txt' }),
-    ).toThrow(/Gunakan salah satu/);
+    expect(() => validateEnv({ ...base, DATABASE_URL_FILE: 'C:/tidak-ada.txt' })).toThrow(
+      /Gunakan salah satu/,
+    );
   });
 });

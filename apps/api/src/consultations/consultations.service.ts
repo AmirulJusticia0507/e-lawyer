@@ -12,7 +12,7 @@ import { ConsultationStatus, Prisma, VideoSessionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
 import { IntegrityService } from '../integrity/integrity.service';
-import { decryptBuffer, encryptBuffer } from '../security/encryption';
+import { decryptBufferWithKeys, encryptBuffer } from '../security/encryption';
 import { assertTransition } from './consultation-status';
 import { ConsultationsGateway } from './consultations.gateway';
 import {
@@ -282,7 +282,11 @@ export class ConsultationsService {
     const fileName = `${randomUUID()}-${safeName}`;
     writeFileSync(
       join(dir, fileName),
-      encryptBuffer(file.buffer, this.config.getOrThrow<string>('ENCRYPTION_KEY')),
+      encryptBuffer(
+        file.buffer,
+        this.config.get<string>('FILE_ENCRYPTION_KEY') ||
+          this.config.getOrThrow<string>('ENCRYPTION_KEY'),
+      ),
     );
     const storageKey = join('attachments', id, fileName).split('\\').join('/');
 
@@ -334,10 +338,12 @@ export class ConsultationsService {
     ) {
       throw new BadRequestException('Lokasi berkas tidak valid');
     }
-    const content = decryptBuffer(
-      readFileSync(absolute),
-      this.config.getOrThrow<string>('ENCRYPTION_KEY'),
-    );
+    const content = decryptBufferWithKeys(readFileSync(absolute), [
+      this.config.get<string>('FILE_ENCRYPTION_KEY') ||
+        this.config.getOrThrow<string>('ENCRYPTION_KEY'),
+      this.config.get<string>('FILE_ENCRYPTION_KEY_PREVIOUS', ''),
+      this.config.get<string>('ENCRYPTION_KEY_PREVIOUS', ''),
+    ]);
     return { attachment, content };
   }
 

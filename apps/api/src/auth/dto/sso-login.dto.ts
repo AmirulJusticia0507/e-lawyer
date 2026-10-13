@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsInt, IsOptional } from 'class-validator';
+import { IsEmail, IsInt, IsString, MinLength } from 'class-validator';
 
 export class SsoLoginDto {
   @IsEmail({}, { message: 'Format email tidak valid' })

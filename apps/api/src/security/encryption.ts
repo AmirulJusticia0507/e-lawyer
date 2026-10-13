@@ -3,7 +3,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 const PREFIX = 'elawyer:v1:';
 
 function keyBytes(secret: string): Buffer {
-  if (!secret || secret.startsWith('changeme'))
+  if (!secret || secret.startsWith('changeme') || Buffer.byteLength(secret, 'utf8') < 32)
     throw new Error('ENCRYPTION_KEY wajib dikonfigurasi');
   return createHash('sha256').update(secret, 'utf8').digest();
 }
@@ -35,11 +35,26 @@ export function encryptText(value: string, secret: string): string {
 }
 
 export function decryptText(value: string, secret: string): string {
-  try {
-    const decoded = Buffer.from(value, 'base64');
-    if (!decoded.subarray(0, PREFIX.length).equals(Buffer.from(PREFIX))) return value;
-    return decryptBuffer(decoded, secret).toString('utf8');
-  } catch {
-    return value;
+  const decoded = Buffer.from(value, 'base64');
+  if (!decoded.subarray(0, PREFIX.length).equals(Buffer.from(PREFIX))) return value;
+  return decryptBuffer(decoded, secret).toString('utf8');
+}
+
+export function decryptBufferWithKeys(value: Buffer, secrets: string[]): Buffer {
+  if (!value.subarray(0, PREFIX.length).equals(Buffer.from(PREFIX))) return value;
+  let lastError: unknown;
+  for (const secret of secrets.filter(Boolean)) {
+    try {
+      return decryptBuffer(value, secret);
+    } catch (error) {
+      lastError = error;
+    }
   }
+  throw lastError ?? new Error('Kunci dekripsi tidak tersedia');
+}
+
+export function decryptTextWithKeys(value: string, secrets: string[]): string {
+  const decoded = Buffer.from(value, 'base64');
+  if (!decoded.subarray(0, PREFIX.length).equals(Buffer.from(PREFIX))) return value;
+  return decryptBufferWithKeys(decoded, secrets).toString('utf8');
 }

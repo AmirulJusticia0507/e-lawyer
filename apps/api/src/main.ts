@@ -5,12 +5,20 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import rateLimit from 'express-rate-limit';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);
   const prefix = config.get<string>('API_PREFIX', 'api').replace(/^\/+|\/+$/g, '');
+  const server = app.getHttpAdapter().getInstance() as {
+    disable(name: string): void;
+    set(name: string, value: number): void;
+  };
+  server.disable('x-powered-by');
+  const trustProxyHops = config.get<number>('TRUST_PROXY_HOPS', 0);
+  if (trustProxyHops > 0) server.set('trust proxy', trustProxyHops);
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
@@ -26,7 +34,12 @@ async function bootstrap(): Promise<void> {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'");
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+    );
     next();
   });
 
@@ -60,15 +73,7 @@ async function bootstrap(): Promise<void> {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    const forwardedProtocol = req.headers['x-forwarded-proto'];
-    const isHttps = req.secure || forwardedProtocol === 'https';
-    if (isHttps) {
-      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-    }
-    next();
-  });
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const origins = config
     .get<string>('CORS_ORIGINS', '')
@@ -76,7 +81,7 @@ async function bootstrap(): Promise<void> {
     .map((o) => o.trim())
     .filter(Boolean);
   app.enableCors({
-    origin: origins.length > 0 ? origins : true,
+    origin: origins.length > 0 ? origins : config.get<string>('NODE_ENV') !== 'production',
     credentials: true,
   });
 

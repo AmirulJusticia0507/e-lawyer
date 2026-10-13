@@ -14,7 +14,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { decryptText, encryptText } from '../security/encryption';
+import { decryptTextWithKeys, encryptText } from '../security/encryption';
 import {
   DEFAULT_DOCUMENT_TEMPLATES,
   hashDocumentContent,
@@ -38,11 +38,22 @@ export class DocumentsService {
   ) {}
 
   private encrypt(content: string): string {
-    return encryptText(content, this.config.getOrThrow<string>('ENCRYPTION_KEY'));
+    return encryptText(content, this.documentKey());
   }
 
   private decrypt(content: string): string {
-    return decryptText(content, this.config.getOrThrow<string>('ENCRYPTION_KEY'));
+    return decryptTextWithKeys(content, [
+      this.documentKey(),
+      this.config.get<string>('DOCUMENT_ENCRYPTION_KEY_PREVIOUS', ''),
+      this.config.get<string>('ENCRYPTION_KEY_PREVIOUS', ''),
+    ]);
+  }
+
+  private documentKey(): string {
+    return (
+      this.config.get<string>('DOCUMENT_ENCRYPTION_KEY') ||
+      this.config.getOrThrow<string>('ENCRYPTION_KEY')
+    );
   }
 
   async list(query: QueryDocumentsDto) {

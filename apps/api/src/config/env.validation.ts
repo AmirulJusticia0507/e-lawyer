@@ -7,6 +7,7 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 import { resolveSecretFiles } from './secret-files';
@@ -41,6 +42,12 @@ export class EnvironmentVariables {
   @IsOptional()
   CORS_ORIGINS = '';
 
+  @IsInt()
+  @Min(0)
+  @Max(5)
+  @IsOptional()
+  TRUST_PROXY_HOPS = 0;
+
   @IsString()
   @IsOptional()
   WEB_URL = 'http://localhost:5173';
@@ -73,6 +80,36 @@ export class EnvironmentVariables {
 
   @IsString()
   JWT_REFRESH_SECRET!: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  ENCRYPTION_KEY?: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  ENCRYPTION_KEY_PREVIOUS?: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  DOCUMENT_ENCRYPTION_KEY?: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  DOCUMENT_ENCRYPTION_KEY_PREVIOUS?: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  FILE_ENCRYPTION_KEY?: string;
+
+  @IsString()
+  @MinLength(32)
+  @IsOptional()
+  FILE_ENCRYPTION_KEY_PREVIOUS?: string;
 
   @IsString()
   @IsOptional()
@@ -141,6 +178,19 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
   const errors = validateSync(validated, { skipMissingProperties: false });
   if (errors.length > 0) {
     throw new Error(`Konfigurasi environment tidak valid:\n${errors.toString()}`);
+  }
+  if (validated.NODE_ENV === Environment.Production) {
+    const weakSecret = (value?: string) =>
+      !value || value.length < 32 || value.startsWith('changeme');
+    if (weakSecret(validated.JWT_ACCESS_SECRET) || weakSecret(validated.JWT_REFRESH_SECRET)) {
+      throw new Error('JWT secret production wajib unik dan minimal 32 karakter');
+    }
+    if (weakSecret(validated.ENCRYPTION_KEY)) {
+      throw new Error('ENCRYPTION_KEY production wajib unik dan minimal 32 karakter');
+    }
+    if (!validated.CORS_ORIGINS) {
+      throw new Error('CORS_ORIGINS wajib dikonfigurasi pada production');
+    }
   }
   // Return plain object, not class instance
   return JSON.parse(JSON.stringify(validated));

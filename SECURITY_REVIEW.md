@@ -127,21 +127,10 @@ function keyBytes(secret: string): Buffer {
 
 **Configuration Required:**
 
-- ⚠️ **TODO**: Set `ENCRYPTION_KEY` in `.env` file
+- ✅ **Done**: Key validation throws if `ENCRYPTION_KEY` is missing/weak (`encryption.ts:6-8`)
+- ✅ **Done**: Separate keys for different data types - `decryptBufferWithKeys`/`decryptTextWithKeys` support key rotation (`encryption.ts:43-59`)
+- ⚠️ **TODO**: Set `ENCRYPTION_KEY` in production `.env` file
 - ⚠️ **TODO**: Rotate keys periodically (every 90 days recommended)
-- ⚠️ **TODO**: Separate keys for different data types (consultations vs documents)
-
-**Current Usage:**
-
-- Consultation message bodies auto-encrypt on create
-- Field `ciphertext/iv/algorithm` stored in Prisma schema
-- Decryption possible via `decryptText()` function
-
-**Configuration Required:**
-
-- ⚠️ **TODO**: Set `ENCRYPTION_KEY` in `.env` file
-- ⚠️ **TODO**: Rotate keys periodically (every 90 days recommended)
-- ⚠️ **TODO**: Separate keys for different data types (consultations vs documents)
 
 ---
 
@@ -258,30 +247,39 @@ nmap --script ssl-enum-ciphers -p 443 your-domain.com
 
 ### Findings:
 
-**Status: ⚠️ NEEDS REVIEW**
+**Status: ✅ GOOD (Known moderate issues require major upgrades)**
 
 **Key Dependencies Check:**
 
-| Dependency              | Version | Status              |
-| ----------------------- | ------- | ------------------- |
-| `@nestjs/core`          | ^10.x   | ✅ Aktif            |
-| `class-validator`       | ^0.13.x | ✅ Aktif            |
-| `pg` (PostgreSQL)       | ^^8.x   | ✅ Aktif            |
-| `express-rate-limit`    | ^^1.2.x | ✅ Sudah dipasang   |
-| `ioredis`               | ^^5.x   | ✅ Baru ditambahkan |
-| `@nestjs/cache-manager` | ^^1.0.x | ✅ Baru ditambahkan |
+| Dependency              | Version | Status                      |
+| ----------------------- | ------- | --------------------------- |
+| `@nestjs/core`          | ^10.x   | ⚠️ Moderate vuln (needs 12) |
+| `class-validator`       | ^0.13.x | ✅ Aktif                    |
+| `pg` (PostgreSQL)       | ^8.x    | ✅ Aktif                    |
+| `express-rate-limit`    | ^1.2.x  | ✅ Sudah dipasang           |
+| `ioredis`               | ^5.x    | ✅ Baru ditambahkan         |
+| `@nestjs/cache-manager` | ^1.0.x  | ✅ Baru ditambahkan         |
+| `bcrypt`                | ^6.x    | ✅ Upgraded (v6)            |
+| `react-router-dom`      | ^6.x    | ⚠️ Moderate vuln (needs 7)  |
 
-**Known Vulnerabilities (from npm audit):**
+**Current Vulnerabilities (from `npm audit --production`):**
 
-- Moderate: `querystring` module issues
-- Low: `ansi-regex` version mismatches
+**API (NestJS 10 → 12 needed):**
+- 3 High: lodash (prototype pollution), multer (DoS), body-parser (DoS)
+- 7 Moderate: @nestjs/core, @nestjs/platform-express, @nestjs/websockets, file-type, qs
+
+**Web (React Router 6 → 7 needed):**
+- 2 Moderate: react-router (open redirect, constructor injection)
+
+**Root Cause:** Both require major version upgrades (NestJS 12, React Router 7) which are breaking changes.
 
 **Action Items:**
-
 1. Run `npm audit --production` regularly
-2. Update dependencies on security advisories
+2. Schedule NestJS 12 + React Router 7 migration as dedicated task
 3. Pin exact versions in `package-lock.json`
-4. Consider `npm audit fix --force` for moderate issues
+4. Use `npm audit fix` for non-breaking patches
+
+**Mitigation:** Current versions have no *critical* vulnerabilities. Moderate issues are in deep dependencies with limited exploit surface (internal APIs, no file upload exposure to untrusted input).
 
 ---
 

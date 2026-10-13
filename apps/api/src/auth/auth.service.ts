@@ -1,12 +1,19 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { DEFAULT_ROLE, RoleName } from '../common/constants/roles';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthenticatedUser, JwtPayload } from './interfaces/jwt-payload.interface';
 import { IssuedTokens, TokenService } from './token.service';
+import { AuthMailService } from './auth-mail.service';
 
 export interface AuthResult extends IssuedTokens {
   user: AuthenticatedUser & { fullName: string };
@@ -18,13 +25,17 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
     private readonly config: ConfigService,
+    private readonly mail: AuthMailService,
   ) {}
 
   private get rounds(): number {
     return this.config.get<number>('BCRYPT_ROUNDS', 12);
   }
 
-  async register(dto: RegisterDto, meta?: { userAgent?: string; ip?: string }): Promise<AuthResult> {
+  async register(
+    dto: RegisterDto,
+    meta?: { userAgent?: string; ip?: string },
+  ): Promise<AuthResult> {
     const email = dto.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -94,6 +105,44 @@ export class AuthService {
     return { success: true };
   }
 
+  async forgotPassword(emailInput: string): Promise<{ message: string }> {
+    const message = 'Jika email terdaftar, tautan reset password telah dikirim.';
+    const user = await this.prisma.user.findUnique({ where: { email: emailInput.toLowerCase() } });
+    if (!user || user.status !== 'ACTIVE') return { message };
+
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(token);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await this.prisma.$transaction([
+      this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+      this.prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash, expiresAt } }),
+    ]);
+
+    const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173').replace(/\/$/, '');
+    await this.mail.sendPasswordReset(user.email, `${webUrl}/reset-password?token=${token}`);
+    return { message };
+  }
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash: this.hashResetToken(token) },
+    });
+    if (!record || record.usedAt || record.expiresAt <= new Date()) {
+      throw new BadRequestException('Tautan reset tidak valid atau sudah kedaluwarsa');
+    }
+
+    const passwordHash = await bcrypt.hash(password, this.rounds);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+      this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+    await this.tokens.revokeAllForUser(record.userId);
+    return { message: 'Password berhasil diperbarui. Silakan masuk kembali.' };
+  }
+
   async me(userId: string): Promise<AuthenticatedUser & { fullName: string }> {
     return this.buildAuthUser(userId);
   }
@@ -116,9 +165,11 @@ export class AuthService {
     };
   }
 
-  private async buildAuthUser(
-    userId: string,
-  ): Promise<AuthenticatedUser & { fullName: string }> {
+  private hashResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private async buildAuthUser(userId: string): Promise<AuthenticatedUser & { fullName: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {

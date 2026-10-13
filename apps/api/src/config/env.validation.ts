@@ -1,5 +1,14 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Matches, Max, Min, validateSync } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator';
 import { resolveSecretFiles } from './secret-files';
 
 enum Environment {
@@ -31,6 +40,18 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   CORS_ORIGINS = '';
+
+  @IsString()
+  @IsOptional()
+  WEB_URL = 'http://localhost:5173';
+
+  @IsString()
+  @IsOptional()
+  SMTP_URL = '';
+
+  @IsString()
+  @IsOptional()
+  SMTP_FROM = 'e-Lawyer <no-reply@elawyer.local>';
 
   @IsString()
   DATABASE_URL!: string;

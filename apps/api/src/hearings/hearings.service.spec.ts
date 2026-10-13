@@ -7,6 +7,8 @@ describe('HearingsService', () => {
   const tx = {
     case: { findUnique: jest.fn() },
     hearing: { findMany: jest.fn(), create: jest.fn() },
+    hearingSla: { createMany: jest.fn() },
+    reminder: { createMany: jest.fn() },
   };
   const prisma = {
     hearing: { findMany: jest.fn() },

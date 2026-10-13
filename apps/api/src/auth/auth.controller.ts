@@ -4,6 +4,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthResult, AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
@@ -27,6 +28,20 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto, @Req() req: Request): Promise<AuthResult> {
     return this.auth.login(dto, this.meta(req));
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.auth.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
+    return this.auth.resetPassword(dto.token, dto.password);
   }
 
   @Public()

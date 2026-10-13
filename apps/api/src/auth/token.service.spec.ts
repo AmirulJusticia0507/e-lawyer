@@ -19,7 +19,10 @@ describe('TokenService', () => {
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(now);
     jwt = {
-      signAsync: jest.fn().mockResolvedValueOnce('access-token').mockResolvedValueOnce('refresh-token'),
+      signAsync: jest
+        .fn()
+        .mockResolvedValueOnce('access-token')
+        .mockResolvedValueOnce('refresh-token'),
       verifyAsync: jest.fn(),
     };
     const config = {

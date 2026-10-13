@@ -172,6 +172,18 @@ export const api = {
     request<AuthResult>('/auth/register', { method: 'POST', body: dto, auth: false }),
   login: (dto: { email: string; password: string }) =>
     request<AuthResult>('/auth/login', { method: 'POST', body: dto, auth: false }),
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+      auth: false,
+    }),
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: { token, password },
+      auth: false,
+    }),
   logout: (refreshToken: string) =>
     request<{ success: true }>('/auth/logout', { method: 'POST', body: { refreshToken } }),
   me: () =>

@@ -15,6 +15,9 @@ const Hearings = lazy(() => import('./pages/Hearings'));
 const Home = lazy(() => import('./pages/Home'));
 const Integritas = lazy(() => import('./pages/Integritas'));
 const Login = lazy(() => import('./pages/Login'));
+const SignUp = lazy(() => import('./pages/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const BillingDashboard = lazy(() => import('./pages/BillingDashboard'));
 const RegulationDetail = lazy(() => import('./pages/RegulationDetail'));
 const Regulations = lazy(() => import('./pages/Regulations'));
@@ -33,6 +36,9 @@ export default function App() {
       <Suspense fallback={<p role="status">Memuat halaman…</p>}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/"
             element={
@@ -143,7 +149,7 @@ export default function App() {
               </RequireAuth>
             }
           />
-<Route
+          <Route
             path="/integritas"
             element={
               <RequireAuth permission="READ:INTEGRITY">

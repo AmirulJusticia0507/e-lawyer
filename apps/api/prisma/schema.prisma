@@ -294,9 +294,10 @@ model User {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
-  roles         UserRole[]
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]     @relation("AuditActor")
+  roles               UserRole[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]           @relation("AuditActor")
 
   clientsCreated      Client[]         @relation("ClientCreatedBy")
   interactionsCreated Interaction[]    @relation("InteractionCreatedBy")
@@ -305,7 +306,7 @@ model User {
   assignmentsMade     CaseAssignment[] @relation("CaseAssignmentMadeBy")
   assignmentsHistory  CaseAssignment[] @relation("CaseAssignmentFrom")
   assignmentsReceived CaseAssignment[] @relation("CaseAssignmentTo")
-  feedbackGiven     Feedback[]         @relation("FeedbackGivenBy")
+  feedbackGiven       Feedback[]       @relation("FeedbackGivenBy")
 
   consultationsRequested Consultation[] @relation("ConsultationRequestedBy")
   consultationsAssigned  Consultation[] @relation("ConsultationAssignedTo")
@@ -330,6 +331,20 @@ model User {
   escrowTransactions     EscrowTransaction[] @relation("EscrowTransactionActor")
 
   @@index([status])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Role {
@@ -517,17 +532,17 @@ model TimeEntry {
 }
 
 model Feedback {
-  id              String          @id @default(uuid()) @db.Uuid
-  caseId          String?         @db.Uuid
-  userId          String          @db.Uuid
-  predictionType  String          // 'case_strength', 'verdict_prediction', 'citations'
-  predictedValue  String
-  actualOutcome   String?
-  rating          Int?            // 1-5 scale
-  feedbackText    String?
-  createdAt       DateTime        @default(now())
-  user          User          @relation("FeedbackGivenBy", fields: [userId], references: [id], onDelete: SetNull)
-  case        Case?         @relation("FeedbackGivenBy", fields: [caseId], references: [id], onDelete: SetNull)
+  id             String   @id @default(uuid()) @db.Uuid
+  caseId         String?  @db.Uuid
+  userId         String   @db.Uuid
+  predictionType String // 'case_strength', 'verdict_prediction', 'citations'
+  predictedValue String
+  actualOutcome  String?
+  rating         Int? // 1-5 scale
+  feedbackText   String?
+  createdAt      DateTime @default(now())
+  user           User     @relation("FeedbackGivenBy", fields: [userId], references: [id], onDelete: SetNull)
+  case           Case?    @relation("FeedbackGivenBy", fields: [caseId], references: [id], onDelete: SetNull)
 }
 
 model FeeScheme {

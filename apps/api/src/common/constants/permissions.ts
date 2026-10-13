@@ -85,16 +85,7 @@ const anomalyFull = [
 ];
 
 export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
-  [RoleName.ADMIN]: [
-    key(Action.MANAGE, Subject.USER),
-    key(Action.MANAGE, Subject.ROLE),
-    ...allOf(Subject.HEARING).map((p) => key(p.action, p.subject)),
-    key(Action.READ, Subject.AUDIT_LOG),
-    key(Action.READ, Subject.REGULATION),
-    ...citationAll,
-    ...integrityFull,
-    ...anomalyFull,
-  ],
+  [RoleName.ADMIN]: PERMISSIONS.map((p) => key(p.action, p.subject)),
   [RoleName.MANAGING_PARTNER]: [
     ...allOf(Subject.CASE).map((p) => key(p.action, p.subject)),
     ...allOf(Subject.CLIENT).map((p) => key(p.action, p.subject)),

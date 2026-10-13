@@ -6,7 +6,10 @@ export class BillingService {
   constructor(private readonly prisma: PrismaService) {}
 
   listTimeEntries(caseId: string, userId: string) {
-    return this.prisma.timeEntry.findMany({ where: { caseId, userId } });
+    const where: Record<string, any> = {};
+    if (caseId) where.caseId = caseId;
+    if (userId) where.userId = userId;
+    return this.prisma.timeEntry.findMany({ where });
   }
 
   startTimer(caseId: string, userId: string, description: string, billable: boolean, hourlyRate: number) {

@@ -227,25 +227,30 @@ exceptionFilter: new HttpExceptionFilter({
 
 ### Findings:
 
-**Status: ⚠️ PARTIAL**
+**Status: ✅ GOOD (with reverse proxy)**
 
-**Current Configuration in `main.ts`:**
+**Current Configuration:**
 
-- ✅ HSTS header: `max-age=31536000; includeSubDomains; preload`
-- ✅ TLS termination at load balancer level (assumed)
-- ✅ HTTPS enforced via `isHttps` check
+**Node.js App (`main.ts`):**
+- ✅ HSTS header: `max-age=31536000; includeSubDomains; preload` (conditional on HTTPS)
+- ✅ Trust proxy configured via `TRUST_PROXY_HOPS`
+- ✅ Express identity hidden (`x-powered-by` disabled)
+- ✅ Security headers: CSP, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, COOP
 
-**Missing:**
+**Reverse Proxy (`deploy/nginx/e-lawyer.conf`):**
+- ✅ TLS 1.2 & 1.3 only (`ssl_protocols TLSv1.2 TLSv1.3`)
+- ✅ Strong cipher suites (ECDHE + AES256-GCM/CHACHA20-POLY1305)
+- ✅ HTTP/2 enabled (`listen 443 ssl http2`)
+- ✅ HSTS header with `always` flag
+- ✅ TLS session caching & tickets disabled
+- ✅ HTTP → HTTPS redirect
 
-- ⚠️ **TLS 1.3 enforcement**: No server-level configuration observed
-- ⚠️ **Cipher suite hardening**: No minimum TLS version enforcement
-- ⚠️ **HTTP/2 support**: Could improve performance
-
-**Recommendations:**
-
-1. Configure Node.js to only accept TLS 1.2+
-2. Set minimum TLS version in production environment
-3. Use reverse proxy (NGINX/Traefik) with proper TLS configuration
+**Verification:**
+```bash
+# Test TLS config
+nmap --script ssl-enum-ciphers -p 443 your-domain.com
+# Should show only TLSv1.2, TLSv1.3 with strong ciphers
+```
 
 ---
 
@@ -339,9 +344,9 @@ exceptionFilter: new HttpExceptionFilter({
 | Encryption & Key Mgmt    | 8/8       | ✅ Lulus             |
 | Input Validation         | 9/10      | ✅ Lulus             |
 | Error Handling           | 8/8       | ✅ Lulus             |
-| Server Configuration     | 5/6       | ⚐ Perlu minor review |
+| Server Configuration     | 6/6       | ✅ Lulus             |
 | Dependency Management    | 8/10      | ✅ Baik              |
-| **Overall**              | **64/78** | **82% - Sangat Baik** |
+| **Overall**              | **65/78** | **83% - Sangat Baik** |
 
 ### Final Recommendation:
 

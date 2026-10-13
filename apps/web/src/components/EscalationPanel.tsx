@@ -140,8 +140,8 @@ export function EscalationPanel({ hearings }: EscalationPanelProps) {
             >
               Batal
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
     </div>
   );

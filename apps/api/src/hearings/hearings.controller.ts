@@ -64,7 +64,13 @@ export class HearingsController {
     return this.sla.getStatistics();
   }
 
-  @Get('sla/sweep')
+  @Get('sla/timers')
+  @RequirePermission(Action.READ, Subject.HEARING)
+  listAllSlaTimers() {
+    return this.sla.listAllSlaTimers();
+  }
+
+  @Post('sla/sweep')
   @RequirePermission(Action.UPDATE, Subject.HEARING)
   slaSweep() {
     return this.sla.sweepSla();

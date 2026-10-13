@@ -17,6 +17,7 @@ import { IssuedTokens, TokenService } from './token.service';
 import { AuthMailService } from './auth-mail.service';
 import { CaptchaService } from './captcha.service';
 import { HCaptchaService } from './hcaptcha.service';
+import { MathCaptchaService } from './math-captcha.service';
 
 export interface AuthResult extends IssuedTokens {
   user: AuthenticatedUser & { fullName: string };
@@ -31,6 +32,7 @@ export class AuthService {
     private readonly mail: AuthMailService,
     private readonly hcaptcha: HCaptchaService,
     private readonly captcha: CaptchaService,
+    private readonly mathCaptcha: MathCaptchaService,
   ) {}
 
   private get rounds(): number {
@@ -100,13 +102,9 @@ export class AuthService {
   }
 
   async ssoLogin(dto: SsoLoginDto, meta?: { userAgent?: string; ip?: string }): Promise<AuthResult> {
-    if (!dto.captchaToken) {
-      throw new UnauthorizedException('Verifikasi CAPTCHA wajib diisi');
-    }
-
-    const captchaValid = await this.captcha.verify(dto.captchaToken, meta?.ip);
+    const captchaValid = this.mathCaptcha.verify(dto.challengeId, dto.answer);
     if (!captchaValid) {
-      throw new UnauthorizedException('Verifikasi CAPTCHA gagal, silakan coba lagi');
+      throw new UnauthorizedException('Jawaban CAPTCHA salah atau sudah kadaluarsa');
     }
 
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
@@ -130,6 +128,10 @@ export class AuthService {
 
     await this.tokens.revokeAllForUser(user.id);
     return this.completeAuthentication(user.id, meta);
+  }
+
+  getMathChallenge(): { challengeId: string; question: string } {
+    return this.mathCaptcha.generateChallenge();
   }
 
   async refresh(

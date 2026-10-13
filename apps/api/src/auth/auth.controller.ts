@@ -33,6 +33,13 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  @Get('sso/challenge')
+  getSsoChallenge() {
+    return this.auth.getMathChallenge();
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
   @Post('sso/login')
   ssoLogin(@Body() dto: SsoLoginDto, @Req() req: Request): Promise<AuthResult> {
     return this.auth.ssoLogin(dto, this.meta(req));

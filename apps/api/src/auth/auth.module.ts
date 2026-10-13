@@ -6,13 +6,14 @@ import { AuthMailService } from './auth-mail.service';
 import { AuthService } from './auth.service';
 import { CaptchaService } from './captcha.service';
 import { HCaptchaService } from './hcaptcha.service';
+import { MathCaptchaService } from './math-captcha.service';
 import { TokenService } from './token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [PassportModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, AuthMailService, CaptchaService, HCaptchaService, TokenService, JwtStrategy],
-  exports: [AuthService, TokenService, HCaptchaService, CaptchaService],
+  providers: [AuthService, AuthMailService, CaptchaService, HCaptchaService, MathCaptchaService, TokenService, JwtStrategy],
+  exports: [AuthService, TokenService, HCaptchaService, CaptchaService, MathCaptchaService],
 })
 export class AuthModule {}

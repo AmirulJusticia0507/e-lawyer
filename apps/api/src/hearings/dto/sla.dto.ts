@@ -18,7 +18,7 @@ export class CreatePostponementDto {
 
 export class ProcessPostponementDto {
   @IsEnum(PostponementStatus)
-  decision!: PostponementStatus.APPROVED | PostponementStatus.REJECTED;
+  decision!: Exclude<PostponementStatus, 'PENDING'>;
 }
 
 export class AdvanceStageDto {

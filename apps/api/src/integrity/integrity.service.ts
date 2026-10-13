@@ -14,6 +14,7 @@ import { resolve } from 'path';
 import {
   AnomalySeverity,
   AnomalyStatus,
+  AnomalyType,
   DeadlineStatus,
   IntegrityCheckResult,
   IntegrityEntityType,
@@ -681,13 +682,7 @@ export class IntegrityService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async flag(input: {
-    type:
-      | 'UPLOAD_BURST'
-      | 'BACKDATE_SUSPECT'
-      | 'CLAIM_CHANGED'
-      | 'DELAY_PATTERN'
-      | 'HASH_MISMATCH'
-      | 'DEADLINE_BREACH';
+    type: AnomalyType;
     severity: AnomalySeverity;
     subject: string;
     message: string;

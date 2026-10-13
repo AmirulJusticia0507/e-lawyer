@@ -30,7 +30,7 @@ export function Calendar({ events, onEventDrop, onEventResize }: CalendarProps) 
         courtroom: event.courtroom,
         judgeName: event.judgeName,
       },
-    })));
+    }));
   }, [events]);
 
   const handleEventDrop = (info: any) => {
@@ -93,8 +93,8 @@ export function Calendar({ events, onEventDrop, onEventResize }: CalendarProps) 
                   </span>
                 </div>
               </div>
-            );
-          }}
+            </FullCalendar.EventRoot>
+          }
         </FullCalendar.EventRoot>
       </FullCalendar>
     </DndProvider>

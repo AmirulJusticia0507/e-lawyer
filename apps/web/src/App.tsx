@@ -12,7 +12,6 @@ const ConsultationDetail = lazy(() => import('./pages/ConsultationDetail'));
 const Consultations = lazy(() => import('./pages/Consultations'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Hearings = lazy(() => import('./pages/Hearings'));
-const Hearings = lazy(() => import('./pages/Hearings'));
 const Home = lazy(() => import('./pages/Home'));
 const Integritas = lazy(() => import('./pages/Integritas'));
 const Login = lazy(() => import('./pages/Login'));

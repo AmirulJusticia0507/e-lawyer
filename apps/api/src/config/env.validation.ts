@@ -106,10 +106,18 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  HCAPTCHA_SITE_KEY = '';
+
+  @IsString()
+  @IsOptional()
+  HCAPTCHA_SECRET_KEY = '';
+
+  @IsString()
+  @IsOptional()
   INTEGRITY_HASH_ALGO = 'sha256';
 }
 
-export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
+export function validateEnv(config: Record<string, unknown>): Record<string, unknown> {
   const resolvedConfig = resolveSecretFiles(config);
   const validated = plainToInstance(EnvironmentVariables, resolvedConfig, {
     enableImplicitConversion: true,
@@ -118,5 +126,6 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
   if (errors.length > 0) {
     throw new Error(`Konfigurasi environment tidak valid:\n${errors.toString()}`);
   }
-  return validated;
+  // Return plain object, not class instance
+  return JSON.parse(JSON.stringify(validated));
 }

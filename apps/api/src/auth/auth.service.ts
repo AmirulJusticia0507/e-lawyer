@@ -14,6 +14,7 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthenticatedUser, JwtPayload } from './interfaces/jwt-payload.interface';
 import { IssuedTokens, TokenService } from './token.service';
 import { AuthMailService } from './auth-mail.service';
+import { HCaptchaService } from './hcaptcha.service';
 
 export interface AuthResult extends IssuedTokens {
   user: AuthenticatedUser & { fullName: string };
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly config: ConfigService,
     private readonly mail: AuthMailService,
+    private readonly hcaptcha: HCaptchaService,
   ) {}
 
   private get rounds(): number {
@@ -62,6 +64,11 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ip?: string }): Promise<AuthResult> {
+    const hcaptchaValid = await this.hcaptcha.verify(dto.hCaptchaToken, meta?.ip);
+    if (!hcaptchaValid) {
+      throw new UnauthorizedException('Verifikasi hCaptcha gagal, silakan coba lagi');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (!user) {
       throw new UnauthorizedException('Email atau password salah');

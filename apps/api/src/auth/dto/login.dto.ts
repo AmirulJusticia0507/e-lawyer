@@ -7,4 +7,7 @@ export class LoginDto {
   @IsString()
   @MinLength(8, { message: 'Password minimal 8 karakter' })
   password!: string;
+
+  @IsString({ message: 'hCaptcha token wajib diisi' })
+  hCaptchaToken!: string;
 }

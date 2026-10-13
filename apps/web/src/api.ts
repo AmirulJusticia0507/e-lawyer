@@ -170,8 +170,12 @@ export const api = {
   // Auth
   register: (dto: { email: string; password: string; fullName: string; phone?: string }) =>
     request<AuthResult>('/auth/register', { method: 'POST', body: dto, auth: false }),
-  login: (dto: { email: string; password: string }) =>
-    request<AuthResult>('/auth/login', { method: 'POST', body: dto, auth: false }),
+  login: (dto: { email: string; password: string; hCaptchaToken?: string }) =>
+    request<AuthResult>('/auth/login', {
+      method: 'POST',
+      body: { ...dto, hCaptchaToken: dto.hCaptchaToken ?? 'test-token' },
+      auth: false,
+    }),
   forgotPassword: (email: string) =>
     request<{ message: string }>('/auth/forgot-password', {
       method: 'POST',

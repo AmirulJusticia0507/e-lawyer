@@ -8,3 +8,4 @@
   - Push ke `origin/main` (atau branch kerja aktif) setelah commit.
 - Jangan commit file rahasia (`.env`, kredensial). Gunakan `.env.example`.
 - Sebelum commit, jalankan lint/typecheck/test bila tersedia.
+- usahakan pakai indonesia selama percakapan

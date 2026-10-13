@@ -26,13 +26,26 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 export function Button({
   className,
   type = 'button',
+  variant = 'primary',
+  size = 'md',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost'; size?: 'sm' | 'md' | 'lg' }) {
+  const variants = {
+    primary: 'bg-[var(--accent)] text-white hover:bg-[var(--accent-2)]',
+    ghost: 'bg-transparent text-[var(--text)] hover:bg-[var(--surface-2)]',
+  };
+  const sizes = {
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-6 py-3 text-base',
+  };
   return (
     <button
       type={type}
       className={cx(
-        'inline-flex items-center justify-center rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--accent-2)] disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center rounded-xl font-semibold transition disabled:cursor-not-allowed disabled:opacity-50',
+        variants[variant],
+        sizes[size],
         className,
       )}
       {...props}

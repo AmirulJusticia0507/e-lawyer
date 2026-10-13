@@ -19,6 +19,7 @@ const SignUp = lazy(() => import('./pages/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const BillingDashboard = lazy(() => import('./pages/BillingDashboard'));
+const SlaDashboard = lazy(() => import('./pages/SlaDashboard'));
 const RegulationDetail = lazy(() => import('./pages/RegulationDetail'));
 const Regulations = lazy(() => import('./pages/Regulations'));
 
@@ -165,6 +166,16 @@ export default function App() {
               <RequireAuth permission="READ:INVOICE">
                 <Layout>
                   <BillingDashboard />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/sla"
+            element={
+              <RequireAuth permission="READ:HEARING">
+                <Layout>
+                  <SlaDashboard />
                 </Layout>
               </RequireAuth>
             }

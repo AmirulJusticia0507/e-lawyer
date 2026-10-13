@@ -11,9 +11,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DEFAULT_ROLE, RoleName } from '../common/constants/roles';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SsoLoginDto } from './dto/sso-login.dto';
 import { AuthenticatedUser, JwtPayload } from './interfaces/jwt-payload.interface';
 import { IssuedTokens, TokenService } from './token.service';
 import { AuthMailService } from './auth-mail.service';
+import { CaptchaService } from './captcha.service';
 import { HCaptchaService } from './hcaptcha.service';
 
 export interface AuthResult extends IssuedTokens {
@@ -28,6 +30,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly mail: AuthMailService,
     private readonly hcaptcha: HCaptchaService,
+    private readonly captcha: CaptchaService,
   ) {}
 
   private get rounds(): number {
@@ -64,9 +67,46 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ip?: string }): Promise<AuthResult> {
+    if (!dto.hCaptchaToken) {
+      throw new UnauthorizedException('Verifikasi hCaptcha wajib diisi');
+    }
+
     const hcaptchaValid = await this.hcaptcha.verify(dto.hCaptchaToken, meta?.ip);
     if (!hcaptchaValid) {
       throw new UnauthorizedException('Verifikasi hCaptcha gagal, silakan coba lagi');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    if (!user) {
+      throw new UnauthorizedException('Email atau password salah');
+    }
+
+    const valid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Email atau password salah');
+    }
+
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Akun tidak aktif');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    await this.tokens.revokeAllForUser(user.id);
+    return this.completeAuthentication(user.id, meta);
+  }
+
+  async ssoLogin(dto: SsoLoginDto, meta?: { userAgent?: string; ip?: string }): Promise<AuthResult> {
+    if (!dto.captchaToken) {
+      throw new UnauthorizedException('Verifikasi CAPTCHA wajib diisi');
+    }
+
+    const captchaValid = await this.captcha.verify(dto.captchaToken, meta?.ip);
+    if (!captchaValid) {
+      throw new UnauthorizedException('Verifikasi CAPTCHA gagal, silakan coba lagi');
     }
 
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });

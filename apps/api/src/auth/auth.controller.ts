@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SsoLoginDto } from './dto/sso-login.dto';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
 
 @Controller('auth')
@@ -28,6 +29,13 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto, @Req() req: Request): Promise<AuthResult> {
     return this.auth.login(dto, this.meta(req));
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('sso/login')
+  ssoLogin(@Body() dto: SsoLoginDto, @Req() req: Request): Promise<AuthResult> {
+    return this.auth.ssoLogin(dto, this.meta(req));
   }
 
   @Public()

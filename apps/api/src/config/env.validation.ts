@@ -114,6 +114,22 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  CAP_SECRET_KEY = '';
+
+  @IsString()
+  @IsOptional()
+  CAP_VERIFY_URL = '';
+
+  @IsString()
+  @IsOptional()
+  RECAPTCHA_SECRET_KEY = '';
+
+  @IsString()
+  @IsOptional()
+  CAPTCHA_ENABLED = 'true';
+
+  @IsString()
+  @IsOptional()
   INTEGRITY_HASH_ALGO = 'sha256';
 }
 

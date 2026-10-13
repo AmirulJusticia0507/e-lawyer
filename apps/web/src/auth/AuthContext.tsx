@@ -13,7 +13,7 @@ interface AuthContextValue {
   user: UserInfo | null;
   token: string | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, hCaptchaToken?: string) => Promise<void>;
   register: (input: {
     email: string;
     password: string;
@@ -67,8 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await api.login({ email, password });
+  const login = useCallback(async (email: string, password: string, hCaptchaToken?: string) => {
+    const result = await api.login({ email, password, hCaptchaToken });
     setTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
     setToken(result.accessToken);
     setUser(result.user);

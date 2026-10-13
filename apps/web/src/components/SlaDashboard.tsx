@@ -81,11 +81,11 @@ export function SlaDashboard({ hearings }: SlaDashboardProps) {
       <h2 className="text-xl font-bold">Dashboard SLA Sidang</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {slaData.map((item) => (
-          <div key={item.id} className="p-4 rounded bg-{item.isBreached ? 'red-100' : item.status === 'AT_RISK' ? 'yellow-100' : 'green-100'}>
+          <div key={item.id} className={`p-4 rounded bg-${item.isBreached ? 'red-100' : item.status === 'AT_RISK' ? 'yellow-100' : 'green-100'}`}>
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-medium">{item.caseId}</h3>
-                <p className="text-sm muted">H-{{ item.daysUntilHearing }} ke sidang</p>
+                <p className="text-sm muted">H-{item.daysUntilHearing} ke sidang</p>
               </div>
               <div>
                 <span className={item.isBreached ? 'text-red-600' : item.status === 'AT_RISK' ? 'text-yellow-600' : 'text-green-600'>
@@ -94,7 +94,7 @@ export function SlaDashboard({ hearings }: SlaDashboardProps) {
               </div>
             </div>
             <p className="text-sm muted">
-              H-{{ item.daysUntilDeadline }} ke deadline{SLA}
+              H-{item.daysUntilDeadline} ke deadline SLA
               {item.isBreached && <span className="text-red-500"> (BREACHED)</span>}
             </p>
           </div>

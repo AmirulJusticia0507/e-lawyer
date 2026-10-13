@@ -51,6 +51,7 @@ import type {
   SearchKind,
   SearchResult,
   SlaStatistics,
+  TimeEntry,
   VideoSession,
 } from './types';
 
@@ -262,6 +263,7 @@ export const api = {
     notes?: string;
   }) => request<Hearing>('/hearings', { method: 'POST', body: dto }),
   listSlaTimers: (hearingId: string) => request<HearingSla[]>(`/hearings/${hearingId}/sla`),
+  listAllSlaTimers: () => request<HearingSla[]>('/hearings/sla/timers'),
   advanceSlaStage: (hearingId: string, stage: HearingStage) =>
     request<HearingSla>(`/hearings/${hearingId}/sla/advance`, { method: 'POST', body: { stage } }),
   slaStatistics: () => request<SlaStatistics>('/hearings/sla/statistics'),
@@ -562,6 +564,12 @@ export const api = {
   },
   resolveAnomaly: (id: string, dto: { status: AnomalyStatus; note?: string }) =>
     request<AnomalyFlag>(`/integrity/anomalies/${id}`, { method: 'PATCH', body: dto }),
+
+  // Billing
+  listTimeEntries: (params: { caseId?: string; userId?: string } = {}) => {
+    const q = buildQuery(params);
+    return request<TimeEntry[]>(`/billing/time-entries${q ? `?${q}` : ''}`);
+  },
 };
 
 export const statusFlow: Record<CaseStatus, CaseStatus[]> = {

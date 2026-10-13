@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { api, jurisdictionLabels } from '../api';
 import { useAuth } from '../auth/AuthContext';
+import { Button, Card, Badge, Input, Select, Textarea, EmptyState, Field } from '../components/ui';
 import type {
   CaseSummary,
   DocumentTemplate,
@@ -30,6 +31,21 @@ const VERDICT_LABELS: Record<JudgmentVerdict, string> = {
   OTHER: 'Lainnya',
 };
 
+const STATUS_TONES: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+  DRAFT: 'info',
+  SUBMITTED: 'warning',
+  SIGNED: 'success',
+  ARCHIVED: 'neutral',
+};
+
+const POA_TYPES = [
+  { value: 'SPECIFIC', label: 'Khusus' },
+  { value: 'GENERAL', label: 'Umum' },
+  { value: 'SPECIAL', label: 'Istimewa' },
+];
+
+const VERDICT_OPTIONS = Object.entries(VERDICT_LABELS).map(([value, label]) => ({ value, label }));
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Terjadi kesalahan. Coba lagi.';
 }
@@ -38,8 +54,10 @@ function printDocument(document: LegalDocument): void {
   const printWindow = window.open('', '_blank');
   if (!printWindow) throw new Error('Popup diblokir browser. Izinkan popup untuk mencetak dokumen.');
   printWindow.opener = null;
-  const escapeHtml = (value: string) =>
-    value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char);
+  const escapeHtml = (value: string) => {
+    const map: Record<string, string> = { '&': '&', '<': '<', '>': '>', '"': '"', "'": "'" };
+    return value.replace(/[&<>"']/g, (char) => map[char] ?? char);
+  };
   printWindow.document.write(
     `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>${escapeHtml(document.title)}</title><style>body{font:12pt Georgia,serif;max-width:760px;margin:48px auto;line-height:1.7;color:#111}h1{font-size:16pt;text-align:center}pre{font:inherit;white-space:pre-wrap} @media print{body{margin:24mm}}</style></head><body><h1>${escapeHtml(document.title)}</h1><pre>${escapeHtml(document.content)}</pre></body></html>`,
   );
@@ -92,10 +110,10 @@ export default function Documents() {
     [templates, type, selectedCase],
   );
 
-  const refreshDocuments = async (selectedCaseId = caseId) => {
+  const refreshDocuments = useCallback(async (selectedCaseId = caseId) => {
     const result = await api.listDocuments({ caseId: selectedCaseId || undefined, limit: 100 });
     setDocuments(result.items);
-  };
+  }, [caseId]);
 
   useEffect(() => {
     void Promise.all([api.listCases({ limit: 100 }), api.listDocumentTemplates()])
@@ -109,7 +127,7 @@ export default function Documents() {
 
   useEffect(() => {
     void refreshDocuments(caseId).catch((reason: unknown) => setError(errorMessage(reason)));
-  }, [caseId]);
+  }, [caseId, refreshDocuments]);
 
   useEffect(() => {
     if (!availableTemplates.some((item) => item.id === templateId)) setTemplateId('');
@@ -278,126 +296,435 @@ export default function Documents() {
     }
   };
 
+  const handlePrint = () => {
+    if (!selected) return;
+    try {
+      printDocument({ ...selected, title: editTitle, content });
+    } catch (reason) {
+      setError(errorMessage(reason));
+    }
+  };
+
+  const documentTypeOptions = Object.entries(DOCUMENT_LABELS)
+    .filter(([value]) => value !== 'JUDGMENT' || canCreateJudgment)
+    .map(([value, label]) => ({ value: value as DocumentType, label }));
+
   return (
-    <div>
-      <div className="page-heading">
-        <div>
-          <h1>Dokumen</h1>
-          <p className="muted">Buat dokumen perkara, kelola revisi, dan siapkan alur tanda tangan.</p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Dokumen</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Buat dokumen perkara, kelola revisi, dan siapkan alur tanda tangan.
+        </p>
       </div>
-      {error && <p className="error" role="alert">{error}</p>}
-      {notice && <p className="notice" role="status">{notice}</p>}
-      <section className="card document-create">
-        <h2>Dokumen baru</h2>
-        <form onSubmit={(event) => void create(event)} className="document-form">
-          <div className="field">
-            <label htmlFor="document-case">Perkara</label>
-            <select id="document-case" className="select" value={caseId} onChange={(event) => { setCaseId(event.target.value); setSelected(null); }} required>
-              <option value="">Pilih perkara</option>
-              {cases.map((item) => <option key={item.id} value={item.id}>{item.caseNumber} — {item.title}</option>)}
-            </select>
-            {selectedCase && <span className="muted">{jurisdictionLabels[selectedCase.jurisdiction]}</span>}
+
+      {error && <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-600" role="alert">{error}</div>}
+      {notice && <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-600" role="status">{notice}</div>}
+
+      <Card>
+        <h2 className="text-lg font-semibold mb-4">Dokumen Baru</h2>
+        <form onSubmit={create} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Perkara *">
+              <Select
+                value={caseId}
+                onChange={(e) => { setCaseId(e.target.value); setSelected(null); }}
+                options={[{ value: '', label: 'Pilih perkara' }, ...cases.map((c) => ({ value: c.id, label: `${c.caseNumber} — ${c.title}` }))]}
+                required
+              />
+            </Field>
+            <Field label="Jenis Dokumen *">
+              <Select
+                value={type}
+                onChange={(e) => setType(e.target.value as DocumentType)}
+                options={documentTypeOptions}
+              />
+            </Field>
+            <Field label="Judul">
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={`Otomatis: ${DOCUMENT_LABELS[type]}`}
+              />
+            </Field>
+            <Field label="Template">
+              <Select
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+                options={[{ value: '', label: 'Template bawaan' }, ...availableTemplates.map((t) => ({ value: t.id, label: `${t.name} v${t.version}` }))]}
+              />
+            </Field>
           </div>
-          <div className="field">
-            <label htmlFor="document-type">Jenis dokumen</label>
-            <select id="document-type" className="select" value={type} onChange={(event) => setType(event.target.value as DocumentType)}>
-              {Object.entries(DOCUMENT_LABELS).filter(([value]) => value !== 'JUDGMENT' || canCreateJudgment).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="document-title">Judul</label>
-            <input id="document-title" className="input" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={`Otomatis: ${DOCUMENT_LABELS[type]}`} />
-          </div>
-          <div className="field">
-            <label htmlFor="document-template">Template</label>
-            <select id="document-template" className="select" value={templateId} onChange={(event) => setTemplateId(event.target.value)}>
-              <option value="">Template bawaan</option>
-              {availableTemplates.map((item) => <option key={item.id} value={item.id}>{item.name} v{item.version}</option>)}
-            </select>
-          </div>
+
+          {selectedCase && (
+            <div className="text-sm text-[var(--muted)]">
+              Jurisdiksi: {jurisdictionLabels[selectedCase.jurisdiction]}
+            </div>
+          )}
+
           {type === 'POWER_OF_ATTORNEY' && (
-            <div className="document-fields">
-              <h3>Data Surat Kuasa</h3>
-              <div className="grid-2">
-                <div className="field"><label>Jenis kuasa</label><select className="select" value={poa.type} onChange={(e) => setPoa({ ...poa, type: e.target.value as PowerOfAttorneyType })}><option value="SPECIFIC">Khusus</option><option value="GENERAL">Umum</option><option value="SPECIAL">Istimewa</option></select></div>
-                <div className="field"><label>Nama pemberi kuasa</label><input className="input" required value={poa.principalName} onChange={(e) => setPoa({ ...poa, principalName: e.target.value })} /></div>
-                <div className="field"><label>NIK pemberi (16 digit)</label><input className="input" value={poa.principalNik} onChange={(e) => setPoa({ ...poa, principalNik: e.target.value })} /></div>
-                <div className="field"><label>NPWP pemberi (opsional)</label><input className="input" value={poa.principalNpwp} onChange={(e) => setPoa({ ...poa, principalNpwp: e.target.value })} /></div>
-                <div className="field"><label>Nama advokat</label><input className="input" required value={poa.attorneyName} onChange={(e) => setPoa({ ...poa, attorneyName: e.target.value })} /></div>
-                <div className="field"><label>Nomor izin advokat</label><input className="input" required value={poa.attorneyLicenseNo} onChange={(e) => setPoa({ ...poa, attorneyLicenseNo: e.target.value })} /></div>
-                <div className="field"><label>NPWP advokat (opsional)</label><input className="input" value={poa.attorneyNpwp} onChange={(e) => setPoa({ ...poa, attorneyNpwp: e.target.value })} /></div>
-                <div className="field"><label>Kewenangan kuasa {poa.type === 'SPECIAL' && '(wajib untuk kuasa istimewa)'}</label><textarea className="input" value={poa.authority} onChange={(e) => setPoa({ ...poa, authority: e.target.value })} rows={3} /></div>
+            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+              <h3 className="font-medium">Data Surat Kuasa</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Jenis Kuasa">
+                  <Select
+                    value={poa.type}
+                    onChange={(e) => setPoa({ ...poa, type: e.target.value as PowerOfAttorneyType })}
+                    options={POA_TYPES}
+                  />
+                </Field>
+                <Field label="Nama Pemberi Kuasa *">
+                  <Input
+                    value={poa.principalName}
+                    onChange={(e) => setPoa({ ...poa, principalName: e.target.value })}
+                    required
+                  />
+                </Field>
+                <Field label="NIK Pemberi (16 digit)">
+                  <Input
+                    value={poa.principalNik}
+                    onChange={(e) => setPoa({ ...poa, principalNik: e.target.value })}
+                  />
+                </Field>
+                <Field label="NPWP Pemberi (opsional)">
+                  <Input
+                    value={poa.principalNpwp}
+                    onChange={(e) => setPoa({ ...poa, principalNpwp: e.target.value })}
+                  />
+                </Field>
+                <Field label="Nama Advokat *">
+                  <Input
+                    value={poa.attorneyName}
+                    onChange={(e) => setPoa({ ...poa, attorneyName: e.target.value })}
+                    required
+                  />
+                </Field>
+                <Field label="Nomor Izin Advokat *">
+                  <Input
+                    value={poa.attorneyLicenseNo}
+                    onChange={(e) => setPoa({ ...poa, attorneyLicenseNo: e.target.value })}
+                    required
+                  />
+                </Field>
+                <Field label="NPWP Advokat (opsional)">
+                  <Input
+                    value={poa.attorneyNpwp}
+                    onChange={(e) => setPoa({ ...poa, attorneyNpwp: e.target.value })}
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label={`Kewenangan Kuasa ${poa.type === 'SPECIAL' && '(wajib untuk kuasa istimewa)'}`}>
+                    <Textarea
+                      value={poa.authority}
+                      onChange={(e) => setPoa({ ...poa, authority: e.target.value })}
+                      rows={3}
+                    />
+                  </Field>
+                </div>
               </div>
-              <p className="muted">Format NIK/NPWP dan nomor izin diperiksa secara sintaksis; keabsahan izin advokat belum diverifikasi ke PERADI.</p>
+              <p className="text-sm text-[var(--muted)]">
+                Format NIK/NPWP dan nomor izin diperiksa secara sintaksis; keabsahan izin advokat belum diverifikasi ke PERADI.
+              </p>
             </div>
           )}
+
           {type === 'JUDGMENT' && (
-            <div className="document-fields">
-              <h3>Struktur Putusan</h3>
-              <div className="grid-2">
-                <div className="field"><label>Jenis amar</label><select className="select" value={verdict} onChange={(e) => setVerdict(e.target.value as JudgmentVerdict)}>{Object.entries(VERDICT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
-                {([
-                  ['caseSummary', 'Duduk perkara'],
-                  ['considerations', 'Pertimbangan hukum (wajib sitasi pasal F3)'],
-                  ['disposition', 'Amar putusan'],
-                  ['closing', 'Penutup'],
-                ] as const).map(([key, label]) => <div className="field" key={key}><label>{label}</label><textarea className="input" rows={key === 'considerations' ? 5 : 3} required minLength={key === 'closing' || key === 'disposition' ? 3 : 10} value={judgment[key]} onChange={(e) => setJudgment({ ...judgment, [key]: e.target.value })} /></div>)}
+            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+              <h3 className="font-medium">Struktur Putusan</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Jenis Amar">
+                  <Select
+                    value={verdict}
+                    onChange={(e) => setVerdict(e.target.value as JudgmentVerdict)}
+                    options={VERDICT_OPTIONS}
+                  />
+                </Field>
+                <Field label="Duduk Perkara">
+                  <Textarea
+                    value={judgment.caseSummary}
+                    onChange={(e) => setJudgment({ ...judgment, caseSummary: e.target.value })}
+                    rows={3}
+                    required
+                    minLength={10}
+                  />
+                </Field>
+                <Field label="Pertimbangan Hukum (wajib sitasi pasal F3)">
+                  <Textarea
+                    value={judgment.considerations}
+                    onChange={(e) => setJudgment({ ...judgment, considerations: e.target.value })}
+                    rows={5}
+                    required
+                    minLength={10}
+                  />
+                </Field>
+                <Field label="Amar Putusan">
+                  <Textarea
+                    value={judgment.disposition}
+                    onChange={(e) => setJudgment({ ...judgment, disposition: e.target.value })}
+                    rows={3}
+                    required
+                    minLength={3}
+                  />
+                </Field>
+                <Field label="Penutup">
+                  <Textarea
+                    value={judgment.closing}
+                    onChange={(e) => setJudgment({ ...judgment, closing: e.target.value })}
+                    rows={3}
+                    required
+                    minLength={3}
+                  />
+                </Field>
               </div>
-              <p className="muted">Tautkan sitasi dengan jenis dokumen PUTUSAN melalui F3. Minimal satu sitasi PUTUSAN harus berstatus valid.</p>
+              <p className="text-sm text-[var(--muted)]">
+                Tautkan sitasi dengan jenis dokumen PUTUSAN melalui F3. Minimal satu sitasi PUTUSAN harus berstatus valid.
+              </p>
             </div>
           )}
-          <button className="btn" type="submit" disabled={busy || !caseId}>{busy ? 'Menyimpan…' : 'Buat draf'}</button>
-        </form>
-      </section>
 
-      <div className="document-workspace">
-        <section className="card">
-          <div className="document-list-heading"><h2>Daftar dokumen</h2><span className="muted">{documents.length}</span></div>
-          <div className="document-list">
-            {documents.length === 0 ? <p className="muted">Belum ada dokumen untuk perkara ini.</p> : documents.map((document) => (
-              <button className={`document-list-item${selected?.id === document.id ? ' is-selected' : ''}`} key={document.id} onClick={() => void selectDocument(document.id)}>
-                <strong>{document.title}</strong><span>{DOCUMENT_LABELS[document.type]}</span><span className={`badge badge-${document.status}`}>{document.status}</span>
-              </button>
-            ))}
+          <div className="flex justify-end pt-4 border-t border-[var(--border)]">
+            <Button type="submit" disabled={busy || !caseId} size="lg">
+              {busy ? 'Menyimpan…' : 'Buat Draf'}
+            </Button>
           </div>
-          <h3>Template perkara ini</h3>
-          {templates.filter((item) => item.jurisdiction === selectedCase?.jurisdiction).map((item) => (
-            <div className="template-row" key={item.id}><span>{item.name} · {DOCUMENT_LABELS[item.documentType]} · v{item.version}</span><button className="btn btn-ghost btn-sm" onClick={() => void archiveTemplate(item)}>Arsipkan</button></div>
-          ))}
-        </section>
+        </form>
+      </Card>
 
-        <section className="card document-editor">
-          {!selected ? <div className="empty-state"><h2>Pilih dokumen</h2><p className="muted">Pilih dokumen di daftar untuk meninjau isi, revisi, dan tanda tangan.</p></div> : (
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1 space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Daftar Dokumen</h2>
+              <span className="text-sm text-[var(--muted)]">{documents.length}</span>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {documents.length === 0 ? (
+                <EmptyState title="Belum ada dokumen" description="Buat dokumen baru atau pilih perkara lain." />
+              ) : (
+                documents.map((document) => (
+                  <button
+                    key={document.id}
+                    onClick={() => void selectDocument(document.id)}
+                    className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                      selected?.id === document.id
+                        ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30'
+                        : 'border-[var(--border)] hover:bg-[var(--surface-2)]'
+                    }`}
+                  >
+                    <div className="font-medium text-[var(--text)]">{document.title}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge tone={STATUS_TONES[document.status] || 'neutral'}>{document.status}</Badge>
+                      <span className="text-xs text-[var(--muted)]">{DOCUMENT_LABELS[document.type]}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {selectedCase && (
+              <div className="mt-6 pt-4 border-t border-[var(--border)]">
+                <h3 className="font-medium mb-3">Template Perkara Ini</h3>
+                {templates
+                  .filter((item) => item.jurisdiction === selectedCase?.jurisdiction)
+                  .map((item) => (
+                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+                      <span className="text-sm text-[var(--text)]">
+                        {item.name} · {DOCUMENT_LABELS[item.documentType]} · v{item.version}
+                      </span>
+                      <Button variant="ghost" size="sm" onClick={() => void archiveTemplate(item)}>
+                        Arsipkan
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          {!selected ? (
+            <Card>
+              <EmptyState title="Pilih Dokumen" description="Pilih dokumen di daftar untuk meninjau isi, revisi, dan tanda tangan." />
+            </Card>
+          ) : (
             <>
-              <div className="document-editor-heading"><div><span className={`badge badge-${selected.status}`}>{selected.status}</span><h2>{selected.title}</h2><p className="muted">{selected.case?.caseNumber} · {DOCUMENT_LABELS[selected.type]}{selected.template ? ` · ${selected.template.name} v${selected.template.version}` : ''}</p></div><button className="btn btn-ghost" onClick={() => { try { printDocument({ ...selected, title: editTitle, content }); } catch (reason) { setError(errorMessage(reason)); } }}>Cetak / PDF</button></div>
-              {selected.status === 'DRAFT' ? (
-                <>
-                  <div className="field"><label>Judul</label><input className="input" value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></div>
-                  <div className="field"><label>Isi dokumen</label><textarea className="input document-content" value={content} onChange={(event) => setContent(event.target.value)} /></div>
-                  <form className="ai-draft-panel" onSubmit={(event) => void generateAiDraft(event)}>
-                    <h3>Asisten AI untuk draf</h3>
-                    <p className="muted">Instruksi dan teks sumber yang Anda masukkan di bawah ini akan dikirim ke provider eksternal. Isi dokumen dan data perkara tidak disertakan otomatis. Tinjau hasil sebelum digunakan.</p>
-                    <div className="field"><label htmlFor="ai-instruction">Instruksi</label><textarea id="ai-instruction" className="input" rows={3} maxLength={3000} value={aiInstruction} onChange={(event) => setAiInstruction(event.target.value)} required /></div>
-                    <div className="field"><label htmlFor="ai-source-text">Teks sumber pilihan Anda (opsional)</label><textarea id="ai-source-text" className="input" rows={4} maxLength={20000} value={aiSourceText} onChange={(event) => setAiSourceText(event.target.value)} /></div>
-                    <button className="btn btn-ghost" type="submit" disabled={busy || !aiInstruction.trim()}>{busy ? 'Memproses…' : 'Buat usulan draf AI'}</button>
-                    {aiDraft && <div className="ai-draft-result"><h4>Usulan draf — belum disimpan</h4><pre>{aiDraft}</pre><button className="btn btn-ghost" type="button" onClick={() => { setContent(aiDraft); setAiDraft(''); }}>Gunakan di editor</button></div>}
-                  </form>
-                  <div className="document-actions">
-                    <button className="btn" onClick={() => void save()} disabled={busy}>Simpan revisi</button>
-                    <button className="btn btn-ghost" onClick={() => void submit()} disabled={busy}>Kirim & kunci</button>
-                    <input className="input template-name" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder={selected.template ? 'Versi baru dari template terkait' : 'Nama template (opsional)'} disabled={Boolean(selected.template)} />
-                    <button className="btn btn-ghost" onClick={() => void saveTemplate()} disabled={busy}>Simpan sebagai template</button>
+              <Card>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge tone={STATUS_TONES[selected.status] || 'neutral'}>{selected.status}</Badge>
+                    </div>
+                    <h2 className="text-xl font-semibold text-[var(--text)] truncate">{selected.title}</h2>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      {selected.case?.caseNumber} · {DOCUMENT_LABELS[selected.type]}
+                      {selected.template ? ` · ${selected.template.name} v${selected.template.version}` : ''}
+                    </p>
                   </div>
-                </>
-              ) : <div className="document-readonly"><pre>{selected.content}</pre><p className="muted">SHA-256: {selected.sha256 ?? 'belum tersedia'}</p></div>}
-              {selected.versions && selected.versions.length > 0 && <div className="version-history"><h3>Riwayat versi</h3>{selected.versions.length > 1 && <details><summary>Bandingkan v{selected.versions[1].version} → v{selected.versions[0].version}</summary><div className="version-comparison"><div><strong>Sebelumnya · v{selected.versions[1].version}</strong><pre>{selected.versions[1].content}</pre></div><div><strong>Terbaru · v{selected.versions[0].version}</strong><pre>{selected.versions[0].content}</pre></div></div></details>}{selected.versions.map((version) => <details key={version.id}><summary>Versi {version.version} · {new Date(version.createdAt).toLocaleString('id-ID')} · {version.changeSummary}</summary><pre>{version.content}</pre></details>)}</div>}
-              {selected.status === 'SUBMITTED' && <form className="signature-request" onSubmit={(event) => void requestSignature(event)}><h3>Permintaan tanda tangan</h3><p className="muted">Permintaan disimpan sebagai pending. E-signature, e-meterai, dan verifikasi BSrE membutuhkan provider resmi.</p><div className="grid-2"><div className="field"><label>Nama penanda tangan</label><input className="input" value={signer.signerName} onChange={(e) => setSigner({ ...signer, signerName: e.target.value })} required /></div><div className="field"><label>Peran</label><input className="input" value={signer.signerRole} onChange={(e) => setSigner({ ...signer, signerRole: e.target.value })} required /></div></div><button className="btn btn-ghost" disabled={busy}>Catat permintaan</button>{selected.signatures?.map((item) => <p key={item.id} className="muted">{item.signerName} · {item.status} · provider {item.metadata?.providerStatus ?? 'belum terhubung'}</p>)}</form>}
-              {selected.type === 'JUDGMENT' && selected.judgment && <p className="muted">Amar: {VERDICT_LABELS[selected.judgment.verdict]}</p>}
-              {selected.type === 'POWER_OF_ATTORNEY' && selected.powerOfAttorney && <p className="muted">{selected.powerOfAttorney.type} · {selected.powerOfAttorney.principalName} → {selected.powerOfAttorney.attorneyName} · izin {selected.powerOfAttorney.attorneyLicenseNo}</p>}
+                  <Button variant="ghost" onClick={handlePrint}>
+                    Cetak / PDF
+                  </Button>
+                </div>
+
+                {selected.status === 'DRAFT' ? (
+                  <>
+                    <div className="space-y-4">
+                      <Field label="Judul">
+                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                      </Field>
+                      <Field label="Isi Dokumen">
+                        <Textarea
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                          className="document-content font-mono"
+                          rows={20}
+                        />
+                      </Field>
+
+                      <Card className="bg-[var(--surface-2)]">
+                        <form onSubmit={generateAiDraft} className="space-y-4">
+                          <h3 className="font-medium">Asisten AI untuk Draf</h3>
+                          <p className="text-sm text-[var(--muted)]">
+                            Instruksi dan teks sumber yang Anda masukkan di bawah ini akan dikirim ke provider eksternal.
+                            Isi dokumen dan data perkara tidak disertakan otomatis. Tinjau hasil sebelum digunakan.
+                          </p>
+                          <Field label="Instruksi">
+                            <Textarea
+                              id="ai-instruction"
+                              value={aiInstruction}
+                              onChange={(e) => setAiInstruction(e.target.value)}
+                              rows={3}
+                              maxLength={3000}
+                              required
+                            />
+                          </Field>
+                          <Field label="Teks Sumber Pilihan Anda (opsional)">
+                            <Textarea
+                              id="ai-source-text"
+                              value={aiSourceText}
+                              onChange={(e) => setAiSourceText(e.target.value)}
+                              rows={4}
+                              maxLength={20000}
+                            />
+                          </Field>
+                          <Button variant="ghost" type="submit" disabled={busy || !aiInstruction.trim()}>
+                            {busy ? 'Memproses…' : 'Buat Usulan Draf AI'}
+                          </Button>
+                          {aiDraft && (
+                            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
+                              <h4 className="font-medium mb-2">Usulan Draf — Belum Disimpan</h4>
+                              <pre className="whitespace-pre-wrap text-sm font-mono max-h-60 overflow-auto">{aiDraft}</pre>
+                              <Button variant="ghost" size="sm" className="mt-2" onClick={() => { setContent(aiDraft); setAiDraft(''); }}>
+                                Gunakan di Editor
+                              </Button>
+                            </div>
+                          )}
+                        </form>
+                      </Card>
+
+                      <div className="flex flex-wrap gap-2 pt-4 border-t border-[var(--border)]">
+                        <Button onClick={save} disabled={busy}>Simpan Revisi</Button>
+                        <Button variant="ghost" onClick={submit} disabled={busy}>Kirim & Kunci</Button>
+                        <Input
+                          className="flex-1 min-w-[200px]"
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.value)}
+                          placeholder={selected.template ? 'Versi baru dari template terkait' : 'Nama template (opsional)'}
+                          disabled={Boolean(selected.template)}
+                        />
+                        <Button variant="ghost" onClick={saveTemplate} disabled={busy}>Simpan Sebagai Template</Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <pre className="whitespace-pre-wrap font-mono text-sm bg-[var(--bg)] p-4 rounded-xl border border-[var(--border)]">{selected.content}</pre>
+                    <p className="text-sm text-[var(--muted)]">SHA-256: {selected.sha256 ?? 'belum tersedia'}</p>
+                  </div>
+                )}
+
+                {selected.versions && selected.versions.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                    <h3 className="font-medium mb-4">Riwayat Versi</h3>
+                    {selected.versions.length > 1 && (
+                      <details className="mb-4">
+                        <summary className="cursor-pointer font-medium text-[var(--accent)]">
+                          Bandingkan v{selected.versions[1].version} → v{selected.versions[0].version}
+                        </summary>
+                        <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                          <div>
+                            <p className="font-medium mb-2">Sebelumnya · v{selected.versions[1].version}</p>
+                            <pre className="whitespace-pre-wrap text-sm font-mono bg-[var(--bg)] p-3 rounded border border-[var(--border)] max-h-60 overflow-auto">
+                              {selected.versions[1].content}
+                            </pre>
+                          </div>
+                          <div>
+                            <p className="font-medium mb-2">Terbaru · v{selected.versions[0].version}</p>
+                            <pre className="whitespace-pre-wrap text-sm font-mono bg-[var(--bg)] p-3 rounded border border-[var(--border)] max-h-60 overflow-auto">
+                              {selected.versions[0].content}
+                            </pre>
+                          </div>
+                        </div>
+                      </details>
+                    )}
+                    {selected.versions.map((version) => (
+                      <details key={version.id} className="mb-3">
+                        <summary className="cursor-pointer text-sm text-[var(--text)]">
+                          Versi {version.version} · {new Date(version.createdAt).toLocaleString('id-ID')} · {version.changeSummary}
+                        </summary>
+                        <pre className="whitespace-pre-wrap text-sm font-mono mt-2 bg-[var(--bg)] p-3 rounded border border-[var(--border)] max-h-60 overflow-auto">
+                          {version.content}
+                        </pre>
+                      </details>
+                    ))}
+                  </div>
+                )}
+
+                {selected.status === 'SUBMITTED' && (
+                  <form onSubmit={requestSignature} className="mt-6 pt-6 border-t border-[var(--border)] space-y-4">
+                    <h3 className="font-medium">Permintaan Tanda Tangan</h3>
+                    <p className="text-sm text-[var(--muted)]">
+                      Permintaan disimpan sebagai pending. E-signature, e-meterai, dan verifikasi BSrE membutuhkan provider resmi.
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Nama Penanda Tangan *">
+                        <Input
+                          value={signer.signerName}
+                          onChange={(e) => setSigner({ ...signer, signerName: e.target.value })}
+                          required
+                        />
+                      </Field>
+                      <Field label="Peran *">
+                        <Input
+                          value={signer.signerRole}
+                          onChange={(e) => setSigner({ ...signer, signerRole: e.target.value })}
+                          required
+                        />
+                      </Field>
+                    </div>
+                    <Button variant="ghost" disabled={busy} type="submit">
+                      Catat Permintaan
+                    </Button>
+                    {selected.signatures?.map((item) => (
+                      <p key={item.id} className="text-sm text-[var(--muted)]">
+                        {item.signerName} · {item.status} · provider {item.metadata?.providerStatus ?? 'belum terhubung'}
+                      </p>
+                    ))}
+                  </form>
+                )}
+
+                {selected.type === 'JUDGMENT' && selected.judgment && (
+                  <p className="mt-4 text-sm text-[var(--muted)]">Amar: {VERDICT_LABELS[selected.judgment.verdict]}</p>
+                )}
+                {selected.type === 'POWER_OF_ATTORNEY' && selected.powerOfAttorney && (
+                  <p className="mt-4 text-sm text-[var(--muted)]">
+                    {selected.powerOfAttorney.type} · {selected.powerOfAttorney.principalName} →{' '}
+                    {selected.powerOfAttorney.attorneyName} · izin {selected.powerOfAttorney.attorneyLicenseNo}
+                  </p>
+                )}
+              </Card>
             </>
           )}
-        </section>
+        </div>
       </div>
     </div>
   );

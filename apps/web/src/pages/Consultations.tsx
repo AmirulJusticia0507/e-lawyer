@@ -6,7 +6,26 @@ import {
   consultationModeLabels,
   consultationStatusLabels,
 } from '../api';
+import { Button, Card, Badge, Input, Select, EmptyState, Modal, Textarea } from '../components/ui';
 import type { Client, ConsultationMode, ConsultationStatus, ConsultationSummary } from '../types';
+
+const MODE_OPTIONS: { value: ConsultationMode; label: string }[] = [
+  { value: 'CHAT', label: 'Chat' },
+  { value: 'VIDEO', label: 'Video Call' },
+  { value: 'PHONE', label: 'Telepon' },
+  { value: 'IN_PERSON', label: 'Tatap Muka' },
+];
+
+const STATUS_OPTIONS: { value: ConsultationStatus | ''; label: string }[] = [
+  { value: '', label: 'Semua status' },
+  { value: 'REQUESTED', label: 'Diajukan' },
+  { value: 'SCHEDULED', label: 'Terjadwal' },
+  { value: 'ONGOING', label: 'Berlangsung' },
+  { value: 'COMPLETED', label: 'Selesai' },
+  { value: 'CANCELLED', label: 'Dibatalkan' },
+];
+
+const PAGE_SIZE = 10;
 
 export default function Consultations() {
   const [items, setItems] = useState<ConsultationSummary[]>([]);
@@ -16,8 +35,9 @@ export default function Consultations() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<ConsultationStatus | ''>('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     clientId: '',
@@ -27,17 +47,28 @@ export default function Consultations() {
     scheduledAt: '',
   });
 
-  const load = () => {
-    void api
-      .listConsultations({ page, limit: 10, search: search || undefined, status: status || undefined })
-      .then((res) => {
-        setItems(res.items);
-        setTotal(res.meta.total);
-      })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Gagal memuat konsultasi'));
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.listConsultations({
+        page,
+        limit: PAGE_SIZE,
+        search: search || undefined,
+        status: status || undefined,
+      });
+      setItems(res.items);
+      setTotal(res.meta.total);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Gagal memuat konsultasi');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(load, [page, status]);
+  useEffect(() => {
+    void load();
+  }, [page, status]);
 
   useEffect(() => {
     void api
@@ -65,7 +96,7 @@ export default function Consultations() {
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
       });
       setForm({ clientId: '', subject: '', description: '', mode: 'CHAT', scheduledAt: '' });
-      setShowForm(false);
+      setShowModal(false);
       setPage(1);
       load();
     } catch (err) {
@@ -75,165 +106,199 @@ export default function Consultations() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / 10));
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <div>
-      <h1>Konsultasi Legal</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Konsultasi Legal</h1>
+          <p className="mt-1 text-sm text-[var(--muted)]">Kelola daftar konsultasi klien</p>
+        </div>
+        <Button onClick={() => setShowModal(true)}>+ Konsultasi Baru</Button>
+      </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
-          <form onSubmit={onSearch} style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-            <input
-              className="input"
-              placeholder="Cari subjek, deskripsi, klien..."
+      <Card>
+        <form onSubmit={onSearch} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex-1 min-w-0">
+            <label className="block text-sm font-medium mb-1">Cari</label>
+            <Input
+              placeholder="Subjek, deskripsi, klien..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <select
-              className="select"
+          </div>
+          <div className="w-full sm:w-48">
+            <label className="block text-sm font-medium mb-1">Status</label>
+            <Select
               value={status}
               onChange={(e) => setStatus(e.target.value as ConsultationStatus | '')}
-              style={{ maxWidth: 180 }}
-            >
-              <option value="">Semua status</option>
-              <option value="REQUESTED">Diajukan</option>
-              <option value="SCHEDULED">Terjadwal</option>
-              <option value="ONGOING">Berlangsung</option>
-              <option value="COMPLETED">Selesai</option>
-              <option value="CANCELLED">Dibatalkan</option>
-            </select>
-            <button className="btn" type="submit">
+              options={STATUS_OPTIONS}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" variant="primary" disabled={loading}>
               Cari
-            </button>
-          </form>
-          <button className="btn" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Tutup' : '+ Konsultasi Baru'}
-          </button>
-        </div>
-      </div>
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => { setSearch(''); setStatus(''); setPage(1); load(); }}>
+              Reset
+            </Button>
+          </div>
+        </form>
+      </Card>
 
-      {showForm && (
-        <div className="card">
-          <h3>Pengajuan Konsultasi</h3>
-          <form onSubmit={onCreate} className="grid-2">
-            <div className="field">
-              <label>Klien</label>
-              <select
-                className="select"
-                value={form.clientId}
-                onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                required
-              >
-                <option value="">Pilih klien...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Mode</label>
-              <select
-                className="select"
-                value={form.mode}
-                onChange={(e) => setForm({ ...form, mode: e.target.value as ConsultationMode })}
-              >
-                <option value="CHAT">Chat</option>
-                <option value="VIDEO">Video Call</option>
-                <option value="PHONE">Telepon</option>
-                <option value="IN_PERSON">Tatap Muka</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Subjek</label>
-              <input
-                className="input"
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                required
-                placeholder="Mis. Konsultasi wanprestasi kontrak"
-              />
-            </div>
-            <div className="field">
-              <label>Jadwal Preferensi (opsional)</label>
-              <input
-                className="input"
-                type="datetime-local"
-                value={form.scheduledAt}
-                onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
-              />
-            </div>
-            <div className="field" style={{ gridColumn: '1 / -1' }}>
-              <label>Deskripsi</label>
-              <textarea
-                className="input"
-                rows={3}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
-            <div>
-              <button className="btn" type="submit" disabled={saving}>
-                {saving ? 'Menyimpan...' : 'Ajukan'}
-              </button>
-            </div>
-          </form>
-          {error && <p className="error">{error}</p>}
-        </div>
-      )}
-
-      <div className="card">
-        {items.length === 0 ? (
-          <p className="muted">Belum ada konsultasi.</p>
+      <Card>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-3 border-[var(--accent)] border-t-transparent" />
+            <span className="sr-only">Memuat...</span>
+          </div>
+        ) : items.length === 0 ? (
+          <EmptyState title="Belum ada konsultasi" description={search || status ? 'Coba ubah filter pencarian' : 'Klik "Konsultasi Baru" untuk menambahkan.'} />
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Subjek</th>
-                <th>Klien</th>
-                <th>Mode</th>
-                <th>Jadwal</th>
-                <th>Advokat</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link to={`/konsultasi/${c.id}`}>{c.subject}</Link>
-                  </td>
-                  <td>{c.client.fullName}</td>
-                  <td>{consultationModeLabels[c.mode]}</td>
-                  <td>{c.scheduledAt ? new Date(c.scheduledAt).toLocaleString('id-ID') : '-'}</td>
-                  <td>{c.assignedTo?.fullName ?? '-'}</td>
-                  <td>
-                    <span className="badge">{consultationStatusLabels[c.status]}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-xs uppercase text-[var(--muted)]">
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="px-4 py-3">Subjek</th>
+                    <th className="px-4 py-3">Klien</th>
+                    <th className="px-4 py-3">Mode</th>
+                    <th className="px-4 py-3">Jadwal</th>
+                    <th className="px-4 py-3">Advokat</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((c) => (
+                    <tr key={c.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/50 transition-colors">
+                      <td className="px-4 py-4 font-medium">
+                        <Link to={`/konsultasi/${c.id}`} className="text-[var(--accent)] hover:underline">
+                          {c.subject}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-4">{c.client.fullName}</td>
+                      <td className="px-4 py-4">
+                        <Badge tone="info">{consultationModeLabels[c.mode]}</Badge>
+                      </td>
+                      <td className="px-4 py-4 text-[var(--muted)]">
+                        {c.scheduledAt ? new Date(c.scheduledAt).toLocaleString('id-ID') : '-'}
+                      </td>
+                      <td className="px-4 py-4 text-[var(--muted)]">{c.assignedTo?.fullName ?? '-'}</td>
+                      <td className="px-4 py-4">
+                        <Badge tone={getStatusTone(c.status)}>{consultationStatusLabels[c.status]}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Sebelumnya
-          </button>
-          <span className="muted">
-            Halaman {page} dari {totalPages}
-          </span>
-          <button
-            className="btn btn-ghost btn-sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Berikutnya
-          </button>
-        </div>
-      </div>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-[var(--muted)]">
+                Menampilkan {startItem}–{endItem} dari {total} konsultasi
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Sebelumnya
+                </Button>
+                <span className="text-sm text-[var(--muted)]">
+                  Halaman {page} dari {totalPages}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Berikutnya
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Konsultasi Baru"
+        size="lg"
+      >
+        <form onSubmit={onCreate} className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium mb-1">Klien <span className="text-rose-500">*</span></label>
+            <Select
+              value={form.clientId}
+              onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+              options={[{ value: '', label: 'Pilih klien...' }, ...clients.map((c) => ({ value: c.id, label: c.fullName }))]}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Mode <span className="text-rose-500">*</span></label>
+            <Select
+              value={form.mode}
+              onChange={(e) => setForm({ ...form, mode: e.target.value as ConsultationMode })}
+              options={MODE_OPTIONS}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Subjek <span className="text-rose-500">*</span></label>
+            <Input
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              required
+              placeholder="Mis. Konsultasi wanprestasi kontrak"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Jadwal Preferensi</label>
+            <Input
+              type="datetime-local"
+              value={form.scheduledAt}
+              onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium mb-1">Deskripsi</label>
+            <Textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Batal</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Menyimpan...' : 'Ajukan'}</Button>
+          </div>
+        </form>
+        {error && <p className="mt-3 text-sm text-rose-600" role="alert">{error}</p>}
+      </Modal>
     </div>
   );
+}
+
+function getStatusTone(status: string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
+  switch (status) {
+    case 'ONGOING':
+      return 'success';
+    case 'SCHEDULED':
+      return 'info';
+    case 'COMPLETED':
+      return 'neutral';
+    case 'CANCELLED':
+      return 'danger';
+    case 'REQUESTED':
+      return 'warning';
+    default:
+      return 'neutral';
+  }
 }

@@ -65,7 +65,11 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   );
 }
 
-export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({
+  className,
+  options,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & { options?: Array<{ value: string; label: string }> }) {
   return (
     <select
       className={cx(
@@ -73,7 +77,13 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
         className,
       )}
       {...props}
-    />
+    >
+      {options?.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -124,6 +134,51 @@ export function EmptyState({ title, description }: { title: string; description:
     <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
       <p className="font-semibold">{title}</p>
       <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>
+    </div>
+  );
+}
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}) {
+  if (!isOpen) return null;
+
+  const sizes = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} />
+      <div className="relative min-h-full flex items-center justify-center p-4">
+        <div className={cx('w-full bg-[var(--surface)] rounded-2xl shadow-xl', sizes[size])}>
+          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+            <h2 id="modal-title" className="text-lg font-semibold text-[var(--text)]">{title}</h2>
+            <button
+              type="button"
+              className="p-1 rounded-lg text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+              onClick={onClose}
+              aria-label="Tutup"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="p-5">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

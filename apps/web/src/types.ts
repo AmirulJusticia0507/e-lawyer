@@ -156,6 +156,7 @@ export interface HearingSla {
   status: SlaStatus;
   createdAt: string;
   updatedAt: string;
+  hearing?: Hearing & { case?: Pick<CaseSummary, 'id' | 'caseNumber' | 'title'> };
 }
 
 export interface SlaAlert {
@@ -658,4 +659,13 @@ export interface CaseIntegrity {
   receipts: DocumentReceiptItem[];
   deadlines: CaseDeadlineItem[];
   anomalies: AnomalyFlag[];
+}
+
+export interface TimeEntry {
+  id: string;
+  description?: string;
+  durationMinutes?: number;
+  hourlyRate?: number;
+  amount?: number;
+  case?: { caseNumber: string };
 }

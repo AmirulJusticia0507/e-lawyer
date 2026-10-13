@@ -58,6 +58,15 @@ export class SlaService {
     return this.prisma.hearingSla.findMany({
       where: { hearingId },
       orderBy: { startedAt: 'asc' },
+      include: {
+        hearing: {
+          include: {
+            case: {
+              select: { id: true, caseNumber: true, title: true },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -159,5 +168,20 @@ export class SlaService {
       byStage: byStage.map((s) => ({ stage: s.stage, count: s._count._all })),
       recentAlerts,
     };
+  }
+
+  async listAllSlaTimers() {
+    return this.prisma.hearingSla.findMany({
+      orderBy: { startedAt: 'asc' },
+      include: {
+        hearing: {
+          include: {
+            case: {
+              select: { id: true, caseNumber: true, title: true },
+            },
+          },
+        },
+      },
+    });
   }
 }

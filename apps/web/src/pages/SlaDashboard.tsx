@@ -18,11 +18,15 @@ const stageLabels: Record<string, string> = {
   PUTUSAN: 'Putusan',
 };
 
+const PAGE_SIZE = 10;
+
 export default function SlaDashboard() {
   const { user } = useAuth();
   const canUpdate = user?.permissions.includes('UPDATE:HEARING') ?? false;
   const [stats, setStats] = useState<SlaStatistics | null>(null);
   const [timers, setTimers] = useState<HearingSla[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,14 +35,17 @@ export default function SlaDashboard() {
     try {
       const [statsResult, timersResult] = await Promise.all([
         api.slaStatistics(),
-        api.listSlaTimers(''),
+        api.listAllSlaTimers(),
       ]);
       setStats(statsResult);
-      setTimers(timersResult);
+      const allTimers = timersResult;
+      setTotal(allTimers.length);
+      const start = (page - 1) * PAGE_SIZE;
+      setTimers(allTimers.slice(start, start + PAGE_SIZE));
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : 'Gagal memuat data SLA');
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     void load();
@@ -73,6 +80,10 @@ export default function SlaDashboard() {
       setBusy(false);
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div className="space-y-6">
@@ -140,37 +151,85 @@ export default function SlaDashboard() {
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold">Daftar Timer Aktif</h2>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <h2 className="text-xl font-bold">Daftar Timer Aktif</h2>
+          <div className="text-sm text-[var(--muted)]">
+            Menampilkan {startItem}–{endItem} dari {total} timer
+          </div>
+        </div>
+
         {timers.length === 0 ? (
           <EmptyState
             title="Belum ada timer SLA"
             description="Timer dibuat otomatis saat jadwal sidang disimpan."
           />
         ) : (
-          <div className="mt-4 space-y-3">
-            {timers.map((timer) => (
-              <article key={timer.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <strong className="text-[var(--text)]">{timer.label}</strong>
-                    <Badge tone={getStatusTone(timer.status)}>
-                      {statusLabels[timer.status] ?? timer.status}
-                    </Badge>
-                  </div>
-                  {canUpdate && timer.status !== 'COMPLETED' && timer.status !== 'BREACHED' && (
-                    <Button size="sm" onClick={() => advance(timer.hearingId, timer.stage)} disabled={busy}>
-                      Tandai selesai
-                    </Button>
-                  )}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-4 text-sm text-[var(--muted)]">
-                  <span>Mulai: {new Date(timer.startedAt).toLocaleString('id-ID')}</span>
-                  <span>Batas: {new Date(timer.deadlineAt).toLocaleString('id-ID')}</span>
-                  {timer.completedAt && <span>Selesai: {new Date(timer.completedAt).toLocaleString('id-ID')}</span>}
-                </div>
-              </article>
-            ))}
-          </div>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-xs uppercase text-[var(--muted)]">
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="px-4 py-3">Timer</th>
+                    <th className="px-4 py-3">Perkara</th>
+                    <th className="px-4 py-3">Tahapan</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Mulai</th>
+                    <th className="px-4 py-3">Batas</th>
+                    <th className="px-4 py-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timers.map((timer) => (
+                    <tr key={timer.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/50">
+                      <td className="px-4 py-4 font-medium text-[var(--text)]">{timer.label}</td>
+                      <td className="px-4 py-4 text-[var(--muted)]">{timer.hearing?.case?.caseNumber ?? timer.hearingId}</td>
+                      <td className="px-4 py-4 text-[var(--muted)]">{stageLabels[timer.stage] ?? timer.stage}</td>
+                      <td className="px-4 py-4">
+                        <Badge tone={getStatusTone(timer.status)}>
+                          {statusLabels[timer.status] ?? timer.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-4 text-[var(--muted)]">{new Date(timer.startedAt).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-4 text-[var(--muted)]">{new Date(timer.deadlineAt).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-4">
+                        {canUpdate && timer.status !== 'COMPLETED' && timer.status !== 'BREACHED' && (
+                          <Button
+                            size="sm"
+                            onClick={() => advance(timer.hearingId, timer.stage)}
+                            disabled={busy}
+                          >
+                            Tandai selesai
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Sebelumnya
+              </Button>
+              <span className="text-sm text-[var(--muted)]">
+                Halaman {page} dari {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Berikutnya
+              </Button>
+            </div>
+          </>
         )}
       </Card>
     </div>

@@ -70,83 +70,88 @@ export default function Hearings() {
   const completed = hearings.filter((hearing) => hearing.status === 'COMPLETED').length;
 
   return (
-    <div className="grid gap-6 pb-10">
-      <header className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm sm:p-8">
-        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[var(--accent)]/15 blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
-              Ruang kendali litigasi
-            </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              Agenda persidangan
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-              Kelola jadwal, deteksi bentrok ruang, pantau SLA, dan tindak lanjuti pengingat dari
-              satu tampilan.
-            </p>
-          </div>
-          <Button
-            className="bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--border)]"
-            onClick={() => void load()}
-            disabled={busy}
-          >
-            Muat ulang data
-          </Button>
-        </div>
-        <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
-          <Metric label="Total agenda" value={hearings.length} />
-          <Metric label="Agenda aktif" value={upcoming} />
-          <Metric label="Sidang selesai" value={completed} />
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">Ruang kendali litigasi</p>
+        <h1 className="mt-2 text-2xl font-bold">Agenda Persidangan</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Kelola jadwal, deteksi bentrok ruang, pantau SLA, dan tindak lanjuti pengingat dari satu tampilan.
+        </p>
+      </div>
 
       {error && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-600"
-        >
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-600" role="alert">
           {error}
         </div>
       )}
       {notice && (
-        <div
-          role="status"
-          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600"
-        >
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-600" role="status">
           {notice}
         </div>
       )}
 
-      <div
-        className={`grid gap-6 ${canCreate ? 'xl:grid-cols-[minmax(0,1.65fr)_minmax(20rem,0.85fr)]' : ''}`}
-      >
-        <HearingList
-          hearings={hearings}
-          selectedId={selectedId}
-          onSelect={(hearing) => setSelectedId(hearing.id)}
-        />
-        {canCreate && <HearingForm onCreate={create} busy={busy} />}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="bg-[var(--bg)]/70">
+          <div className="text-2xl font-bold">{hearings.length}</div>
+          <div className="text-xs text-[var(--muted)]">Total Agenda</div>
+        </Card>
+        <Card className="bg-[var(--bg)]/70">
+          <div className="text-2xl font-bold">{upcoming}</div>
+          <div className="text-xs text-[var(--muted)]">Agenda Aktif</div>
+        </Card>
+        <Card className="bg-[var(--bg)]/70">
+          <div className="text-2xl font-bold">{completed}</div>
+          <div className="text-xs text-[var(--muted)]">Sidang Selesai</div>
+        </Card>
       </div>
 
-      <Calendar hearings={hearings} />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ConflictDetector hearings={hearings} />
-        <SlaDashboard hearings={hearings} />
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Daftar Sidang</h2>
+            <Button variant="ghost" size="sm" onClick={() => void load()} disabled={busy}>
+              Muat Ulang
+            </Button>
+          </div>
+          <HearingList
+            hearings={hearings}
+            selectedId={selectedId}
+            onSelect={(hearing) => setSelectedId(hearing.id)}
+          />
+        </Card>
+
+        {canCreate && (
+          <Card className="lg:sticky lg:top-6">
+            <h2 className="text-lg font-semibold mb-4">Jadwal Baru</h2>
+            <HearingForm onCreate={create} busy={busy} />
+          </Card>
+        )}
       </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        <ReminderPanel hearingId={selected?.id} />
-        <EscalationPanel hearings={hearings} />
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">Kalender Sidang</h2>
+          <Calendar hearings={hearings} />
+        </Card>
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">Deteksi Bentrok Ruang</h2>
+          <ConflictDetector hearings={hearings} />
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">Monitoring SLA</h2>
+          <SlaDashboard hearings={hearings} />
+        </Card>
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">Pengingat & Eskalasi</h2>
+          <div className="space-y-6">
+            <ReminderPanel hearingId={selected?.id} />
+            <EscalationPanel hearings={hearings} />
+          </div>
+        </Card>
       </div>
     </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="border-0 bg-[var(--bg)]/70 p-4 shadow-none">
-      <span className="block text-2xl font-bold">{value}</span>
-      <span className="text-xs font-medium text-[var(--muted)]">{label}</span>
-    </Card>
   );
 }

@@ -1,104 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Table, TableBody, TableHeader, TableRow, TableCell, Button, Input, Select } from '@/components/ui';
-import { useAuth } from '@/auth/AuthContext';
-import { api } from '@/api';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { Badge, Card, EmptyState } from '../components/ui';
+
+interface TimeEntry {
+  id: string;
+  description?: string;
+  durationMinutes?: number;
+  hourlyRate?: number;
+  amount?: number;
+  case?: { caseNumber: string };
+}
 
 export function BillingDashboard() {
   const { user } = useAuth();
-  const [timeEntries, setTimeEntries] = useState([]);
-  const [invoices, setInvoices] = useState([]);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/billing/time-entries?caseId=&userId=' + user?.id)
-      .then((res) => res.json())
-      .then((data) => {
-        setTimeEntries(data);
-        setLoading(false);
-      });
-    
-    fetch('/api/billing/invoices')
-      .then((res) => res.json())
-      .then((data) => {
-        setInvoices(data);
-        setLoading(false);
-      });
+    const controller = new AbortController();
+    fetch(`/api/billing/time-entries?userId=${encodeURIComponent(user?.id ?? '')}`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('Gagal memuat data keuangan');
+        return response.json() as Promise<TimeEntry[]>;
+      })
+      .then(setEntries)
+      .catch((reason: unknown) => {
+        if (!(reason instanceof DOMException && reason.name === 'AbortError'))
+          setError(reason instanceof Error ? reason.message : 'Gagal memuat data keuangan');
+      })
+      .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [user?.id]);
 
-  return (
-    <div className="p-6 bg-bg text-text">
-      <h1 className="text-2xl font-bold mb-6">Dashboard Keuangan</h1>
-      
-      {loading ? (
-        <p className="muted">Memuat data...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Timesheet Card */}
-          <Card>
-            <h3 className="text-xl font-medium mb-4">Timesheet</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableColumn>Perkara</TableColumn>
-                  <TableColumn>Deskripsi</TableColumn>
-                  <TableColumn>Jam Kerja</TableColumn>
-                  <TableColumn>Tarif</TableColumn>
-                  <TableColumn>Amount</TableColumn>
-                </TableRow>
-              </TableHeader>
-              {timeEntries.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell>{entry.case?.caseNumber || '-'}</TableCell>
-                  <TableCell>{entry.description || '-'}</TableCell>
-                  <TableCell>{entry.durationMinutes ? `${entry.durationMinutes} menit` : '-'}</TableCell>
-                  <TableCell>{entry.hourlyRate || '0'}</TableCell>
-                  <TableCell>{entry.amount || 0}</TableCell>
-                </TableRow>
-              ))}
-            </Table>
-          </Card>
+  const totalMinutes = useMemo(
+    () => entries.reduce((sum, entry) => sum + (entry.durationMinutes ?? 0), 0),
+    [entries],
+  );
+  const totalAmount = useMemo(
+    () => entries.reduce((sum, entry) => sum + (entry.amount ?? 0), 0),
+    [entries],
+  );
+  const rupiah = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  });
 
-          {/* Invoices Card */}
-          <Card>
-            <h3 className="text-xl font-medium mb-4">Invoice</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableColumn>No Invoice</TableColumn>
-                  <TableColumn>Perkara</TableColumn>
-                  <TableColumn>Total</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn>Aksi</TableColumn>
-                </TableRow>
-              </TableHeader>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell>{invoice.invoiceNo || invoice.id.substring(0, 8)}</TableCell>
-                  <TableCell>{invoice.case?.caseNumber || '-'}</TableCell>
-                  <TableCell>{invoice.total ?? 0}</TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        invoice.status === 'PAID'
-                          ? 'badge bg-success'
-                          : invoice.status === 'PARTIALLY_PAID'
-                            ? 'badge bg-warning'
-                            : 'badge bg-secondary'
-                      }
-                    >
-                      {invoice.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <button className="btn btn-sm btn-outline">Lihat</button>
-                    <button className="btn btn-sm btn-danger">Batal</button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </Table>
-          </Card>
+  return (
+    <div className="grid gap-6 pb-10">
+      <header className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
+          Operasional firma
+        </p>
+        <h1 className="mt-2 text-3xl font-bold">Keuangan & timesheet</h1>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Pantau waktu kerja dan nilai jasa yang tercatat untuk setiap perkara.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <Metric label="Entri waktu" value={String(entries.length)} />
+          <Metric label="Jam tercatat" value={(totalMinutes / 60).toFixed(1)} />
+          <Metric label="Nilai jasa" value={rupiah.format(totalAmount)} />
+        </div>
+      </header>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600"
+        >
+          {error}
         </div>
       )}
+      <Card>
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+              Aktivitas terbaru
+            </p>
+            <h2 className="mt-1 text-xl font-bold">Timesheet</h2>
+          </div>
+          <Badge tone="info">{entries.length} entri</Badge>
+        </div>
+        {loading ? (
+          <p className="text-sm text-[var(--muted)]">Memuat data…</p>
+        ) : entries.length === 0 ? (
+          <EmptyState
+            title="Belum ada timesheet"
+            description="Entri waktu kerja akan muncul di sini."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-[var(--muted)]">
+                <tr className="border-b border-[var(--border)]">
+                  <th className="px-3 py-3">Perkara</th>
+                  <th className="px-3 py-3">Aktivitas</th>
+                  <th className="px-3 py-3">Durasi</th>
+                  <th className="px-3 py-3 text-right">Nilai</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr className="border-b border-[var(--border)] last:border-0" key={entry.id}>
+                    <td className="px-3 py-4 font-semibold">{entry.case?.caseNumber ?? '—'}</td>
+                    <td className="px-3 py-4 text-[var(--muted)]">
+                      {entry.description ?? 'Tanpa deskripsi'}
+                    </td>
+                    <td className="px-3 py-4">{entry.durationMinutes ?? 0} menit</td>
+                    <td className="px-3 py-4 text-right">{rupiah.format(entry.amount ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-[var(--bg)]/70 p-4">
+      <strong className="block text-xl">{value}</strong>
+      <span className="text-xs text-[var(--muted)]">{label}</span>
+    </div>
+  );
+}
+
+export default BillingDashboard;

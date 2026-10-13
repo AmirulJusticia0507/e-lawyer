@@ -1,112 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ApiError, api } from '../api';
+import type { Reminder } from '../types';
+import { Badge, Card, EmptyState } from './ui';
 
-export function ReminderPanel({ hearingId }: { hearingId: string }) {
-  const [reminders, setReminders] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [newReminder, setNewReminder] = useState({
-    type: 'H-7',
-    triggerAt: new Date().toISOString(),
-    deliveryMethod: 'email',
-  });
-
+export function ReminderPanel({ hearingId }: { hearingId?: string }) {
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [error, setError] = useState('');
   useEffect(() => {
-    // Placeholder - in real app would fetch reminders from API
-    setReminders([
-      { id: '1', type: 'H-7', triggerAt: new Date().toISOString(), delivered: false },
-      { id: '2', type: 'H-3', triggerAt: new Date(Date.now() + 24 * 60_000).toISOString(), delivered: false },
-    ]);
+    if (!hearingId) {
+      setReminders([]);
+      return;
+    }
+    api
+      .listReminders(hearingId)
+      .then(setReminders)
+      .catch((reason) =>
+        setError(reason instanceof ApiError ? reason.message : 'Gagal memuat pengingat'),
+      );
   }, [hearingId]);
-
-  const handleDelete = (id: string) => {
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-  };
-
   return (
-    <div className="p-4 bg-blue-50 rounded">
-      <h3 className="font-medium mb-4">Reminder Jadwal Sidang</h3>
-
+    <Card>
       <div className="mb-4">
-        <p className="text-sm muted">
-          Set reminder untuk jadwal sidang ID: {hearingId}
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+          Notifikasi
         </p>
+        <h2 className="mt-1 text-lg font-bold">Pengingat sidang</h2>
       </div>
-
-      <div className="space-y-3">
-        {reminders.map((reminder) => (
-          <div key={reminder.id} className="p-3 bg-white rounded">
-            <div className="flex items-between">
-              <span>
-                <strong>{reminder.type}</strong> - {new Date(reminder.triggerAt).toLocaleString()}
-              </span>
-              <button
-                className="btn btn-sm btn-danger"
-                onClick={() => handleDelete(reminder.id)}
-              >
-                Hapus
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showForm && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const newId = `reminder-${Date.now()}`;
-              setReminders((prev) => [...prev, { ...newReminder, id: newId, delivered: false }]);
-              setShowForm(false);
-            }}
-          >
-            <div className="grid grid-cols-2 gap-2">
+      {error && <p className="mb-3 text-sm text-rose-500">{error}</p>}
+      {!hearingId ? (
+        <EmptyState
+          title="Pilih agenda"
+          description="Klik agenda untuk melihat pengingat otomatisnya."
+        />
+      ) : reminders.length === 0 ? (
+        <EmptyState
+          title="Belum ada pengingat"
+          description="Pengingat H-7, H-3, dan H-1 dibuat otomatis."
+        />
+      ) : (
+        <div className="grid gap-3">
+          {reminders.map((reminder) => (
+            <div
+              key={reminder.id}
+              className="flex items-center justify-between rounded-xl border border-[var(--border)] p-3"
+            >
               <div>
-                <select
-                  value={newReminder.type}
-                  onChange={(e) => setNewReminder({ ...newReminder, type: e.target.value })
-                  }
-                  className="w-full border border-border rounded px-3 py-2 bg-surface text-text"
-                >
-                  <option value="H-7">H-7 (7 hari sebelum)</option>
-                  <option value="H-3">H-3 (3 hari sebelum)</option>
-                  <option value="H-1">H-1 (1 hari sebelum)</option>
-                  <option value="custom">Custom</option>
-                </select>
+                <strong className="text-sm">{reminder.type}</strong>
+                <p className="text-xs text-[var(--muted)]">
+                  {new Date(reminder.triggerAt).toLocaleString('id-ID')}
+                </p>
               </div>
-              <div>
-                <input
-                  type="datetime-local"
-                  value={newReminder.triggerAt}
-                  onChange={(e) => setNewReminder({ ...newReminder, triggerAt: e.target.value })}
-                  className="w-full border border-border rounded px-3 py-2 bg-surface text-text"
-                />
-              </div>
-            </div>
-            <div>
-              <select
-                value={newReminder.deliveryMethod}
-                onChange={(e) => setNewReminder({ ...newReminder, deliveryMethod: e.target.value })}
-                className="w-full border border-border rounded px-3 py-2 bg-surface text-text"
-                >
-                <option value="email">Email</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="push">Push Notifikasi</option>
-                <option value="sms">SMS</option>
-              </select>
-            </div>
-            <div>
-              <button type="submit" className="btn">
-                Simpan Reminder
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => setShowForm(false)}
+              <Badge
+                tone={
+                  reminder.status === 'SENT'
+                    ? 'success'
+                    : reminder.status === 'FAILED'
+                      ? 'danger'
+                      : 'neutral'
+                }
               >
-                Batal
-              </button>
-            </form>
-          )}
+                {reminder.status}
+              </Badge>
+            </div>
+          ))}
         </div>
-      </div>
-    </div>
+      )}
+    </Card>
   );
 }

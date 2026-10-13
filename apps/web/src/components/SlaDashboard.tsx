@@ -1,105 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import type { Hearing } from '../types';
+import { Badge, Card, EmptyState } from './ui';
 
-interface HearingSLA {
-  id: string;
-  caseId: string;
-  hearingDate: string;
-  startTime: string;
-  endTime: string;
-  courtroom: string;
-  judgeName: string;
-  status: 'ON_TRACK' | 'AT_RISK' | 'BREACHED';
-  daysUntilHearing: number;
-  daysUntilDeadline: number;
-  isBreached: boolean;
-}
+const DAY = 86_400_000;
 
-interface SlaDashboardProps {
-  hearings: any[];
-}
-
-export function SlaDashboard({ hearings }: SlaDashboardProps) {
-  const [slaData, setSlaData] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  useEffect(() => {
-    const calculateSla = (hearings: any[]) => {
-      const now = new Date();
-      const slaData = hearings.map((hearing) => {
-        const hearingDate = new Date(hearing.startsAt);
-        const deadline = new Date(hearing.startsAt);
-        deadline.setDate(deadline.getDate() - 7); // H-7 deadline
-
-        const daysUntilHearing = Math.ceil(
-          (hearingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        const daysUntilDeadline = Math.ceil(
-          (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        let status: 'ON_TRACK' | 'AT_RISK' | 'BREACHED' = 'ON_TRACK';
-        let isBreached = false;
-
-        if (now > deadline) {
-          status = 'BREACHED';
-          isBreached = true;
-        } else if (now > deadline) {
-          status = 'AT_RISK';
-        }
-
+export function SlaDashboard({ hearings }: { hearings: Hearing[] }) {
+  const items = useMemo(
+    () =>
+      hearings.map((hearing) => {
+        const days = Math.ceil((new Date(hearing.startsAt).getTime() - Date.now()) / DAY);
         return {
-          id: hearing.id,
-          caseId: hearing.caseId,
-          hearingDate: hearing.startsAt,
-          startTime: hearing.startsAt,
-          endTime: hearing.endsAt,
-          courtroom: hearing.courtroom,
-          judgeName: hearing.judgeName,
-          status,
-          daysUntilHearing,
-          daysUntilDeadline,
-          isBreached,
-        };
-      });
-      setSlaData(slaData);
-      setLoading(false);
-    };
-
-    if (hearings.length > 0) {
-      calculateSla(hearings);
-    } else {
-      setLoading(false);
-    }
-  }, [hearings]);
-
-  if (loading) {
-    return <div className="p-4">Memuat data SLA...</div>;
-  }
-
+          hearing,
+          days,
+          tone: days < 0 ? 'danger' : days <= 3 ? 'warning' : 'success',
+          label: days < 0 ? 'Terlewat' : days <= 3 ? 'Perlu perhatian' : 'Sesuai SLA',
+        } as const;
+      }),
+    [hearings],
+  );
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Dashboard SLA Sidang</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {slaData.map((item) => (
-          <div key={item.id} className="p-4 rounded bg-{item.isBreached ? 'red-100' : item.status === 'AT_RISK' ? 'yellow-100' : 'green-100'}>
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium">{item.caseId}</h3>
-                <p className="text-sm muted">H-{{ item.daysUntilHearing }} ke sidang</p>
-              </div>
-              <div>
-                <span className={item.isBreached ? 'text-red-600' : item.status === 'AT_RISK' ? 'text-yellow-600' : 'text-green-600'>
-                  {item.status}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm muted">
-              H-{{ item.daysUntilDeadline }} ke deadline{SLA}
-              {item.isBreached && <span className="text-red-500"> (BREACHED)</span>}
-            </p>
-          </div>
-        ))}
+    <Card>
+      <div className="mb-4">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+          Kesehatan proses
+        </p>
+        <h2 className="mt-1 text-lg font-bold">Ringkasan SLA</h2>
       </div>
-    </div>
+      {items.length === 0 ? (
+        <EmptyState
+          title="Belum ada data SLA"
+          description="Status muncul setelah jadwal sidang dibuat."
+        />
+      ) : (
+        <div className="grid gap-3">
+          {items.slice(0, 5).map(({ hearing, days, tone, label }) => (
+            <div
+              key={hearing.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] p-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{hearing.case.caseNumber}</p>
+                <p className="text-xs text-[var(--muted)]">
+                  {days < 0 ? `${Math.abs(days)} hari terlewat` : `${days} hari lagi`}
+                </p>
+              </div>
+              <Badge tone={tone}>{label}</Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }

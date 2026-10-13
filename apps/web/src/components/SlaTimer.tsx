@@ -1,47 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ApiError, api } from '../api';
+import type { HearingSla } from '../types';
+import { Badge, Card, EmptyState } from './ui';
 
 export function SlaTimer({ hearingId }: { hearingId: string }) {
-  const [slaTimer, setSlaTimer] = useState<any>(null);
-  const [status, setStatus] = useState<'ON_TRACK' | 'AT_RISK' | 'BREACHED'>('ON_TRACK');
-
+  const [timers, setTimers] = useState<HearingSla[]>([]);
+  const [error, setError] = useState('');
   useEffect(() => {
-    // Placeholder SLA logic - in real app would calculate based on hearing deadline
-    const now = new Date();
-    const hearingStart = new Date('2024-12-20T09:00:00'); // placeholder hearing start
-    const deadline = new Date('2024-12-20T17:00:00'); // placeholder deadline
-
-    let status = 'ON_TRACK';
-    let slaTimer = null;
-
-    if (now > deadline) {
-      status = 'BREACHED';
-      slaTimer = { status: 'BREACHED', minutesOverdue: Math.floor((now.getTime() - deadline.getTime()) / 60_000) };
-    } else if (now > new Date(deadline.getTime() - 60_000)) {
-      status = 'AT_RISK';
-      slaTimer = { status: 'AT_RISK', minutesUntilDeadline: Math.floor((deadline.getTime() - now.getTime()) / 60_000) };
-    } else {
-      slaTimer = { status: 'ON_TRACK', minutesUntilDeadline: Math.floor((deadline.getTime() - now.getTime()) / 60_000) };
-    }
-
-    setStatus(status);
-    setSlaTimer(slaTimer);
+    api
+      .listSlaTimers(hearingId)
+      .then(setTimers)
+      .catch((reason) =>
+        setError(reason instanceof ApiError ? reason.message : 'Gagal memuat SLA'),
+      );
   }, [hearingId]);
-
-  if (!slaTimer) return null;
-
   return (
-    <div className="p-4 bg-gray-50 rounded">
-      <h3 className="font-medium mb-2">Timer SLA</h3>
-      <div className="p-3 bg-{status === 'BREACHED' ? 'red-100' : status === 'AT_RISK' ? 'yellow-100' : 'green-100'} rounded">
-        <p className="muted">
-          {status === 'ON_TRACK'
-            ? 'SLA aman - {slaTimer.minutesUntilDeadline} menit lagi'
-            : status === 'AT_RISK'
-              ? 'SLA berisiko - {slaTimer.minutesUntilDeadline} menit lagi'
-              : 'SLA TERLAMBAT - {slaTimer.minutesOverdue} menit sudah lewat'}
-          </p>
-        <p className="mt-2">{status === 'ON_TRACK' ? 'Sistem berjalan normal' : 'Awas! SLA akan breached'}.</p>
-      </div>
-    </div>
+    <Card>
+      <h2 className="mb-4 text-lg font-bold">Tahapan SLA</h2>
+      {error && <p className="mb-3 text-sm text-rose-500">{error}</p>}
+      {timers.length === 0 ? (
+        <EmptyState
+          title="Belum ada timer"
+          description="Timer dibuat otomatis saat agenda disimpan."
+        />
+      ) : (
+        <div className="grid gap-3">
+          {timers.map((timer) => (
+            <div
+              key={timer.id}
+              className="flex items-center justify-between rounded-xl border border-[var(--border)] p-3"
+            >
+              <div>
+                <strong className="text-sm">{timer.label}</strong>
+                <p className="text-xs text-[var(--muted)]">
+                  Batas {new Date(timer.deadlineAt).toLocaleString('id-ID')}
+                </p>
+              </div>
+              <Badge
+                tone={
+                  timer.status === 'BREACHED'
+                    ? 'danger'
+                    : timer.status === 'AT_RISK'
+                      ? 'warning'
+                      : timer.status === 'COMPLETED'
+                        ? 'success'
+                        : 'info'
+                }
+              >
+                {timer.status}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }

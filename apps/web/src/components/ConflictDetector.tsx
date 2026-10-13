@@ -1,49 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import type { Hearing } from '../types';
+import { Badge, Card, EmptyState } from './ui';
 
-export function ConflictDetector({ hearings }: { hearings: any[] }) {
-  const [conflicts, setConflicts] = useState<any[]>([]);
-
-  useEffect(() => {
-    const conflicts: any[] = [];
-    for (let i = 0; i < hearings.length; i++) {
-      for (let j = i + 1; j < hearings.length; j++) {
-        const a = hearings[i];
-        const b = hearings[j];
-        if (a.courtroom === b.courtroom) {
-          const startA = new Date(a.startsAt).getTime();
-          const endA = new Date(a.endsAt).getTime();
-          const startB = new Date(b.startsAt).getTime();
-          const endB = new Date(b.endsAt).getTime();
-          if (startA < endB && startB < endA) {
-            conflicts.push({ hearingA: a, hearingB: b });
-          }
-        }
-      }
-    }
-    setConflicts(conflicts);
+export function ConflictDetector({ hearings }: { hearings: Hearing[] }) {
+  const conflicts = useMemo(() => {
+    const result: Array<{ first: Hearing; second: Hearing }> = [];
+    hearings.forEach((first, index) =>
+      hearings.slice(index + 1).forEach((second) => {
+        const overlaps =
+          first.courtroom === second.courtroom &&
+          new Date(first.startsAt).getTime() < new Date(second.endsAt).getTime() &&
+          new Date(second.startsAt).getTime() < new Date(first.endsAt).getTime();
+        if (overlaps) result.push({ first, second });
+      }),
+    );
+    return result;
   }, [hearings]);
-
   return (
-    <div className="p-4 bg-yellow-50 rounded">
-      <h3 className="font-medium mb-2">Deteksi Bentrok Jadwal</h3>
-      {conflicts.length === 0 ? (
-        <p className="text-green-600">Tidak ada bentrok jadwal</p>
-      : (
+    <Card>
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="text-red-600">
-            {conflicts.length} pasang jadwal bertabrakan:
-            {conflicts.length > 1 ? 'beberapa pasang' : 'satu pasang'}
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+            Validasi otomatis
           </p>
-          <ul className="list-disc list-inside mt-2">
-            {conflicts.map((c, idx) => (
-              <li key={idx}>
-                <strong>Ruang:</strong> {c.hearingA.courtroom} & {c.hearingB.courtroom}{' '}
-                <strong>Waktu:</strong> {new Date(c.hearingA.startsAt).toLocaleString()} vs {new Date(c.hearingB.startsAt).toLocaleString()}
-              </li>
-            ))}
-          </ul>
+          <h2 className="mt-1 text-lg font-bold">Bentrok jadwal</h2>
+        </div>
+        <Badge tone={conflicts.length ? 'danger' : 'success'}>{conflicts.length || 'Aman'}</Badge>
+      </div>
+      {conflicts.length === 0 ? (
+        <EmptyState
+          title="Tidak ada bentrok"
+          description="Ruang sidang dan waktu seluruh agenda sudah aman."
+        />
+      ) : (
+        <div className="grid gap-3">
+          {conflicts.map(({ first, second }) => (
+            <div
+              key={`${first.id}-${second.id}`}
+              className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-sm"
+            >
+              <strong>{first.courtroom}</strong>
+              <p className="mt-1 text-[var(--muted)]">
+                {first.case.caseNumber} berbenturan dengan {second.case.caseNumber}.
+              </p>
+            </div>
+          ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -130,6 +130,45 @@ export class ConsultationsController {
     });
   }
 
+  @Get(':id/attachments/:attachmentId/signed-url')
+  @RequirePermission(Action.READ, Subject.CONSULTATION)
+  signedUrl(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+  ) {
+    return this.consultations.issueSignedDownloadUrl(id, attachmentId);
+  }
+
+  @Get(':id/attachments/:attachmentId/download-signed')
+  @Header('Cache-Control', 'private, max-age=60')
+  @RequirePermission(Action.READ, Subject.CONSULTATION)
+  async downloadSigned(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Query('expires') expires: string,
+    @Query('sig') sig: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const { attachment, content } = await this.consultations.prepareSignedDownload(
+      id,
+      attachmentId,
+      Number(expires),
+      sig,
+    );
+    const fallback = extname(attachment.fileName) || '.bin';
+    res.setHeader('Content-Disposition', `attachment; filename="download${fallback}"`);
+    return new StreamableFile(content, {
+      type: attachment.mimeType,
+      disposition: `attachment; filename="download${fallback}"`,
+    });
+  }
+
+  @Get(':id/transcript')
+  @RequirePermission(Action.READ, Subject.CONSULTATION)
+  transcript(@Param('id', ParseUUIDPipe) id: string) {
+    return this.consultations.getTranscript(id);
+  }
+
   @Post(':id/video-sessions')
   @RequirePermission(Action.UPDATE, Subject.CONSULTATION)
   createVideoSession(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CreateVideoSessionDto) {

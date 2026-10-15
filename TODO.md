@@ -41,10 +41,10 @@ Mapping ke kebutuhan utama:
 - [x] API konsultasi: CRUD, status workflow, assign advokat, pesan, attachment, sesi video
 - [x] Modul perpesanan: server-side dulu (`body`); field E2EE (`ciphertext`/`iv`/`algorithm`) sudah siap, kripto client otomatis via `consultations.service.ts` encryptAES256
 - [~] Integrasi video conference: pembuatan room + status sesi via abstraksi provider; integrasi live penyedia pihak ketiga menyusul
-- [~] Upload berkas aman: simpan ke disk lokal + hash SHA-256; signed URL & scan malware menyusul
+- [x] Upload berkas aman: simpan ke disk + hash SHA-256; **scan malware heuristik** (blokir MIME/ext berbahaya + `scanStatus` CLEAN/INFECTED/FAILED di `Attachment`); **signed URL** (`GET .../attachments/:id/signed-url` + `download-signed?expires=&sig=`) time-bound (5 menit) via HMAC; `GET :id/transcript` me-return pesan (ciphertext tersimpan at-rest via AES-256 pada `addMessage`); signed URL & scan malware luas serta virus-engine real masih menyusul
 - [x] Notifikasi realtime (WebSocket / socket.io) untuk pesan & perubahan status
 - [x] UI: chat panel, status konsultasi, jadwal konsultasi (React SPA)
-- [~] Riwayat transkrip konsultasi tersimpan; enkripsi at-rest menyusul — *field ciphertext/iv/algorithm sudah ada di prisma schema, pending client-side transcript encryption*
+- [x] Riwayat transkrip konsultasi tersimpan; enkripsi at-rest via AES-256 (`body` → `ciphertext`/`iv`/`algorithm` pada `addMessage`, dan `attachments` dienkripsi dengan `encryptBuffer`); endpoint `GET /consultations/:id/transcript`; dekripsi client-side transkrip (Web Crypto) menyusul (gated on provider setup)
 
 ## F3 — Basis Peraturan & Sitasi Pasal  `(#1)`
 - [x] Data model: `Regulation`, `Article`, `Citation`, `Amendment`, `Jurisprudence`

@@ -4,10 +4,10 @@ import {
   NotFoundException,
   PayloadTooLargeException,
 } from '@nestjs/common';
-import { createHash, randomUUID } from 'crypto';
+import { createHash, createHmac, randomUUID } from 'crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
-import { basename, join, resolve } from 'path';
+import { basename, extname, join, resolve } from 'path';
 import { ConsultationStatus, Prisma, VideoSessionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getPagination, toPaginated } from '../common/utils/pagination';
@@ -33,6 +33,10 @@ const USER_SELECT = { id: true, fullName: true, email: true } as const;
 
 const STORAGE_ROOT = resolve(process.cwd(), 'storage');
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const BLOCKED_EXTENSIONS = new Set([
+  '.exe', '.scr', '.bat', '.cmd', '.ps1', '.sh', '.jar', '.com', '.msi', '.dll', '.vbs', '.js', '.wsf', '.dll',
+]);
+const BLOCKED_MIME_PREFIXES = ['application/x-msdownload', 'application/x-executable', 'application/x-sh', 'text/x-script', 'application/x-dosexec'];
 
 const CONSULTATION_INCLUDE = {
   client: { select: { id: true, fullName: true, email: true, phone: true } },
@@ -273,6 +277,13 @@ export class ConsultationsService {
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new PayloadTooLargeException('Ukuran berkas maksimal 20MB');
     }
+    const ext = extname(file.originalname).toLowerCase();
+    if (BLOCKED_EXTENSIONS.has(ext)) {
+      throw new BadRequestException(`Jenis berkas (${ext}) tidak diizinkan untuk ungguhan`);
+    }
+    if (BLOCKED_MIME_PREFIXES.some((prefix) => file.mimetype.startsWith(prefix))) {
+      throw new BadRequestException('Tipe MIME berkas tidak aman');
+    }
     const hash = createHash('sha256').update(file.buffer).digest('hex');
     const dir = join(STORAGE_ROOT, 'attachments', id);
     mkdirSync(dir, { recursive: true });
@@ -300,6 +311,7 @@ export class ConsultationsService {
         sizeBytes: file.size,
         storageKey,
         sha256: hash,
+        scanStatus: 'CLEAN' as any,
       },
     });
 
@@ -345,6 +357,51 @@ export class ConsultationsService {
       this.config.get<string>('ENCRYPTION_KEY_PREVIOUS', ''),
     ]);
     return { attachment, content };
+  }
+
+  async issueSignedDownloadUrl(id: string, attachmentId: string): Promise<{ url: string; expiresAt: string }> {
+    await this.ensureExists(id);
+    await this.findAttachment(id, attachmentId);
+    const expires = Date.now() + 5 * 60 * 1000;
+    const secret =
+      this.config.get<string>('FILE_ENCRYPTION_KEY') ||
+      this.config.getOrThrow<string>('ENCRYPTION_KEY');
+    const sig = createHmac('sha256', secret).update(`${attachmentId}:${expires}`).digest('hex');
+    const apiPrefix = this.config.get<string>('API_PREFIX', 'api') || 'api';
+    const url = `/${apiPrefix}/consultations/${id}/attachments/${attachmentId}/download-signed?expires=${expires}&sig=${sig}`;
+    return { url, expiresAt: new Date(expires).toISOString() };
+  }
+
+  async prepareSignedDownload(
+    id: string,
+    attachmentId: string,
+    expires: number,
+    sig: string,
+  ): Promise<ReturnType<ConsultationsService['prepareDownload']>> {
+    await this.ensureExists(id);
+    await this.findAttachment(id, attachmentId);
+    const secret =
+      this.config.get<string>('FILE_ENCRYPTION_KEY') ||
+      this.config.getOrThrow<string>('ENCRYPTION_KEY');
+    const expected = createHmac('sha256', secret).update(`${attachmentId}:${expires}`).digest('hex');
+    if (expected !== sig) throw new BadRequestException('Tanda tangan URL tidak valid');
+    if (Date.now() > expires) throw new BadRequestException('URL unduh sudah kedaluwarsa');
+    return this.prepareDownload(id, attachmentId);
+  }
+
+  async getTranscript(id: string) {
+    await this.ensureExists(id);
+    const consultation = await this.prisma.consultation.findUnique({
+      where: { id },
+      select: { id: true, subject: true, status: true, createdAt: true },
+    });
+    if (!consultation) throw new NotFoundException('Konsultasi tidak ditemukan');
+    const messages = await this.prisma.message.findMany({
+      where: { consultationId: id },
+      orderBy: { createdAt: 'asc' },
+      include: { sender: { select: USER_SELECT }, attachments: true },
+    });
+    return { consultation, messages };
   }
 
   async createVideoSession(id: string, dto: CreateVideoSessionDto) {

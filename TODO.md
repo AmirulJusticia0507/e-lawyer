@@ -145,7 +145,7 @@ Mapping ke kebutuhan utama:
 - [x] Autentikasi & sesi dalam SPA (refresh token rotation, guard route per role) — *AuthContext + guards sudah ada di apps/web, token rotation logic diterapkan*
 - [x] Aksesibilitas (a11y) & tema — *Tailwind sudah support dark mode, implementedasi a11y labels sudah ditambahkan ke komponen utama*
 - [x] Optimasi performa (code splitting, lazy loading) — *Semua halaman pakai React.lazy + dynamic imports, code splitting sudah aktif*
-- [x] Rilis produksi (Vercel/Netlify/NGINX static) — *vercel.json sudah dibuat, build config siap, butuh deploy ke Vercel*
+- [x] Rilis produksi (Vercel/Netlify/NGINX static) — *vercel.json root ditambahkan, `npm run build --workspace=@elawyer/web` (tsc+vite) lulus, output `apps/web/dist`, rewrites ke index.html; butuh `VITE_API_URL` env di Vercel + deploy manual*
 
 ---
 

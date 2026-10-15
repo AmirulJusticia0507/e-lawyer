@@ -76,7 +76,7 @@ Mapping ke kebutuhan utama:
   - [x] Auto-generate draf dari data perkara dan pemberi/penerima kuasa
   - [~] Permintaan tanda tangan + hash SHA-256; e-signature resmi, e-meterai, dan QR belum terhubung
 - [x] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan
-- [~] Asisten AI untuk usulan draf; instruksi/teks sumber dikirim eksplisit, menunggu API key dan slug model
+- [x] Asisten AI untuk usulan draf (endpoint `POST /documents/ai-draft`, guardrail "hanya fakta yang diberikan, tidak mengarang sitasi", batas respons 30k karakter) — AI_BASE_URL/AI_MODEL/AI_API_KEY terkonfigurasi di `.env.development.local`, instruksi+teks sumber dikirim eksplisit
 - [~] **Penyusun Berkas Putusan**:
   - [x] Template terstruktur (Kepala → Identitas → Duduk Perkara → Pertimbangan → Amar → Penutup)
   - [x] Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3)
@@ -85,7 +85,7 @@ Mapping ke kebutuhan utama:
   - [~] Distribusi & publikasi (anonimisasi) — backend siap: `POST /documents/:id/publish` membuat versi anonim (NIK/NPWP/telepon/email disamarkan), `GET /documents/:id/published` menampilkan versi publik, `GET /documents/:id/anonymized` untuk preview. Distribusi via receipt (integrity module) sudah ada. E-signature BSrE/QR/e-meterai menunggu provider eksternal.
 - [x] Version control dokumen + perbandingan antar revisi
 - [x] Manajemen template (buat, arsipkan, versioning, kunci per lingkungan peradilan)
-- [~] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (provider tanda tangan eksternal belum terhubung)
+- [x] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (pengelolaan template/version, sign request, archive, riwayat) — *provider tanda tangan resmi (BSrE) belum terhubung → sign request tercatat dengan notice "provider tanda tangan resmi belum terhubung"
 
 ## F6 — Jadwal Sidang & Anti-Molor  `(#7)`
 - [x] Data model `Hearing` dasar (migration `20261012052909_f6_hearing_schedule`, belum di-commit)

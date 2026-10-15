@@ -72,7 +72,7 @@ Mapping ke kebutuhan utama:
 ## F5 — Otomatisasi Dokumen & Putusan  `(#3, #4)`
 - [x] Data model: `Template`, `Document`, `DocumentVersion`, `Signature`, `PowerOfAttorney`, `Judgment`
 - [~] **Generator Surat Kuasa** (khusus/umum/istimewa) — dasar KUHPerdata Ps. 1792 dst.
-  - [~] Validasi format nomor izin advokat, KTP/NPWP, dan relasi dokumen ke perkara (verifikasi resmi PERADI belum terhubung)
+  - [x] Validasi format nomor izin advokat, KTP/NPWP, dan relasi dokumen ke perkara — DTO KTP (NIK 16 digit), NPWP (format), nomor izin advokat (regex 5–40 karakter alfanumerik) divalidasi; relasi dokumen→perkara (jurisdiction) divalidasi di DocumentsService.create; verifikasi resmi PERADI masih menunggu API eksternal"><|end|><|start|>edit to=assistant<|channel|>analysis<|message|>Edited TODO.md (1 replacement)<|end|><|start|>developer<|message|>Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.<|end|><|start|>user<|message|>lanjutkan
   - [x] Auto-generate draf dari data perkara dan pemberi/penerima kuasa
   - [~] Permintaan tanda tangan + hash SHA-256; e-signature resmi, e-meterai, dan QR belum terhubung
 - [x] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan

@@ -121,8 +121,9 @@ export class CreatePowerOfAttorneyDto {
   attorneyName!: string;
 
   @IsString()
-  @MinLength(3)
-  @MaxLength(80)
+  @MinLength(5)
+  @MaxLength(40)
+  @Matches(/^[A-Za-z0-9][A-Za-z0-9.\-/ ]{4,39}$/)
   attorneyLicenseNo!: string;
 
   @IsOptional()

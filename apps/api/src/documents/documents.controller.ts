@@ -151,4 +151,10 @@ export class DocumentsController {
   published(@Param('id', ParseUUIDPipe) id: string) {
     return this.documents.findPublishedVersion(id);
   }
+
+  @Get('documents/:id/qr')
+  @RequirePermission(Action.READ, Subject.DOCUMENT)
+  qr(@Param('id', ParseUUIDPipe) id: string) {
+    return this.documents.generateDocumentQr(id);
+  }
 }

@@ -74,15 +74,17 @@ Mapping ke kebutuhan utama:
 - [~] **Generator Surat Kuasa** (khusus/umum/istimewa) — dasar KUHPerdata Ps. 1792 dst.
   - [x] Validasi format nomor izin advokat, KTP/NPWP, dan relasi dokumen ke perkara — DTO KTP (NIK 16 digit), NPWP (format), nomor izin advokat (regex 5–40 karakter alfanumerik) divalidasi; relasi dokumen→perkara (jurisdiction) divalidasi di DocumentsService.create; verifikasi resmi PERADI masih menunggu API eksternal"><|end|><|start|>edit to=assistant<|channel|>analysis<|message|>Edited TODO.md (1 replacement)<|end|><|start|>developer<|message|>Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.<|end|><|start|>user<|message|>lanjutkan
   - [x] Auto-generate draf dari data perkara dan pemberi/penerima kuasa
-  - [~] Permintaan tanda tangan + hash SHA-256; e-signature resmi, e-meterai, dan QR belum terhubung
+  - [x] Permintaan tanda tangan: hash SHA-256 isi dokumen (`hashDocumentContent`), alur sign request (`POST /documents/:id/signatures`), status PENDING/SIGNED, UI input penanda tangan, **QR code verifikasi (server-side, `GET /documents/:id/qr` → png data URL tanpa provider eksternal)**. *E-signature BSrE resmi & e-meterai masih menunggu provider resmi eksternal (belum dikonfigurasi)*
 - [x] **Generator dokumen litigasi**: gugatan, jawaban, replik, duplik, kesimpulan
+- [~] **Cetak/Save as PDF**: cetak via browser sudah siap (`printDocument`); format resmi MA dan e-signature hakim (BSrE) menunggu integrasi provider eksternal
+- [x] Distribusi ke para pihak + publikasi anonimisasi (backend siap: jurnal, published, repository Receipt terhubung integritas module)
 - [x] Asisten AI untuk usulan draf (endpoint `POST /documents/ai-draft`, guardrail "hanya fakta yang diberikan, tidak mengarang sitasi", batas respons 30k karakter) — AI_BASE_URL/AI_MODEL/AI_API_KEY terkonfigurasi di `.env.development.local`, instruksi+teks sumber dikirim eksplisit
 - [~] **Penyusun Berkas Putusan**:
   - [x] Template terstruktur (Kepala → Identitas → Duduk Perkara → Pertimbangan → Amar → Penutup)
   - [x] Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3)
   - [x] Template verdict: dikabulkan / ditolak / tidak dapat diterima / damai / verstek
   - [~] Cetak/Save as PDF melalui browser; format MA dan e-signature hakim (BSrE) belum terhubung
-  - [~] Distribusi & publikasi (anonimisasi) — backend siap: `POST /documents/:id/publish` membuat versi anonim (NIK/NPWP/telepon/email disamarkan), `GET /documents/:id/published` menampilkan versi publik, `GET /documents/:id/anonymized` untuk preview. Distribusi via receipt (integrity module) sudah ada. E-signature BSrE/QR/e-meterai menunggu provider eksternal.
+  - [x] Distribusi & publikasi (anonimisasi) — backend siap: `POST /documents/:id/publish` (versi anonim + QR), `GET /documents/:id/published`, `GET /documents/:id/anonymized`, `GET /documents/:id/qr`. Distribusi via receipt (integrity module) sudah ada. *E-signature BSrE & e-meterai menunggu provider resmi eksternal (belum dikonfigurasi)*
 - [x] Version control dokumen + perbandingan antar revisi
 - [x] Manajemen template (buat, arsipkan, versioning, kunci per lingkungan peradilan)
 - [x] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (pengelolaan template/version, sign request, archive, riwayat) — *provider tanda tangan resmi (BSrE) belum terhubung → sign request tercatat dengan notice "provider tanda tangan resmi belum terhubung"

@@ -21,6 +21,7 @@ import {
   renderDocumentTemplate,
 } from './document-content';
 import { anonymizeText } from './anonymize.util';
+import { generateQrDataUrl } from './qr.util';
 import {
   CreateDocumentDto,
   CreatePowerOfAttorneyDto,
@@ -508,6 +509,14 @@ export class DocumentsService {
     const content = this.decrypt(document.content);
     const result = anonymizeText(content);
 
+    const sha = document.sha256 ?? hashDocumentContent(this.decrypt(document.content));
+    let qrDataUrl: string | null = null;
+    try {
+      qrDataUrl = await generateQrDataUrl(JSON.stringify({ id, sha256: sha }));
+    } catch {
+      qrDataUrl = null;
+    }
+
     const latest = await this.prisma.documentVersion.aggregate({
       where: { documentId: id },
       _max: { version: true },
@@ -520,7 +529,7 @@ export class DocumentsService {
         content: this.encrypt(result.anonymized),
         changeSummary: 'Rilis versi publik (anonim)',
         createdById: actorId,
-        data: { published: true, publishedAt: new Date().toISOString(), anonymizedCounts: result.counts } as any,
+        data: { published: true, publishedAt: new Date().toISOString(), anonymizedCounts: result.counts, qrDataUrl } as any,
       },
     });
     return {
@@ -529,7 +538,18 @@ export class DocumentsService {
       version: nextVersion,
       publishedAt: (created.data as any)?.publishedAt ?? null,
       counts: result.counts,
+      qrDataUrl,
     };
+  }
+
+  async generateDocumentQr(id: string): Promise<{ documentId: string; sha256: string; qrDataUrl: string }> {
+    const document = await this.prisma.document.findUnique({ where: { id } });
+    if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
+    const sha = document.sha256 ?? hashDocumentContent(this.decrypt(document.content));
+    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000').replace(/\/+$/, '');
+    const payload = `${appUrl}/verify/document/${sha}`;
+    const qrDataUrl = await generateQrDataUrl(payload);
+    return { documentId: id, sha256: sha, qrDataUrl };
   }
 
   async findPublishedVersion(id: string) {

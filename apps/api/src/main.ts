@@ -9,7 +9,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+  bufferLogs: process.env.NODE_ENV !== 'production',
+});
   const config = app.get(ConfigService);
   const prefix = config.get<string>('API_PREFIX', 'api').replace(/^\/+|\/+$/g, '');
   const server = app.getHttpAdapter().getInstance() as {

@@ -183,7 +183,7 @@ function keyBytes(secret: string): Buffer {
 
 **Missing:**
 
-- ⚠️ **Production mode**: Ensure `bufferLogs: false` in production
+- ✅ **Production mode**: `bufferLogs` is now environment-aware — `false` in production (line 12 of `main.ts`), `true` in development for diagnostics
 - ⚠️ **Structured error responses**: Consider adding error codes and messages format
 - ⚠️ **Sensitive data leakage**: Verify no PII in error messages
 

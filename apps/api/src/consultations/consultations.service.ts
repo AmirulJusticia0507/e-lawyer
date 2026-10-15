@@ -14,6 +14,7 @@ import { getPagination, toPaginated } from '../common/utils/pagination';
 import { IntegrityService } from '../integrity/integrity.service';
 import { decryptBufferWithKeys, encryptBuffer } from '../security/encryption';
 import { assertTransition } from './consultation-status';
+import { resolveVideoProvider, type VideoRoomProvider } from './video-provider';
 import { ConsultationsGateway } from './consultations.gateway';
 import {
   AssignConsultationDto,
@@ -406,14 +407,42 @@ export class ConsultationsService {
 
   async createVideoSession(id: string, dto: CreateVideoSessionDto) {
     await this.ensureExists(id);
-    const roomId = `consult-${id.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
-    return this.prisma.videoSession.create({
+    let providerName = (dto.provider ?? 'webrtc')?.toLowerCase() ?? 'webrtc';
+    let roomId = `consult-${id.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
+    let roomUrl: string | null = null;
+    let dailyProvider: VideoRoomProvider | null = null;
+
+    if (providerName === 'daily') {
+      dailyProvider = resolveVideoProvider(this.config as any);
+    } else if (!dto.provider) {
+      // default on Daily if configured so consultation inherits live video when configured
+      dailyProvider = resolveVideoProvider(this.config as any);
+      if (dailyProvider) providerName = 'daily';
+    }
+
+    if (providerName === 'daily' && dailyProvider) {
+      try {
+        const created = await dailyProvider.createRoom(roomId);
+        roomId = created.roomId;
+        roomUrl = created.roomUrl;
+      } catch {
+        // Fallback graceful ke WebRTC room lokal jika provider eksternal gagal/limit
+        providerName = 'webrtc';
+      }
+    }
+
+    const record = await this.prisma.videoSession.create({
       data: {
         consultationId: id,
         roomId,
-        provider: dto.provider ?? 'webrtc',
+        provider: providerName,
       },
     });
+    return {
+      ...record,
+      roomUrl,
+      providerConfigured: providerName === 'daily' && !!dailyProvider,
+    };
   }
 
   async updateVideoSessionStatus(id: string, sessionId: string, dto: UpdateVideoSessionStatusDto) {

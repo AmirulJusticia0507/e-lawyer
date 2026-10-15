@@ -125,6 +125,14 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  DAILY_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  DAILY_BASE_URL = 'https://api.daily.co';
+
+  @IsString()
+  @IsOptional()
   JWT_REFRESH_EXPIRES_IN = '7d';
 
   @Matches(/^\d+[smhd]$/)

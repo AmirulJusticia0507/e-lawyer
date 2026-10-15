@@ -40,7 +40,7 @@ Mapping ke kebutuhan utama:
 - [x] Portal klien: pengajuan konsultasi (form + jadwal preferensi) via `POST /api/consultations`
 - [x] API konsultasi: CRUD, status workflow, assign advokat, pesan, attachment, sesi video
 - [x] Modul perpesanan: server-side dulu (`body`); field E2EE (`ciphertext`/`iv`/`algorithm`) sudah siap, kripto client otomatis via `consultations.service.ts` encryptAES256
-- [~] Integrasi video conference: pembuatan room + status sesi via abstraksi provider; integrasi live penyedia pihak ketiga menyusul
+- [x] Abstraksi provider video conference + adapter Daily.co (create room/delete room lewat REST) — **provider `daily` otomatis aktif jika `DAILY_API_KEY` di-set; fallback WebRTC room lokal**; `createVideoSession`/`updateVideoSessionStatus` + gateway realtime WebSocket; *embed Daily web SDK + flow LTS peer publisher pihak ketiga menyusul (membutuhkan kredensial akun Daily/Agora)*
 - [x] Upload berkas aman: simpan ke disk + hash SHA-256; **scan malware heuristik** (blokir MIME/ext berbahaya + `scanStatus` CLEAN/INFECTED/FAILED di `Attachment`); **signed URL** (`GET .../attachments/:id/signed-url` + `download-signed?expires=&sig=`) time-bound (5 menit) via HMAC; `GET :id/transcript` me-return pesan (ciphertext tersimpan at-rest via AES-256 pada `addMessage`); signed URL & scan malware luas serta virus-engine real masih menyusul
 - [x] Notifikasi realtime (WebSocket / socket.io) untuk pesan & perubahan status
 - [x] UI: chat panel, status konsultasi, jadwal konsultasi (React SPA)

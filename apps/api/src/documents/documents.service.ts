@@ -20,6 +20,7 @@ import {
   hashDocumentContent,
   renderDocumentTemplate,
 } from './document-content';
+import { anonymizeText } from './anonymize.util';
 import {
   CreateDocumentDto,
   CreatePowerOfAttorneyDto,
@@ -480,6 +481,77 @@ export class DocumentsService {
     if (dto.validFrom && dto.validUntil && new Date(dto.validUntil) < new Date(dto.validFrom)) {
       throw new BadRequestException('Tanggal akhir kuasa tidak boleh sebelum tanggal mulai');
     }
+  }
+
+  /**
+   * Anonimisasi konten dokumen untuk tujuan publikasi (remove PII dasar).
+   * Tidak mengubah isi dokumen asli; patrian NIK/NPWP/telepon/email disamarkan.
+   */
+  async anonymizeDocument(id: string): Promise<{ documentId: string; anonymizedContent: string; counts: Record<string, number> }> {
+    const document = await this.prisma.document.findUnique({ where: { id }, include: { judgment: true, case: { select: { id: true, caseNumber: true } } } });
+    if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
+    const content = this.decrypt(document.content);
+    const result = anonymizeText(content);
+    return { documentId: id, anonymizedContent: result.anonymized, counts: result.counts };
+  }
+
+  /**
+   * Publikasikan versi anonim dokumen: membuat DocumentVersion baru yang menyimpan
+   * konten teranonimisasi + metadata {published:true}. Versi asli tidak diubah.
+   */
+  async publishDocument(id: string, actorId: string) {
+    const document = await this.prisma.document.findUnique({
+      where: { id },
+      include: { case: { select: { id: true, caseNumber: true } } },
+    });
+    if (!document) throw new NotFoundException('Dokumen tidak ditemukan');
+    const content = this.decrypt(document.content);
+    const result = anonymizeText(content);
+
+    const latest = await this.prisma.documentVersion.aggregate({
+      where: { documentId: id },
+      _max: { version: true },
+    });
+    const nextVersion = (latest._max.version ?? 0) + 1;
+    const created = await this.prisma.documentVersion.create({
+      data: {
+        documentId: id,
+        version: nextVersion,
+        content: this.encrypt(result.anonymized),
+        changeSummary: 'Rilis versi publik (anonim)',
+        createdById: actorId,
+        data: { published: true, publishedAt: new Date().toISOString(), anonymizedCounts: result.counts } as any,
+      },
+    });
+    return {
+      documentId: id,
+      versionId: created.id,
+      version: nextVersion,
+      publishedAt: (created.data as any)?.publishedAt ?? null,
+      counts: result.counts,
+    };
+  }
+
+  async findPublishedVersion(id: string) {
+    const version = await this.prisma.documentVersion.findFirst({
+      where: { documentId: id, data: { containsPublished: true } as any },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => null);
+
+    // Fallback: cari manual (Postgres JSON filter tidak selalu tersedia di Prisma typing)
+    let found = version;
+    if (!found) {
+      const versions = await this.prisma.documentVersion.findMany({ where: { documentId: id }, orderBy: { version: 'desc' } });
+      found = versions.find((v) => (v.data as any)?.published === true) ?? null;
+    }
+    if (!found) return null;
+    return {
+      documentId: id,
+      versionId: found.id,
+      version: found.version,
+      publishedAt: (found.data as any)?.publishedAt ?? null,
+      anonymizedContent: this.decrypt(found.content),
+    };
   }
 
   private async validateJudgmentCitations(caseId: string, considerations: string): Promise<void> {

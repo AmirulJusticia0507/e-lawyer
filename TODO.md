@@ -82,7 +82,7 @@ Mapping ke kebutuhan utama:
   - [x] Validasi minimal satu sitasi PUTUSAN tervalidasi (link ke F3)
   - [x] Template verdict: dikabulkan / ditolak / tidak dapat diterima / damai / verstek
   - [~] Cetak/Save as PDF melalui browser; format MA dan e-signature hakim (BSrE) belum terhubung
-  - [ ] Distribusi ke para pihak + publikasi (opsional, anonimisasi)
+  - [~] Distribusi & publikasi (anonimisasi) — backend siap: `POST /documents/:id/publish` membuat versi anonim (NIK/NPWP/telepon/email disamarkan), `GET /documents/:id/published` menampilkan versi publik, `GET /documents/:id/anonymized` untuk preview. Distribusi via receipt (integrity module) sudah ada. E-signature BSrE/QR/e-meterai menunggu provider eksternal.
 - [x] Version control dokumen + perbandingan antar revisi
 - [x] Manajemen template (buat, arsipkan, versioning, kunci per lingkungan peradilan)
 - [~] UI: editor dokumen, pemilihan template, permintaan tanda tangan, riwayat revisi (provider tanda tangan eksternal belum terhubung)

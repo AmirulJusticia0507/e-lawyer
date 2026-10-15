@@ -133,4 +133,22 @@ export class DocumentsController {
   createJudgment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: JudgmentInputDto) {
     return this.documents.createJudgment(id, dto);
   }
+
+  @Get('documents/:id/anonymized')
+  @RequirePermission(Action.READ, Subject.DOCUMENT)
+  anonymized(@Param('id', ParseUUIDPipe) id: string) {
+    return this.documents.anonymizeDocument(id);
+  }
+
+  @Post('documents/:id/publish')
+  @RequirePermission(Action.UPDATE, Subject.DOCUMENT)
+  publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
+    return this.documents.publishDocument(id, actorId);
+  }
+
+  @Get('documents/:id/published')
+  @RequirePermission(Action.READ, Subject.DOCUMENT)
+  published(@Param('id', ParseUUIDPipe) id: string) {
+    return this.documents.findPublishedVersion(id);
+  }
 }
